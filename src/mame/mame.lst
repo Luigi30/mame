@@ -39496,3 +39496,6 @@ simpr8210                       // Pioneer PR-8210
 
 @source:luigisbc.cpp
 luigisbc						//
+
+@source:luigi010.cpp
+luigi010						//

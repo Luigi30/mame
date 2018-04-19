@@ -20,7 +20,29 @@ private:
 	required_device<cpu_device> m_maincpu;
 };
 
+class luigi010_state : public driver_device
+{
+	public:
+	luigi010_state(const machine_config &mconfig, device_type type, const char *tag)
+		: driver_device(mconfig, type, tag)
+		, m_maincpu(*this, "maincpu")
+	{ }
+
+	void luigi010(machine_config &config);
+	void luigi010_mem(address_map &map);
+private:
+	required_device<cpu_device> m_maincpu;
+};
+
 void luigisbc_state::luigisbc_mem(address_map &map)
+{
+	map.unmap_value_high();
+	map(0x000000, 0x0fffff).rom();
+	map(0x100000, 0x1fffff).ram();
+	map(0x600000, 0x60003f).rw("mfp", FUNC(mc68901_device::read), FUNC(mc68901_device::write)).umask16(0x00ff);
+}
+
+void luigi010_state::luigi010_mem(address_map &map)
 {
 	map.unmap_value_high();
 	map(0x000000, 0x0fffff).rom();
@@ -51,13 +73,38 @@ MACHINE_CONFIG_START(luigisbc_state::luigisbc)
 	MCFG_RS232_RI_HANDLER(DEVWRITELINE("mfp", mc68901_device, i6_w))
 MACHINE_CONFIG_END
 
+MACHINE_CONFIG_START(luigi010_state::luigi010)
+	/* basic machine hardware */
+	MCFG_CPU_ADD("maincpu", M68000, MASTER_CLOCK)
+	MCFG_CPU_PROGRAM_MAP(luigi010_mem)
+
+	MCFG_DEVICE_ADD("mfp", MC68901, MASTER_CLOCK/2)
+	MCFG_MC68901_TIMER_CLOCK(Y1)
+	MCFG_MC68901_RX_CLOCK(0)
+	MCFG_MC68901_TX_CLOCK(0)
+//	MCFG_MC68901_OUT_IRQ_CB(INPUTLINE(M68000_TAG, M68K_IRQ_6))
+	MCFG_MC68901_OUT_SO_CB(DEVWRITELINE("rs232", rs232_port_device, write_txd))
+
+	MCFG_RS232_PORT_ADD("rs232", default_rs232_devices, "terminal")
+	MCFG_RS232_RXD_HANDLER(DEVWRITELINE("mfp", mc68901_device, write_rx))
+	MCFG_RS232_DCD_HANDLER(DEVWRITELINE("mfp", mc68901_device, i1_w))
+	MCFG_RS232_CTS_HANDLER(DEVWRITELINE("mfp", mc68901_device, i2_w))
+	MCFG_RS232_RI_HANDLER(DEVWRITELINE("mfp", mc68901_device, i6_w))
+MACHINE_CONFIG_END
+
 /* ROM definition */
 ROM_START( luigisbc )
 	ROM_REGION(0x1000000, "maincpu", 0)
-	ROM_LOAD( "68k.bin", 0x000000, 0x100000, CRC(00000000) SHA1(0) )
+	ROM_LOAD( "68000.bin", 0x000000, 0x100000, CRC(00000000) SHA1(0) )
+ROM_END
+
+ROM_START( luigi010 )
+	ROM_REGION(0x1000000, "maincpu", 0)
+	ROM_LOAD( "68010.bin", 0x000000, 0x100000, CRC(00000000) SHA1(0) )
 ROM_END
 
 /* Driver */
 
 /*    YEAR  NAME        PARENT  COMPAT MACHINE     INPUT     CLASS            INIT  COMPANY         FULLNAME                    FLAGS */
-COMP( 2018, luigisbc,   0,       0,    luigisbc,   luigisbc, luigisbc_state,  0,    "Luigi Thirty", "68000 SBC (h/w 4/7/2018)", MACHINE_NO_SOUND_HW)
+COMP( 2018, luigisbc,   0,       0,    luigisbc,   luigisbc, luigisbc_state,  0,    "Luigi Thirty", "Procyon 68000 (h/w 4/7/2018)", MACHINE_NO_SOUND_HW)
+COMP( 2018, luigi010,   0,       0,    luigi010,   luigisbc, luigi010_state,  0,    "Luigi Thirty", "68010 SBC (idealized)", MACHINE_NO_SOUND_HW)
