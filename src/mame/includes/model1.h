@@ -40,7 +40,6 @@ public:
 		, m_dsbz80(*this, DSBZ80_TAG)
 		, m_tgp_copro(*this, "tgp_copro")
 		, m_screen(*this, "screen")
-		, m_io_timer(*this, "iotimer")
 		, m_copro_fifo_in(*this, "copro_fifo_in")
 		, m_copro_fifo_out(*this, "copro_fifo_out")
 		, m_poly_rom(*this, "polygons")
@@ -54,8 +53,6 @@ public:
 		, m_paletteram16(*this, "palette")
 		, m_palette(*this, "palette")
 		, m_tiles(*this, "tile")
-		, m_analog_ports(*this, "AN.%u", 0)
-		, m_digital_ports(*this, "IN.%u", 0)
 		, m_digits(*this, "digit%u", 0U)
 	{
 	}
@@ -64,12 +61,8 @@ public:
 	DECLARE_MACHINE_START(model1);
 	DECLARE_MACHINE_RESET(model1);
 
-	DECLARE_READ16_MEMBER(network_ctl_r);
-	DECLARE_WRITE16_MEMBER(network_ctl_w);
-	TIMER_DEVICE_CALLBACK_MEMBER(io_command_acknowledge);
-
-	DECLARE_READ16_MEMBER(io_r);
-	DECLARE_WRITE16_MEMBER(io_w);
+	DECLARE_READ8_MEMBER(io_r);
+	DECLARE_WRITE8_MEMBER(io_w);
 
 	DECLARE_WRITE16_MEMBER(bank_w);
 
@@ -209,13 +202,15 @@ public:
 	};
 
 	void model1(machine_config &config);
-
 	void model1_hle(machine_config &config);
+
+	void vf(machine_config &config);
 	void vr(machine_config &config);
 	void vformula(machine_config &config);
 	void swa(machine_config &config);
-	void netmerc(machine_config &config);
 	void wingwar(machine_config &config);
+	void wingwar360(machine_config &config);
+	void netmerc(machine_config &config);
 
 	void model1_io(address_map &map);
 	void model1_mem(address_map &map);
@@ -233,10 +228,10 @@ private:
 	// Machine
 	void irq_raise(int level);
 	void irq_init();
+	DECLARE_WRITE8_MEMBER(irq_control_w);
 
+	uint8_t m_irq_status;
 	int m_last_irq;
-
-	uint8_t m_io_command;
 
 	// Devices
 	required_device<v60_device> m_maincpu;          // V60
@@ -246,7 +241,6 @@ private:
 	optional_device<dsbz80_device> m_dsbz80;        // Digital Sound Board
 	optional_device<mb86233_device> m_tgp_copro;
 	required_device<screen_device> m_screen;
-	required_device<timer_device> m_io_timer;
 	required_device<generic_fifo_u32_device> m_copro_fifo_in, m_copro_fifo_out;
 
 	required_region_ptr<uint32_t> m_poly_rom;
@@ -507,10 +501,13 @@ private:
 	required_device<segas24_tile_device> m_tiles;
 
 	// I/O related
-	uint16_t  m_lamp_state;
-	optional_ioport_array<8> m_analog_ports;
-	required_ioport_array<3> m_digital_ports;
 	output_finder<2> m_digits;
+	DECLARE_WRITE8_MEMBER(vf_outputs_w);
+	DECLARE_WRITE8_MEMBER(vr_outputs_w);
+	DECLARE_WRITE8_MEMBER(swa_outputs_w);
+	DECLARE_WRITE8_MEMBER(wingwar_outputs_w);
+	DECLARE_WRITE8_MEMBER(wingwar360_outputs_w);
+	DECLARE_WRITE8_MEMBER(netmerc_outputs_w);
 };
 
 

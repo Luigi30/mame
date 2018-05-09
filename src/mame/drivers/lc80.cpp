@@ -59,10 +59,11 @@ void lc80_state::lc80_mem(address_map &map)
 }
 
 #if 0
-ADDRESS_MAP_START(lc80_state::sc80_mem)
-	AM_IMPORT_FROM(lc80_mem)
-	AM_RANGE(0xc000, 0xcfff) AM_ROM
-ADDRESS_MAP_END
+void lc80_state::sc80_mem(address_map &map)
+{
+	lc80_mem(map);
+	map(0xc000, 0xcfff).rom();
+}
 #endif
 
 void lc80_state::lc80_io(address_map &map)
@@ -331,34 +332,34 @@ void lc80_state::machine_start()
 
 MACHINE_CONFIG_START(lc80_state::lc80)
 	/* basic machine hardware */
-	MCFG_CPU_ADD(Z80_TAG, Z80, 900000) /* UD880D */
-	MCFG_CPU_PROGRAM_MAP(lc80_mem)
-	MCFG_CPU_IO_MAP(lc80_io)
+	MCFG_DEVICE_ADD(Z80_TAG, Z80, 900000) /* UD880D */
+	MCFG_DEVICE_PROGRAM_MAP(lc80_mem)
+	MCFG_DEVICE_IO_MAP(lc80_io)
 
 	/* video hardware */
 	MCFG_DEFAULT_LAYOUT( layout_lc80 )
 
 	/* sound hardware */
-	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_SOUND_ADD("speaker", SPEAKER_SOUND, 0)
+	SPEAKER(config, "mono").front_center();
+	MCFG_DEVICE_ADD("speaker", SPEAKER_SOUND)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 
 	/* devices */
 	MCFG_DEVICE_ADD(Z80CTC_TAG, Z80CTC, 900000)
 	MCFG_Z80CTC_INTR_CB(INPUTLINE(Z80_TAG, INPUT_LINE_IRQ0))
-	MCFG_Z80CTC_ZC0_CB(WRITELINE(lc80_state, ctc_z0_w))
-	MCFG_Z80CTC_ZC1_CB(WRITELINE(lc80_state, ctc_z1_w))
-	MCFG_Z80CTC_ZC2_CB(WRITELINE(lc80_state, ctc_z2_w))
+	MCFG_Z80CTC_ZC0_CB(WRITELINE(*this, lc80_state, ctc_z0_w))
+	MCFG_Z80CTC_ZC1_CB(WRITELINE(*this, lc80_state, ctc_z1_w))
+	MCFG_Z80CTC_ZC2_CB(WRITELINE(*this, lc80_state, ctc_z2_w))
 
 	MCFG_DEVICE_ADD(Z80PIO1_TAG, Z80PIO, 900000)
 	MCFG_Z80PIO_OUT_INT_CB(INPUTLINE(Z80_TAG, INPUT_LINE_IRQ0))
-	MCFG_Z80PIO_OUT_PA_CB(WRITE8(lc80_state, pio1_pa_w))
-	MCFG_Z80PIO_IN_PB_CB(READ8(lc80_state, pio1_pb_r))
-	MCFG_Z80PIO_OUT_PB_CB(WRITE8(lc80_state, pio1_pb_w))
+	MCFG_Z80PIO_OUT_PA_CB(WRITE8(*this, lc80_state, pio1_pa_w))
+	MCFG_Z80PIO_IN_PB_CB(READ8(*this, lc80_state, pio1_pb_r))
+	MCFG_Z80PIO_OUT_PB_CB(WRITE8(*this, lc80_state, pio1_pb_w))
 
 	MCFG_DEVICE_ADD(Z80PIO2_TAG, Z80PIO, 900000)
 	MCFG_Z80PIO_OUT_INT_CB(INPUTLINE(Z80_TAG, INPUT_LINE_IRQ0))
-	MCFG_Z80PIO_IN_PB_CB(READ8(lc80_state, pio2_pb_r))
+	MCFG_Z80PIO_IN_PB_CB(READ8(*this, lc80_state, pio2_pb_r))
 
 	MCFG_CASSETTE_ADD("cassette")
 	MCFG_CASSETTE_DEFAULT_STATE(CASSETTE_STOPPED | CASSETTE_MOTOR_ENABLED | CASSETTE_SPEAKER_MUTED)
@@ -370,34 +371,34 @@ MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(lc80_state::lc80_2)
 	/* basic machine hardware */
-	MCFG_CPU_ADD(Z80_TAG, Z80, 1800000) /* UD880D */
-	MCFG_CPU_PROGRAM_MAP(lc80_mem)
-	MCFG_CPU_IO_MAP(lc80_io)
+	MCFG_DEVICE_ADD(Z80_TAG, Z80, 1800000) /* UD880D */
+	MCFG_DEVICE_PROGRAM_MAP(lc80_mem)
+	MCFG_DEVICE_IO_MAP(lc80_io)
 
 	/* video hardware */
 	MCFG_DEFAULT_LAYOUT( layout_lc80 )
 
 	/* sound hardware */
-	MCFG_SPEAKER_STANDARD_MONO("mono")
-	MCFG_SOUND_ADD("speaker", SPEAKER_SOUND, 0)
+	SPEAKER(config, "mono").front_center();
+	MCFG_DEVICE_ADD("speaker", SPEAKER_SOUND)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 
 	/* devices */
 	MCFG_DEVICE_ADD(Z80CTC_TAG, Z80CTC, 900000)
 	MCFG_Z80CTC_INTR_CB(INPUTLINE(Z80_TAG, INPUT_LINE_IRQ0))
-	MCFG_Z80CTC_ZC0_CB(WRITELINE(lc80_state, ctc_z0_w))
-	MCFG_Z80CTC_ZC1_CB(WRITELINE(lc80_state, ctc_z1_w))
-	MCFG_Z80CTC_ZC2_CB(WRITELINE(lc80_state, ctc_z2_w))
+	MCFG_Z80CTC_ZC0_CB(WRITELINE(*this, lc80_state, ctc_z0_w))
+	MCFG_Z80CTC_ZC1_CB(WRITELINE(*this, lc80_state, ctc_z1_w))
+	MCFG_Z80CTC_ZC2_CB(WRITELINE(*this, lc80_state, ctc_z2_w))
 
 	MCFG_DEVICE_ADD(Z80PIO1_TAG, Z80PIO, 900000)
 	MCFG_Z80PIO_OUT_INT_CB(INPUTLINE(Z80_TAG, INPUT_LINE_IRQ0))
-	MCFG_Z80PIO_OUT_PA_CB(WRITE8(lc80_state, pio1_pa_w))
-	MCFG_Z80PIO_IN_PB_CB(READ8(lc80_state, pio1_pb_r))
-	MCFG_Z80PIO_OUT_PB_CB(WRITE8(lc80_state, pio1_pb_w))
+	MCFG_Z80PIO_OUT_PA_CB(WRITE8(*this, lc80_state, pio1_pa_w))
+	MCFG_Z80PIO_IN_PB_CB(READ8(*this, lc80_state, pio1_pb_r))
+	MCFG_Z80PIO_OUT_PB_CB(WRITE8(*this, lc80_state, pio1_pb_w))
 
 	MCFG_DEVICE_ADD(Z80PIO2_TAG, Z80PIO, 900000)
 	MCFG_Z80PIO_OUT_INT_CB(INPUTLINE(Z80_TAG, INPUT_LINE_IRQ0))
-	MCFG_Z80PIO_IN_PB_CB(READ8(lc80_state, pio2_pb_r))
+	MCFG_Z80PIO_IN_PB_CB(READ8(*this, lc80_state, pio2_pb_r))
 
 	MCFG_CASSETTE_ADD("cassette")
 	MCFG_CASSETTE_DEFAULT_STATE(CASSETTE_STOPPED | CASSETTE_MOTOR_ENABLED | CASSETTE_SPEAKER_MUTED)
@@ -412,8 +413,8 @@ static MACHINE_CONFIG_START( sc80 )
 	lc80_2(config);
 
 	/* basic machine hardware */
-	MCFG_CPU_MODIFY(Z80_TAG)
-	MCFG_CPU_PROGRAM_MAP(sc80_mem)
+	MCFG_DEVICE_MODIFY(Z80_TAG)
+	MCFG_DEVICE_PROGRAM_MAP(sc80_mem)
 MACHINE_CONFIG_END
 #endif
 

@@ -95,12 +95,8 @@ void isa8_svga_et4k_device::device_start()
 	m_vga = subdevice<tseng_vga_device>("vga");
 
 	m_isa->install_rom(this, 0xc0000, 0xc7fff, "et4000", "et4000");
-
-	m_isa->install_device(0x3b0, 0x3bf, read8_delegate(FUNC(tseng_vga_device::port_03b0_r),m_vga), write8_delegate(FUNC(tseng_vga_device::port_03b0_w),m_vga));
-	m_isa->install_device(0x3c0, 0x3cf, read8_delegate(FUNC(tseng_vga_device::port_03c0_r),m_vga), write8_delegate(FUNC(tseng_vga_device::port_03c0_w),m_vga));
-	m_isa->install_device(0x3d0, 0x3df, read8_delegate(FUNC(tseng_vga_device::port_03d0_r),m_vga), write8_delegate(FUNC(tseng_vga_device::port_03d0_w),m_vga));
-
-	m_isa->install_memory(0xa0000, 0xbffff, read8_delegate(FUNC(tseng_vga_device::mem_r),m_vga), write8_delegate(FUNC(tseng_vga_device::mem_w),m_vga));
+	map_io();
+	map_ram();
 }
 
 READ16_MEMBER(isa16_svga_et4k_device::input_port_0_r ) { return 0xffff; } //return machine().root_device().ioport("IN0")->read(); }
@@ -113,12 +109,17 @@ void isa16_svga_et4k_device::device_start()
 
 	m_isa->install_rom(this, 0xc0000, 0xc7fff, "et4000", "et4000");
 
+	/*
 	m_isa->install_device(0x3b0, 0x3bf, read8_delegate(FUNC(tseng_vga_device::port_03b0_r),m_vga), write8_delegate(FUNC(tseng_vga_device::port_03b0_w),m_vga));
 	m_isa->install_device(0x3c0, 0x3cf, read8_delegate(FUNC(tseng_vga_device::port_03c0_r),m_vga), write8_delegate(FUNC(tseng_vga_device::port_03c0_w),m_vga));
 	m_isa->install_device(0x3d0, 0x3df, read8_delegate(FUNC(tseng_vga_device::port_03d0_r),m_vga), write8_delegate(FUNC(tseng_vga_device::port_03d0_w),m_vga));
 
 	m_isa->install_memory(0xa0000, 0xbffff, read8_delegate(FUNC(tseng_vga_device::mem_r),m_vga), write8_delegate(FUNC(tseng_vga_device::mem_w),m_vga));
 	m_isa->install_memory(0x100000, 0x1fffff, read8_delegate(FUNC(tseng_vga_device::isa_aperture_r),m_vga), write8_delegate(FUNC(tseng_vga_device::isa_aperture_w),m_vga));
+	*/
+	
+	map_io();
+	map_ram();
 }
 
 
@@ -132,4 +133,46 @@ void isa8_svga_et4k_device::device_reset()
 
 void isa16_svga_et4k_device::device_reset()
 {
+}
+
+//-------------------------------------------------
+//  remap - remap ram since something
+//  could have unmapped it
+//-------------------------------------------------
+
+void isa8_svga_et4k_device::remap(int space_id, offs_t start, offs_t end)
+{
+	if (space_id == AS_PROGRAM)
+		map_ram();
+}
+
+void isa8_svga_et4k_device::map_io()
+{
+	m_isa->install_device(0x3b0, 0x3bf, read8_delegate(FUNC(tseng_vga_device::port_03b0_r), m_vga), write8_delegate(FUNC(tseng_vga_device::port_03b0_w), m_vga));
+	m_isa->install_device(0x3c0, 0x3cf, read8_delegate(FUNC(tseng_vga_device::port_03c0_r), m_vga), write8_delegate(FUNC(tseng_vga_device::port_03c0_w), m_vga));
+	m_isa->install_device(0x3d0, 0x3df, read8_delegate(FUNC(tseng_vga_device::port_03d0_r), m_vga), write8_delegate(FUNC(tseng_vga_device::port_03d0_w), m_vga));
+}
+
+void isa8_svga_et4k_device::map_ram()
+{
+	m_isa->install_memory(0xa0000, 0xbffff, read8_delegate(FUNC(tseng_vga_device::mem_r), m_vga), write8_delegate(FUNC(tseng_vga_device::mem_w), m_vga));
+}
+
+void isa16_svga_et4k_device::remap(int space_id, offs_t start, offs_t end)
+{
+	if (space_id == AS_PROGRAM)
+		map_ram();
+}
+
+void isa16_svga_et4k_device::map_io()
+{
+	m_isa->install_device(0x3b0, 0x3bf, read16_delegate(FUNC(tseng_vga_device::port_03b0_r), m_vga), write16_delegate(FUNC(tseng_vga_device::port_03b0_w), m_vga));
+	m_isa->install_device(0x3c0, 0x3cf, read16_delegate(FUNC(tseng_vga_device::port_03c0_r), m_vga), write16_delegate(FUNC(tseng_vga_device::port_03c0_w), m_vga));
+	m_isa->install_device(0x3d0, 0x3df, read16_delegate(FUNC(tseng_vga_device::port_03d0_r), m_vga), write16_delegate(FUNC(tseng_vga_device::port_03d0_w), m_vga));
+}
+
+void isa16_svga_et4k_device::map_ram()
+{
+	m_isa->install_memory(0xa0000, 0xbffff, read16_delegate(FUNC(tseng_vga_device::mem_r), m_vga), write16_delegate(FUNC(tseng_vga_device::mem_w), m_vga));
+	m_isa->install_memory(0x100000, 0x1fffff, read16_delegate(FUNC(tseng_vga_device::isa_aperture_r), m_vga), write16_delegate(FUNC(tseng_vga_device::isa_aperture_w), m_vga));
 }

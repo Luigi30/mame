@@ -59,6 +59,7 @@ void cinemat_state::machine_start()
 	save_item(NAME(m_coin_last_reset));
 	save_item(NAME(m_mux_select));
 	m_led.resolve();
+	m_pressed.resolve();
 }
 
 
@@ -82,14 +83,14 @@ void cinemat_state::machine_reset()
 
 READ8_MEMBER(cinemat_state::inputs_r)
 {
-	return (ioport("INPUTS")->read() >> offset) & 1;
+	return (m_inputs->read() >> offset) & 1;
 }
 
 
 READ8_MEMBER(cinemat_state::switches_r)
 {
 	static const uint8_t switch_shuffle[8] = { 2,5,4,3,0,1,6,7 };
-	return (ioport("SWITCHES")->read() >> switch_shuffle[offset]) & 1;
+	return (m_switches->read() >> switch_shuffle[offset]) & 1;
 }
 
 
@@ -167,7 +168,7 @@ READ8_MEMBER(cinemat_state::speedfrk_wheel_r)
 	int delta_wheel;
 
 	/* the shift register is cleared once per 'frame' */
-	delta_wheel = int8_t(ioport("WHEEL")->read()) / 8;
+	delta_wheel = int8_t(m_wheel->read()) / 8;
 	if (delta_wheel > 3)
 		delta_wheel = 3;
 	else if (delta_wheel < -3)
@@ -179,14 +180,14 @@ READ8_MEMBER(cinemat_state::speedfrk_wheel_r)
 
 READ8_MEMBER(cinemat_state::speedfrk_gear_r)
 {
-	int gearval = ioport("GEAR")->read();
+	int gearval = m_gear_input->read();
 
 	/* check the fake gear input port and determine the bit settings for the gear */
 	if ((gearval & 0x0f) != 0x0f)
 		m_gear = gearval & 0x0f;
 
 	/* add the start key into the mix -- note that it overlaps 4th gear */
-	if (!(ioport("INPUTS")->read() & 0x80))
+	if (!(m_inputs->read() & 0x80))
 		m_gear &= ~0x08;
 
 	return (m_gear >> offset) & 1;
@@ -234,7 +235,7 @@ READ8_MEMBER(cinemat_state::sundance_inputs_r)
 	if (sundance_port_map[offset].portname)
 		return (ioport(sundance_port_map[offset].portname)->read() & sundance_port_map[offset].bitmask) ? 0 : 1;
 	else
-		return (ioport("INPUTS")->read() >> offset) & 1;
+		return (m_inputs->read() >> offset) & 1;
 }
 
 
@@ -974,16 +975,16 @@ INPUT_PORTS_END
 MACHINE_CONFIG_START(cinemat_state::cinemat_nojmi_4k)
 
 	/* basic machine hardware */
-	MCFG_CPU_ADD("maincpu", CCPU, MASTER_CLOCK/4)
+	MCFG_DEVICE_ADD("maincpu", CCPU, MASTER_CLOCK/4)
 	MCFG_CCPU_VECTOR_FUNC(ccpu_cpu_device::vector_delegate(FUNC(cinemat_state::cinemat_vector_callback), this))
-	MCFG_CCPU_EXTERNAL_FUNC(READ8(cinemat_state,joystick_read))
-	MCFG_CPU_PROGRAM_MAP(program_map_4k)
-	MCFG_CPU_DATA_MAP(data_map)
-	MCFG_CPU_IO_MAP(io_map)
+	MCFG_CCPU_EXTERNAL_FUNC(READ8(*this, cinemat_state,joystick_read))
+	MCFG_DEVICE_PROGRAM_MAP(program_map_4k)
+	MCFG_DEVICE_DATA_MAP(data_map)
+	MCFG_DEVICE_IO_MAP(io_map)
 
 	MCFG_DEVICE_ADD("outlatch", LS259, 0) // 7J on CCG-1
-	MCFG_ADDRESSABLE_LATCH_Q5_OUT_CB(WRITELINE(cinemat_state, coin_reset_w))
-	MCFG_ADDRESSABLE_LATCH_Q6_OUT_CB(WRITELINE(cinemat_state, vector_control_w))
+	MCFG_ADDRESSABLE_LATCH_Q5_OUT_CB(WRITELINE(*this, cinemat_state, coin_reset_w))
+	MCFG_ADDRESSABLE_LATCH_Q6_OUT_CB(WRITELINE(*this, cinemat_state, vector_control_w))
 
 	/* video hardware */
 	MCFG_VECTOR_ADD("vector")
@@ -998,37 +999,37 @@ MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(cinemat_state::cinemat_jmi_4k)
 	cinemat_nojmi_4k(config);
-	MCFG_CPU_MODIFY("maincpu")
+	MCFG_DEVICE_MODIFY("maincpu")
 	MCFG_CCPU_VECTOR_FUNC(ccpu_cpu_device::vector_delegate(FUNC(cinemat_state::cinemat_vector_callback), this))
-	MCFG_CCPU_EXTERNAL_FUNC(DEVREAD8("maincpu",ccpu_cpu_device,read_jmi))
+	MCFG_CCPU_EXTERNAL_FUNC(READ8("maincpu",ccpu_cpu_device,read_jmi))
 MACHINE_CONFIG_END
 
 
 MACHINE_CONFIG_START(cinemat_state::cinemat_nojmi_8k)
 	cinemat_nojmi_4k(config);
-	MCFG_CPU_MODIFY("maincpu")
-	MCFG_CPU_PROGRAM_MAP(program_map_8k)
+	MCFG_DEVICE_MODIFY("maincpu")
+	MCFG_DEVICE_PROGRAM_MAP(program_map_8k)
 MACHINE_CONFIG_END
 
 
 MACHINE_CONFIG_START(cinemat_state::cinemat_jmi_8k)
 	cinemat_jmi_4k(config);
-	MCFG_CPU_MODIFY("maincpu")
-	MCFG_CPU_PROGRAM_MAP(program_map_8k)
+	MCFG_DEVICE_MODIFY("maincpu")
+	MCFG_DEVICE_PROGRAM_MAP(program_map_8k)
 MACHINE_CONFIG_END
 
 
 MACHINE_CONFIG_START(cinemat_state::cinemat_jmi_16k)
 	cinemat_jmi_4k(config);
-	MCFG_CPU_MODIFY("maincpu")
-	MCFG_CPU_PROGRAM_MAP(program_map_16k)
+	MCFG_DEVICE_MODIFY("maincpu")
+	MCFG_DEVICE_PROGRAM_MAP(program_map_16k)
 MACHINE_CONFIG_END
 
 
 MACHINE_CONFIG_START(cinemat_state::cinemat_jmi_32k)
 	cinemat_jmi_4k(config);
-	MCFG_CPU_MODIFY("maincpu")
-	MCFG_CPU_PROGRAM_MAP(program_map_32k)
+	MCFG_DEVICE_MODIFY("maincpu")
+	MCFG_DEVICE_PROGRAM_MAP(program_map_32k)
 MACHINE_CONFIG_END
 
 
@@ -1078,7 +1079,7 @@ MACHINE_CONFIG_START(cinemat_state::tailg)
 	tailg_sound(config);
 
 	MCFG_DEVICE_MODIFY("outlatch")
-	MCFG_ADDRESSABLE_LATCH_Q7_OUT_CB(WRITELINE(cinemat_state, mux_select_w))
+	MCFG_ADDRESSABLE_LATCH_Q7_OUT_CB(WRITELINE(*this, cinemat_state, mux_select_w))
 MACHINE_CONFIG_END
 
 
@@ -1121,7 +1122,7 @@ MACHINE_CONFIG_START(cinemat_state::boxingb)
 	MCFG_VIDEO_START_OVERRIDE(cinemat_state,cinemat_color)
 
 	MCFG_DEVICE_MODIFY("outlatch")
-	MCFG_ADDRESSABLE_LATCH_Q7_OUT_CB(WRITELINE(cinemat_state, mux_select_w))
+	MCFG_ADDRESSABLE_LATCH_Q7_OUT_CB(WRITELINE(*this, cinemat_state, mux_select_w))
 MACHINE_CONFIG_END
 
 
@@ -1151,9 +1152,9 @@ MACHINE_CONFIG_END
 MACHINE_CONFIG_START(cinemat_state::qb3)
 	cinemat_jmi_32k(config);
 	qb3_sound(config);
-	MCFG_CPU_MODIFY("maincpu")
-	MCFG_CPU_DATA_MAP(data_map_qb3)
-	MCFG_CPU_IO_MAP(io_map_qb3)
+	MCFG_DEVICE_MODIFY("maincpu")
+	MCFG_DEVICE_DATA_MAP(data_map_qb3)
+	MCFG_DEVICE_IO_MAP(io_map_qb3)
 	MCFG_SCREEN_MODIFY("screen")
 	MCFG_SCREEN_VISIBLE_AREA(0, 1120, 0, 780)
 	MCFG_VIDEO_START_OVERRIDE(cinemat_state,cinemat_qb3color)

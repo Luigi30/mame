@@ -508,6 +508,18 @@ if (VIDEOS["M50458"]~=null) then
 	}
 end
 
+---------------------------------------------------
+--
+--@src/devices/video/mb88303.h,VIDEOS["MB88303"] = true
+---------------------------------------------------
+
+if (VIDEOS["MB88303"]~=null) then
+	files {
+		MAME_DIR .. "src/devices/video/mb88303.cpp",
+		MAME_DIR .. "src/devices/video/mb88303.h",
+	}
+end
+
 --------------------------------------------------
 --
 --@src/devices/video/mb90082.h,VIDEOS["MB90082"] = true
@@ -1043,5 +1055,17 @@ if (VIDEOS["DP8510"]~=null) then
 	files {
 		MAME_DIR .. "src/devices/video/dp8510.cpp",
 		MAME_DIR .. "src/devices/video/dp8510.h",
+	}
+end
+
+--------------------------------------------------
+--
+--@src/devices/video/bt45x.h,VIDEOS["BT45X"] = true
+--------------------------------------------------
+
+if (VIDEOS["BT45X"]~=null) then
+	files {
+		MAME_DIR .. "src/devices/video/bt45x.cpp",
+		MAME_DIR .. "src/devices/video/bt45x.h",
 	}
 end
