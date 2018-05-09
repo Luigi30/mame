@@ -111,8 +111,8 @@ enum
 
 ***************************************************************************/
 
-#define LOG_ACCESSES    0
-#define LOG_REGISTERS   0
+#define LOG_ACCESSES    1
+#define LOG_REGISTERS   1
 
 #define LOG_8514        1
 
@@ -403,6 +403,7 @@ void tseng_vga_device::device_start()
 	save_item(NAME(et4k.dac_state));
 	save_item(NAME(et4k.horz_overflow));
 	save_item(NAME(et4k.aux_ctrl));
+	save_item(NAME(et4k.vsconf1));
 	save_item(NAME(et4k.ext_reg_ena));
 	save_item(NAME(et4k.misc1));
 	save_item(NAME(et4k.misc2));
@@ -474,6 +475,10 @@ void vga_device::vga_vh_text(bitmap_rgb32 &bitmap, const rectangle &cliprect)
 		{
 			ch   = vga.memory[(pos<<1) + 0];
 			attr = vga.memory[(pos<<1) + 1];
+			if(ch != 0x0)
+				printf("ch: %x\n", ch);
+			if(attr != 0x0)
+				printf("attr: %x\n", attr);
 			font_base = 0x20000+(ch<<5);
 			font_base += ((attr & 8) ? vga.sequencer.char_sel.A : vga.sequencer.char_sel.B)*0x2000;
 			blink_en = (vga.attribute.data[0x10]&8&&screen().frame_number() & 0x20) ? attr & 0x80 : 0;
@@ -495,7 +500,13 @@ void vga_device::vga_vh_text(bitmap_rgb32 &bitmap, const rectangle &cliprect)
 						pen = vga.pens[back_col];
 
 					if(!screen().visible_area().contains(column*width+w, line+h))
+					{
+						printf("out of visible area\n");
 						continue;
+					}
+
+					//if(ch != 0x0 && attr != 0x0)
+						//printf("pen: %x\n", pen);
 					bitmapline[column*width+w] = pen;
 
 				}
@@ -508,7 +519,10 @@ void vga_device::vga_vh_text(bitmap_rgb32 &bitmap, const rectangle &cliprect)
 						pen = vga.pens[back_col];
 
 					if(!screen().visible_area().contains(column*width+w, line+h))
+					{
+						printf("out of visible area\n");
 						continue;
+					}
 					bitmapline[column*width+w] = pen;
 				}
 			}
@@ -519,7 +533,10 @@ void vga_device::vga_vh_text(bitmap_rgb32 &bitmap, const rectangle &cliprect)
 						h++)
 				{
 					if(!screen().visible_area().contains(column*width, line+h))
+					{
+						printf("out of visible area\n");
 						continue;
+					}
 					bitmap.plot_box(column*width, line+h, width, 1, vga.pens[attr&0xf]);
 				}
 			}
@@ -945,6 +962,7 @@ uint8_t vga_device::pc_vga_choosevideomode()
 	{
 		if (vga.dac.dirty)
 		{
+			logerror("dac is dirty, updating pen colors\n");
 			for (i=0; i<256;i++)
 			{
 				/* TODO: color shifters? */
@@ -974,6 +992,7 @@ uint8_t vga_device::pc_vga_choosevideomode()
 
 		if (!GRAPHIC_MODE)
 		{
+			logerror("text mode\n");
 			return TEXT_MODE;
 		}
 		else if (vga.gc.shift256)
@@ -1253,19 +1272,28 @@ uint32_t s3_vga_device::screen_update(screen_device &screen, bitmap_rgb32 &bitma
 inline uint8_t vga_device::vga_latch_write(int offs, uint8_t data)
 {
 	uint8_t res = 0;
+	//logerror("writing a pixel. write mode is %d\n", vga.gc.write_mode);
 
 	switch (vga.gc.write_mode & 3) {
 	case 0:
+		//logerror("vga_latch_write: data starts as %x\n", data);
 		data = rotate_right(data);
+		//logerror("vga_latch_write: data is %x after rotation\n", data);
 		if(vga.gc.enable_set_reset & 1<<offs)
+		{
 			res = vga_logical_op((vga.gc.set_reset & 1<<offs) ? vga.gc.bit_mask : 0, offs,vga.gc.bit_mask);
+			//logerror("vga_latch_write: enable_set_reset\n", data);			
+		}
 		else
 			res = vga_logical_op(data, offs, vga.gc.bit_mask);
+		
+		//logerror("vga_latch_write: data ends as %x\n", res);
 		break;
 	case 1:
 		res = vga.gc.latch[offs];
 		break;
 	case 2:
+		//logerror("write mode 2. mask is %x\n", vga.gc.bit_mask);
 		res = vga_logical_op((data & 1<<offs) ? 0xff : 0x00,offs,vga.gc.bit_mask);
 		break;
 	case 3:
@@ -1765,6 +1793,8 @@ uint8_t vga_device::gc_reg_read(uint8_t index)
 READ8_MEMBER(vga_device::port_03c0_r)
 {
 	uint8_t data = 0xff;
+	
+	//logerror("read port 3c0. returning %x", data);
 
 	switch (offset)
 	{
@@ -1971,7 +2001,7 @@ void vga_device::gc_reg_write(uint8_t index,uint8_t data)
 WRITE8_MEMBER(vga_device::port_03c0_w)
 {
 	if (LOG_ACCESSES)
-		logerror("vga_port_03c0_w(): port=0x%04x data=0x%02x\n", offset + 0x3c0, data);
+		//logerror("vga_port_03c0_w(): port=0x%04x data=0x%02x\n", offset + 0x3c0, data);
 
 	switch (offset) {
 	case 0:
@@ -1981,6 +2011,7 @@ WRITE8_MEMBER(vga_device::port_03c0_w)
 		}
 		else
 		{
+			logerror("writing %x to attribute %x\n", data, vga.attribute.index);
 			attribute_reg_write(vga.attribute.index,data);
 		}
 		vga.attribute.state=!vga.attribute.state;
@@ -2063,6 +2094,8 @@ WRITE8_MEMBER(vga_device::port_03d0_w)
 
 	if (CRTC_PORT_ADDR == 0x3d0)
 		vga_crtc_w(space, offset, data, mem_mask);
+	else
+		logerror("CRTC_PORT_ADDR is not 0x3D0 dummy\n");
 }
 
 void vga_device::device_reset()
@@ -2173,37 +2206,56 @@ READ8_MEMBER(vga_device::mem_r)
 
 WRITE8_MEMBER(vga_device::mem_w)
 {
-	//Inside each case must prevent writes to non-mapped VGA memory regions, not only mask the offset.
+	//Inside each case must prevent writes to non-mapped VGA memory regions, not only mask the offset.	
 	switch(vga.gc.memory_map_sel & 0x03)
 	{
 		case 0: break;
 		case 1:
 			if(offset & 0x10000)
+			{
+				//logerror("not writing VGA byte: memory map is 1\n");
 				return;
+			}
 
 			offset &= 0x0ffff;
 			break;
 		case 2:
 			if((offset & 0x18000) != 0x10000)
+			{
+				//logerror("not writing VGA byte: memory map is 2\n");
 				return;
+			}
+				
 
 			offset &= 0x07fff;
 			break;
 		case 3:
 			if((offset & 0x18000) != 0x18000)
-				return;
+			{
+				//logerror("not writing VGA byte: memory map is 3\n");
+				return;	
+			}
 
 			offset &= 0x07fff;
 			break;
 	}
-
+	
 	{
 		uint8_t i;
 
 		for(i=0;i<4;i++)
 		{
+			//logerror("mem_w: vga.sequencer.map_mask == %d\n", vga.sequencer.map_mask);
 			if(vga.sequencer.map_mask & 1 << i)
+			{	
+					/*
+				logerror("writing VGA byte %x to %x. vga.sequencer.data[4] is %x\n", 
+					(vga.sequencer.data[4] & 4) ? vga_latch_write(i,data) : data,
+					offset+i*0x10000,
+					vga.sequencer.data[4]);
+					*/
 				vga.memory[offset+i*0x10000] = (vga.sequencer.data[4] & 4) ? vga_latch_write(i,data) : data;
+			}
 		}
 		return;
 	}
@@ -2307,6 +2359,9 @@ uint8_t tseng_vga_device::tseng_crtc_reg_read(uint8_t index)
 	{
 		switch(index)
 		{
+			case 0x24:
+				res = et4k.vsconf1;
+				break;
 			case 0x34:
 				res = et4k.aux_ctrl;
 				break;
@@ -2331,6 +2386,9 @@ void tseng_vga_device::tseng_crtc_reg_write(uint8_t index, uint8_t data)
 	{
 		switch(index)
 		{
+			case 0x24:
+				et4k.vsconf1 = data;
+				break;
 			case 0x34:
 				et4k.aux_ctrl = data;
 				break;
@@ -2615,8 +2673,111 @@ WRITE8_MEMBER(tseng_vga_device::mem_w)
 {
 	if(svga.rgb8_en || svga.rgb15_en || svga.rgb16_en || svga.rgb24_en)
 	{
+		if(et4k.vsconf1 & 0x10)
+		{
+			logerror("8-bit, linear: writing %x to %x. the offset is %x\n", data, (offset+svga.bank_w*0x10000), offset);
+			vga.memory[offset] = data;
+		}
+		else
+		{
+			logerror("8-bit, not linear: writing %x to %x. the offset is %x\n", data, (offset+svga.bank_w*0x10000), offset);
+			offset &= 0xffff;
+			vga.memory[(offset+svga.bank_w*0x10000)] = data;			
+		}
+	}
+	else
+		vga_device::mem_w(space,offset,data,mem_mask);
+}
+
+READ16_MEMBER(tseng_vga_device::mem_r)
+{
+	if(svga.rgb8_en || svga.rgb15_en || svga.rgb16_en || svga.rgb24_en)
+	{
 		offset &= 0xffff;
-		vga.memory[(offset+svga.bank_w*0x10000)] = data;
+		return vga.memory[(offset+svga.bank_r*0x10000)];
+	}
+
+	return vga_device::mem_r(space,offset,mem_mask);
+}
+
+WRITE16_MEMBER(tseng_vga_device::mem_w)
+{
+	printf("tseng_vga_device::mem_w\n");
+	if(svga.rgb8_en || svga.rgb15_en || svga.rgb16_en || svga.rgb24_en)
+	{
+		if(et4k.vsconf1 & 0x10)
+		{
+			logerror("16-bit, linear: writing %x to %x. the offset is %x\n", data, (offset+svga.bank_w*0x10000), offset);
+			vga.memory[offset] = data;
+		}
+		else
+		{
+			logerror("16-bit, not linear: writing %x to %x. the offset is %x\n", data, (offset+svga.bank_w*0x10000), offset);
+			offset &= 0xffff;
+			vga.memory[(offset+svga.bank_w*0x10000)] = data;			
+		}
+
+	}
+	else
+		vga_device::mem_w(space,offset,data,mem_mask);
+}
+
+READ8_MEMBER(tseng_vga_device::isa_aperture_r)
+{
+	if(svga.rgb8_en || svga.rgb15_en || svga.rgb16_en || svga.rgb24_en)
+	{
+		offset &= 0xffff;
+		return vga.memory[(offset+svga.bank_r*0x10000)];
+	}
+
+	return vga_device::mem_r(space,offset,mem_mask);
+}
+
+WRITE8_MEMBER(tseng_vga_device::isa_aperture_w)
+{
+	if(svga.rgb8_en || svga.rgb15_en || svga.rgb16_en || svga.rgb24_en)
+	{
+		if(et4k.vsconf1 & 0x10)
+		{
+			logerror("8-bit, linear: writing %x to %x. the offset is %x\n", data, (offset+svga.bank_w*0x10000), offset);
+			vga.memory[offset] = data;
+		}
+		else
+		{
+			logerror("8-bit, not linear: writing %x to %x. the offset is %x\n", data, (offset+svga.bank_w*0x10000), offset);
+			offset &= 0xffff;
+			vga.memory[(offset+svga.bank_w*0x10000)] = data;			
+		}
+	}
+	else
+		vga_device::mem_w(space,offset,data,mem_mask);
+}
+
+READ16_MEMBER(tseng_vga_device::isa_aperture_r)
+{
+	if(svga.rgb8_en || svga.rgb15_en || svga.rgb16_en || svga.rgb24_en)
+	{
+		return vga.memory[offset];
+	}
+
+	return vga_device::mem_r(space,offset,mem_mask);
+}
+
+WRITE16_MEMBER(tseng_vga_device::isa_aperture_w)
+{
+	if(svga.rgb8_en || svga.rgb15_en || svga.rgb16_en || svga.rgb24_en)
+	{
+		if(et4k.vsconf1 & 0x10)
+		{
+			logerror("8-bit, linear: writing %x to %x. the offset is %x\n", data, (offset+svga.bank_w*0x10000), offset);
+			vga.memory[offset] = data;
+		}
+		else
+		{
+			logerror("8-bit, not linear: writing %x to %x. the offset is %x\n", data, (offset+svga.bank_w*0x10000), offset);
+			offset &= 0xffff;
+			vga.memory[(offset+svga.bank_w*0x10000)] = data;			
+		}
 	}
 	else
 		vga_device::mem_w(space,offset,data,mem_mask);

@@ -615,7 +615,6 @@ MC6845_UPDATE_ROW( isa8_cga_device::cga_gfx_4bpph_update_row )
 	}
 }
 
-
 /***************************************************************************
   Draw graphics mode with 320x200 pixels (default) with 2 bits/pixel.
   Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
@@ -787,7 +786,7 @@ void isa8_cga_device::mode_control_w(uint8_t data)
 
 	m_mode_control = data;
 
-	//logerror("mode set to %02X\n", cga.mode_control & 0x3F );
+	printf("mode set to %02X\n", m_mode_control & 0x3F);
 	switch ( m_mode_control & 0x3F )
 	{
 	case 0x08: case 0x09: case 0x0C: case 0x0D:
@@ -931,6 +930,8 @@ WRITE8_MEMBER( isa8_cga_device::io_write )
 {
 	mc6845_device *mc6845 = subdevice<mc6845_device>(CGA_MC6845_NAME);
 
+	printf("CGA io_write: offset %02X, data %02x\n", offset, data);
+	
 	switch(offset) {
 	case 0: case 2: case 4: case 6:
 		mc6845->address_w( space, offset, data );
