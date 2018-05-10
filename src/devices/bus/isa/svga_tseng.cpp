@@ -166,13 +166,13 @@ void isa16_svga_et4k_device::remap(int space_id, offs_t start, offs_t end)
 
 void isa16_svga_et4k_device::map_io()
 {
-	m_isa->install_device(0x3b0, 0x3bf, read16_delegate(FUNC(tseng_vga_device::port_03b0_r), m_vga), write16_delegate(FUNC(tseng_vga_device::port_03b0_w), m_vga));
-	m_isa->install_device(0x3c0, 0x3cf, read16_delegate(FUNC(tseng_vga_device::port_03c0_r), m_vga), write16_delegate(FUNC(tseng_vga_device::port_03c0_w), m_vga));
-	m_isa->install_device(0x3d0, 0x3df, read16_delegate(FUNC(tseng_vga_device::port_03d0_r), m_vga), write16_delegate(FUNC(tseng_vga_device::port_03d0_w), m_vga));
+	m_isa->install_device(0x3b0, 0x3bf, read8_delegate(FUNC(tseng_vga_device::port_03b0_r), m_vga), write8_delegate(FUNC(tseng_vga_device::port_03b0_w), m_vga));
+	m_isa->install_device(0x3c0, 0x3cf, read8_delegate(FUNC(tseng_vga_device::port_03c0_r), m_vga), write8_delegate(FUNC(tseng_vga_device::port_03c0_w), m_vga));
+	m_isa->install_device(0x3d0, 0x3df, read8_delegate(FUNC(tseng_vga_device::port_03d0_r), m_vga), write8_delegate(FUNC(tseng_vga_device::port_03d0_w), m_vga));
 }
 
 void isa16_svga_et4k_device::map_ram()
 {
-	m_isa->install_memory(0xa0000, 0xbffff, read16_delegate(FUNC(tseng_vga_device::mem_r), m_vga), write16_delegate(FUNC(tseng_vga_device::mem_w), m_vga));
-	m_isa->install_memory(0x100000, 0x1fffff, read16_delegate(FUNC(tseng_vga_device::isa_aperture_r), m_vga), write16_delegate(FUNC(tseng_vga_device::isa_aperture_w), m_vga));
+	m_isa->install_memory(0xa0000, 0xbffff, read8_delegate(FUNC(tseng_vga_device::mem_r), m_vga), write8_delegate(FUNC(tseng_vga_device::mem_w), m_vga));
+	m_isa->install_memory(0x100000, 0x1fffff, read8_delegate(FUNC(tseng_vga_device::isa_aperture_r), m_vga), write8_delegate(FUNC(tseng_vga_device::isa_aperture_w), m_vga));
 }

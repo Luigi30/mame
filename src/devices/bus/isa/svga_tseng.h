@@ -54,6 +54,7 @@ public:
 	isa16_svga_et4k_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	DECLARE_READ16_MEMBER(input_port_0_r);
+	virtual void remap(int space_id, offs_t start, offs_t end) override;
 
 protected:
 	// device-level overrides
@@ -66,6 +67,8 @@ protected:
 
 private:
 	tseng_vga_device *m_vga;
+	void map_io();
+	void map_ram();
 };
 
 
