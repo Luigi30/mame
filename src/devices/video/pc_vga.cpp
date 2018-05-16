@@ -2675,7 +2675,7 @@ WRITE8_MEMBER(tseng_vga_device::mem_w)
 	{
 		if(et4k.vsconf1 & 0x10)
 		{
-			logerror("8-bit, linear: writing %x to %x. the offset is %x\n", data, (offset+svga.bank_w*0x10000), offset);
+			logerror("8-bit, linear: writing %x to %x\n", data, offset);
 			vga.memory[offset] = data;
 		}
 		else
@@ -2684,39 +2684,6 @@ WRITE8_MEMBER(tseng_vga_device::mem_w)
 			offset &= 0xffff;
 			vga.memory[(offset+svga.bank_w*0x10000)] = data;			
 		}
-	}
-	else
-		vga_device::mem_w(space,offset,data,mem_mask);
-}
-
-READ16_MEMBER(tseng_vga_device::mem_r)
-{
-	if(svga.rgb8_en || svga.rgb15_en || svga.rgb16_en || svga.rgb24_en)
-	{
-		offset &= 0xffff;
-		return vga.memory[(offset+svga.bank_r*0x10000)];
-	}
-
-	return vga_device::mem_r(space,offset,mem_mask);
-}
-
-WRITE16_MEMBER(tseng_vga_device::mem_w)
-{
-	printf("tseng_vga_device::mem_w\n");
-	if(svga.rgb8_en || svga.rgb15_en || svga.rgb16_en || svga.rgb24_en)
-	{
-		if(et4k.vsconf1 & 0x10)
-		{
-			logerror("16-bit, linear: writing %x to %x. the offset is %x\n", data, (offset+svga.bank_w*0x10000), offset);
-			vga.memory[offset] = data;
-		}
-		else
-		{
-			logerror("16-bit, not linear: writing %x to %x. the offset is %x\n", data, (offset+svga.bank_w*0x10000), offset);
-			offset &= 0xffff;
-			vga.memory[(offset+svga.bank_w*0x10000)] = data;			
-		}
-
 	}
 	else
 		vga_device::mem_w(space,offset,data,mem_mask);
@@ -2739,37 +2706,7 @@ WRITE8_MEMBER(tseng_vga_device::isa_aperture_w)
 	{
 		if(et4k.vsconf1 & 0x10)
 		{
-			logerror("8-bit, linear: writing %x to %x. the offset is %x\n", data, (offset+svga.bank_w*0x10000), offset);
-			vga.memory[offset] = data;
-		}
-		else
-		{
-			logerror("8-bit, not linear: writing %x to %x. the offset is %x\n", data, (offset+svga.bank_w*0x10000), offset);
-			offset &= 0xffff;
-			vga.memory[(offset+svga.bank_w*0x10000)] = data;			
-		}
-	}
-	else
-		vga_device::mem_w(space,offset,data,mem_mask);
-}
-
-READ16_MEMBER(tseng_vga_device::isa_aperture_r)
-{
-	if(svga.rgb8_en || svga.rgb15_en || svga.rgb16_en || svga.rgb24_en)
-	{
-		return vga.memory[offset];
-	}
-
-	return vga_device::mem_r(space,offset,mem_mask);
-}
-
-WRITE16_MEMBER(tseng_vga_device::isa_aperture_w)
-{
-	if(svga.rgb8_en || svga.rgb15_en || svga.rgb16_en || svga.rgb24_en)
-	{
-		if(et4k.vsconf1 & 0x10)
-		{
-			logerror("8-bit, linear: writing %x to %x. the offset is %x\n", data, (offset+svga.bank_w*0x10000), offset);
+			logerror("8-bit, linear: writing %x to %x.\n", data, offset, offset);
 			vga.memory[offset] = data;
 		}
 		else
