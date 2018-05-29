@@ -614,10 +614,10 @@ const uint8_t m68000_base_device::m68ki_ea_idx_cycle_table[64] =
     CPU STATE DESCRIPTION
 ***************************************************************************/
 
-#define MASK_ALL                (CPU_TYPE_000 | CPU_TYPE_008 | CPU_TYPE_010 | CPU_TYPE_EC020 | CPU_TYPE_020 | CPU_TYPE_EC030 | CPU_TYPE_030 | CPU_TYPE_EC040 | CPU_TYPE_040 | CPU_TYPE_FSCPU32 )
+#define MASK_ALL                (CPU_TYPE_000 | CPU_TYPE_008 | CPU_TYPE_010 | CPU_TYPE_012 | CPU_TYPE_EC020 | CPU_TYPE_020 | CPU_TYPE_EC030 | CPU_TYPE_030 | CPU_TYPE_EC040 | CPU_TYPE_040 | CPU_TYPE_FSCPU32 )
 #define MASK_24BIT_SPACE            (CPU_TYPE_000 | CPU_TYPE_008 | CPU_TYPE_010 | CPU_TYPE_EC020)
-#define MASK_32BIT_SPACE            (CPU_TYPE_020 | CPU_TYPE_EC030 | CPU_TYPE_030 | CPU_TYPE_EC040 | CPU_TYPE_040 | CPU_TYPE_FSCPU32 )
-#define MASK_010_OR_LATER           (CPU_TYPE_010 | CPU_TYPE_EC020 | CPU_TYPE_020 | CPU_TYPE_030 | CPU_TYPE_EC030 | CPU_TYPE_040 | CPU_TYPE_EC040 | CPU_TYPE_FSCPU32 )
+#define MASK_32BIT_SPACE            ( CPU_TYPE_012 | CPU_TYPE_020 | CPU_TYPE_EC030 | CPU_TYPE_030 | CPU_TYPE_EC040 | CPU_TYPE_040 | CPU_TYPE_FSCPU32 )
+#define MASK_010_OR_LATER           (CPU_TYPE_010 | CPU_TYPE_012 | CPU_TYPE_EC020 | CPU_TYPE_020 | CPU_TYPE_030 | CPU_TYPE_EC030 | CPU_TYPE_040 | CPU_TYPE_EC040 | CPU_TYPE_FSCPU32 )
 #define MASK_020_OR_LATER           (CPU_TYPE_EC020 | CPU_TYPE_020 | CPU_TYPE_EC030 | CPU_TYPE_030 | CPU_TYPE_EC040 | CPU_TYPE_040 | CPU_TYPE_FSCPU32 )
 #define MASK_030_OR_LATER           (CPU_TYPE_030 | CPU_TYPE_EC030 | CPU_TYPE_040 | CPU_TYPE_EC040)
 #define MASK_040_OR_LATER           (CPU_TYPE_040 | CPU_TYPE_EC040)
@@ -1681,6 +1681,30 @@ void m68000_base_device::init_cpu_m68010(void)
 	define_state();
 }
 
+void m68000_base_device::init_cpu_m68012(void)
+{
+	init_cpu_common();
+	m_cpu_type         = CPU_TYPE_012;
+
+	init16(*m_program, *m_oprogram);
+	m_sr_mask          = 0xa71f; /* T1 -- S  -- -- I2 I1 I0 -- -- -- X  N  Z  V  C  */
+	m_jump_table       = m68ki_instruction_jump_table[1];
+	m_cyc_instruction  = m68ki_cycles[1];
+	m_cyc_exception    = m68ki_exception_cycle_table[1];
+	m_cyc_bcc_notake_b = -4;
+	m_cyc_bcc_notake_w = 0;
+	m_cyc_dbcc_f_noexp = 0;
+	m_cyc_dbcc_f_exp   = 6;
+	m_cyc_scc_r_true   = 0;
+	m_cyc_movem_w      = 2;
+	m_cyc_movem_l      = 3;
+	m_cyc_shift        = 1;
+	m_cyc_reset        = 130;
+	m_has_pmmu         = 0;
+	m_has_fpu          = 0;
+
+	define_state();
+}
 
 void m68000_base_device::init_cpu_m68020(void)
 {
@@ -1995,6 +2019,11 @@ std::unique_ptr<util::disasm_interface> m68010_device::create_disassembler()
 	return std::make_unique<m68k_disassembler>(m68k_disassembler::TYPE_68010);
 }
 
+std::unique_ptr<util::disasm_interface> m68012_device::create_disassembler()
+{
+	return std::make_unique<m68k_disassembler>(m68k_disassembler::TYPE_68010);
+}
+
 std::unique_ptr<util::disasm_interface> m68ec020_device::create_disassembler()
 {
 	return std::make_unique<m68k_disassembler>(m68k_disassembler::TYPE_68020);
@@ -2083,7 +2112,7 @@ void m68000_base_device::m68ki_exception_interrupt(uint32_t int_level)
 	/* Acknowledge the interrupt */
 	vector = m_int_ack_callback(*this, int_level);
 
-	/* Get the interrupt vector */
+	/* Get the interrupt vector */		
 	if(vector == M68K_INT_ACK_AUTOVECTOR)
 		/* Use the autovectors.  This is the most commonly used implementation */
 		vector = EXCEPTION_INTERRUPT_AUTOVECTOR+int_level;
@@ -2322,6 +2351,7 @@ DEFINE_DEVICE_TYPE(M68301,      m68301_device,      "m68301",       "Motorola MC
 DEFINE_DEVICE_TYPE(M68008,      m68008_device,      "m68008",       "Motorola MC68008")
 DEFINE_DEVICE_TYPE(M68008PLCC,  m68008plcc_device,  "m68008plcc",   "Motorola MC68008PLCC")
 DEFINE_DEVICE_TYPE(M68010,      m68010_device,      "m68010",       "Motorola MC68010")
+DEFINE_DEVICE_TYPE(M68012,      m68012_device,      "m68012",       "Motorola MC68012")
 DEFINE_DEVICE_TYPE(M68EC020,    m68ec020_device,    "m68ec020",     "Motorola MC68EC020")
 DEFINE_DEVICE_TYPE(M68020,      m68020_device,      "m68020",       "Motorola MC68020")
 DEFINE_DEVICE_TYPE(M68020FPU,   m68020fpu_device,   "m68020fpu",    "Motorola MC68020FPU")
@@ -2412,7 +2442,15 @@ void m68010_device::device_start()
 	init_cpu_m68010();
 }
 
+m68012_device::m68012_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: m68000_base_device(mconfig, tag, owner, clock, M68012, 16,32)
+{
+}
 
+void m68012_device::device_start()
+{
+	init_cpu_m68012();
+}
 
 m68020_device::m68020_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
 	: m68000_base_device(mconfig, tag, owner, clock, M68020, 32,32)
