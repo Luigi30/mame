@@ -42,6 +42,7 @@ enum
 	M68K_CPU_TYPE_68000,
 	M68K_CPU_TYPE_68008,
 	M68K_CPU_TYPE_68010,
+	M68K_CPU_TYPE_68012,
 	M68K_CPU_TYPE_68EC020,
 	M68K_CPU_TYPE_68020,
 	M68K_CPU_TYPE_68EC030,
@@ -296,6 +297,7 @@ protected:
 	void init_cpu_m68000(void);
 	void init_cpu_m68008(void);
 	void init_cpu_m68010(void);
+	void init_cpu_m68012(void);
 	void init_cpu_m68020(void);
 	void init_cpu_m68020fpu(void);
 	void init_cpu_m68020pmmu(void);
@@ -423,6 +425,23 @@ class m68010_device : public m68000_base_device
 public:
 	// construction/destruction
 	m68010_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
+	virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
+
+	virtual uint32_t execute_min_cycles() const override { return 4; };
+	virtual uint32_t execute_max_cycles() const override { return 158; };
+
+	virtual uint32_t execute_default_irq_vector() const override { return -1; };
+
+	// device-level overrides
+	virtual void device_start() override;
+};
+
+class m68012_device : public m68000_base_device
+{
+public:
+	// construction/destruction
+	m68012_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
 
@@ -674,6 +693,7 @@ DECLARE_DEVICE_TYPE(M68301, m68301_device)
 DECLARE_DEVICE_TYPE(M68008, m68008_device)
 DECLARE_DEVICE_TYPE(M68008PLCC, m68008plcc_device)
 DECLARE_DEVICE_TYPE(M68010, m68010_device)
+DECLARE_DEVICE_TYPE(M68012, m68012_device)
 DECLARE_DEVICE_TYPE(M68EC020, m68ec020_device)
 DECLARE_DEVICE_TYPE(M68020, m68020_device)
 DECLARE_DEVICE_TYPE(M68020FPU, m68020fpu_device)

@@ -77,6 +77,7 @@ static constexpr int CPU_TYPE_040    = (0x00000200);
 static constexpr int CPU_TYPE_SCC070 = (0x00000400);
 static constexpr int CPU_TYPE_FSCPU32  = (0x00000800);
 static constexpr int CPU_TYPE_COLDFIRE = (0x00001000);
+static constexpr int CPU_TYPE_012    = (0x00002000);
 
 /* Different ways to stop the CPU */
 static constexpr int STOP_LEVEL_STOP = 1;
@@ -224,9 +225,9 @@ inline uint32_t CPU_TYPE_IS_020_VARIANT() const { return ((m_cpu_type) & (CPU_TY
 inline uint32_t CPU_TYPE_IS_EC020_PLUS() const  { return ((m_cpu_type) & (CPU_TYPE_EC020 | CPU_TYPE_020 | CPU_TYPE_030 | CPU_TYPE_EC030 | CPU_TYPE_040 | CPU_TYPE_EC040 | CPU_TYPE_FSCPU32 | CPU_TYPE_COLDFIRE)); }
 inline uint32_t CPU_TYPE_IS_EC020_LESS() const  { return ((m_cpu_type) & (CPU_TYPE_000 | CPU_TYPE_008 | CPU_TYPE_010 | CPU_TYPE_EC020)); }
 
-inline uint32_t CPU_TYPE_IS_010() const         { return ((m_cpu_type) == CPU_TYPE_010); }
-inline uint32_t CPU_TYPE_IS_010_PLUS() const    { return ((m_cpu_type) & (CPU_TYPE_010 | CPU_TYPE_EC020 | CPU_TYPE_020 | CPU_TYPE_EC030 | CPU_TYPE_030 | CPU_TYPE_040 | CPU_TYPE_EC040 | CPU_TYPE_FSCPU32 | CPU_TYPE_COLDFIRE)); }
-inline uint32_t CPU_TYPE_IS_010_LESS() const    { return ((m_cpu_type) & (CPU_TYPE_000 | CPU_TYPE_008 | CPU_TYPE_010)); }
+inline uint32_t CPU_TYPE_IS_010() const         { return ((m_cpu_type) == CPU_TYPE_010) | ((m_cpu_type) == CPU_TYPE_012); }
+inline uint32_t CPU_TYPE_IS_010_PLUS() const    { return ((m_cpu_type) & (CPU_TYPE_010 | CPU_TYPE_012 | CPU_TYPE_EC020 | CPU_TYPE_020 | CPU_TYPE_EC030 | CPU_TYPE_030 | CPU_TYPE_040 | CPU_TYPE_EC040 | CPU_TYPE_FSCPU32 | CPU_TYPE_COLDFIRE)); }
+inline uint32_t CPU_TYPE_IS_010_LESS() const    { return ((m_cpu_type) & (CPU_TYPE_000 | CPU_TYPE_008 | CPU_TYPE_010 | CPU_TYPE_012)); }
 
 inline uint32_t CPU_TYPE_IS_000() const         { return ((m_cpu_type) == CPU_TYPE_000 || (m_cpu_type) == CPU_TYPE_008); }
 

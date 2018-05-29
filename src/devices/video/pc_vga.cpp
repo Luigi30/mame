@@ -2675,6 +2675,40 @@ WRITE8_MEMBER(tseng_vga_device::isa_aperture_w)
 		vga_device::mem_w(space,offset,data,mem_mask);
 }
 
+READ16_MEMBER(tseng_vga_device::isa_aperture16_r)
+{
+	if(svga.rgb8_en || svga.rgb15_en || svga.rgb16_en || svga.rgb24_en)
+	{
+		offset &= 0xffff;
+		return (vga.memory[(offset+svga.bank_r*0x10000)] << 8) |
+			vga.memory[((offset+1)+svga.bank_r*0x10000)];
+	}
+
+	return (vga_device::mem_r(space,offset,mem_mask) << 8) | (vga_device::mem_r(space,offset,mem_mask));
+}
+
+WRITE16_MEMBER(tseng_vga_device::isa_aperture16_w)
+{
+	if(svga.rgb8_en || svga.rgb15_en || svga.rgb16_en || svga.rgb24_en)
+	{
+		if(et4k.vsconf1 & 0x10)
+		{
+			vga.memory[offset] = data & 0xFF00;
+			vga.memory[offset+1] = data & 0x00FF;
+		}
+		else
+		{
+			offset &= 0xffff;
+			vga.memory[(offset+svga.bank_w*0x10000)] = data;			
+		}
+	}
+	else
+	{
+		vga_device::mem_w(space,offset,data,mem_mask);
+		vga_device::mem_w(space,offset+1,data,mem_mask);
+	}
+}
+
 /******************************************
 
 S3 implementation
