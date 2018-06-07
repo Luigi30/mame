@@ -27,7 +27,7 @@
   1x HD63450 4-channel DMA controller
   
   Slot devices:
-  1x 16-bit ISA slot
+  2x 16-bit ISA slot
 
   Memory Map:
   0x000000-0x0fffff - ROM
@@ -232,7 +232,7 @@ MACHINE_CONFIG_START(luigisbc_state::luigisbc)
 	MCFG_DEVICE_IRQ_ACKNOWLEDGE_DRIVER(luigisbc_state,luigisbc_int_ack)
 
 	MCFG_DEVICE_ADD(MFP_TAG, MC68901, MASTER_CLOCK/4)
-	MCFG_MC68901_TIMER_CLOCK(Y2)
+	MCFG_MC68901_TIMER_CLOCK(Y2 / 16)
 	MCFG_MC68901_RX_CLOCK(9600)
 	MCFG_MC68901_TX_CLOCK(9600)
 	MCFG_MC68901_OUT_SO_CB(WRITELINE(RS232_TAG, rs232_port_device, write_txd))
