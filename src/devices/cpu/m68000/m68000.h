@@ -446,6 +446,23 @@ public:
 	virtual void device_start() override;
 };
 
+class m68012_device : public m68000_base_device
+{
+public:
+	// construction/destruction
+	m68012_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
+	virtual std::unique_ptr<util::disasm_interface> create_disassembler() override;
+
+	virtual uint32_t execute_min_cycles() const override { return 4; };
+	virtual uint32_t execute_max_cycles() const override { return 158; };
+
+	virtual uint32_t execute_default_irq_vector() const override { return -1; };
+
+	// device-level overrides
+	virtual void device_start() override;
+};
+
 class m68ec020_device : public m68000_base_device
 {
 public:
