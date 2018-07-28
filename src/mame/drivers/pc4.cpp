@@ -30,7 +30,6 @@
 #include "cpu/z80/z80.h"
 #include "machine/rp5c01.h"
 
-#include "rendlay.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -72,17 +71,17 @@ void pc4_state::pc4_io(address_map &map)
 {
 	map.unmap_value_high();
 	map(0x0000, 0x000f).rw("rtc", FUNC(rp5c01_device::read), FUNC(rp5c01_device::write));
-	map(0x1000, 0x1000).w(this, FUNC(pc4_state::beep_w));
-	map(0x1fff, 0x1fff).w(this, FUNC(pc4_state::bank_w));
+	map(0x1000, 0x1000).w(FUNC(pc4_state::beep_w));
+	map(0x1fff, 0x1fff).w(FUNC(pc4_state::bank_w));
 
-	map(0x3000, 0x3000).w(this, FUNC(pc4_state::lcd_control_w));
-	map(0x3001, 0x3001).w(this, FUNC(pc4_state::lcd_data_w));
-	map(0x3002, 0x3002).r(this, FUNC(pc4_state::lcd_control_r));
-	map(0x3003, 0x3003).r(this, FUNC(pc4_state::lcd_data_r));
-	map(0x3005, 0x3005).w(this, FUNC(pc4_state::lcd_offset_w));
+	map(0x3000, 0x3000).w(FUNC(pc4_state::lcd_control_w));
+	map(0x3001, 0x3001).w(FUNC(pc4_state::lcd_data_w));
+	map(0x3002, 0x3002).r(FUNC(pc4_state::lcd_control_r));
+	map(0x3003, 0x3003).r(FUNC(pc4_state::lcd_data_r));
+	map(0x3005, 0x3005).w(FUNC(pc4_state::lcd_offset_w));
 
 	//keyboard read, offset used as matrix
-	map(0x5000, 0x50ff).r(this, FUNC(pc4_state::kb_r));
+	map(0x5000, 0x50ff).r(FUNC(pc4_state::kb_r));
 }
 
 static INPUT_PORTS_START( pc4 )
@@ -232,7 +231,6 @@ MACHINE_CONFIG_START(pc4_state::pc4)
 	MCFG_SCREEN_VISIBLE_AREA(0, 240-1, 0, 36-1)
 	MCFG_SCREEN_PALETTE("palette")
 
-	MCFG_DEFAULT_LAYOUT(layout_lcd)
 	MCFG_PALETTE_ADD("palette", 2)
 	MCFG_PALETTE_INIT_OWNER(pc4_state, pc4)
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_pc4)

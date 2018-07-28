@@ -1,9 +1,14 @@
 // license:BSD-3-Clause
 // copyright-holders:Bryan McPhail, David Graves
+#ifndef MAME_INCLUDES_UNDRFIRE_H
+#define MAME_INCLUDES_UNDRFIRE_H
+
+#pragma once
 
 #include "machine/eepromser.h"
 #include "video/tc0100scn.h"
 #include "video/tc0480scp.h"
+#include "emupal.h"
 
 struct uf_tempsprite
 {
@@ -18,13 +23,8 @@ struct uf_tempsprite
 class undrfire_state : public driver_device
 {
 public:
-	enum
-	{
-		TIMER_INTERRUPT5
-	};
-
-	undrfire_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
+	undrfire_state(const machine_config &mconfig, device_type type, const char *tag) :
+		driver_device(mconfig, type, tag),
 		m_maincpu(*this, "maincpu"),
 		m_subcpu(*this, "sub"),
 		m_tc0100scn(*this, "tc0100scn"),
@@ -34,7 +34,8 @@ public:
 		m_shared_ram(*this, "shared_ram"),
 		m_spriteram(*this, "spriteram"),
 		m_gfxdecode(*this, "gfxdecode"),
-		m_palette(*this, "palette") { }
+		m_palette(*this, "palette")
+	{ }
 
 	void undrfire(machine_config &config);
 	void cbombers(machine_config &config);
@@ -46,6 +47,11 @@ protected:
 	virtual void video_start() override;
 
 private:
+	enum
+	{
+		TIMER_INTERRUPT5
+	};
+
 	required_device<cpu_device> m_maincpu;
 	optional_device<cpu_device> m_subcpu;
 	required_device<tc0100scn_device> m_tc0100scn;
@@ -80,3 +86,5 @@ private:
 	void cbombers_cpub_map(address_map &map);
 	void undrfire_map(address_map &map);
 };
+
+#endif // MAME_INCLUDES_UNDRFIRE_H

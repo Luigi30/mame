@@ -171,7 +171,7 @@ Address bus A0-A11 is Y0-Y11
 #define A2_UPPERBANK_TAG "inhbank"
 #define IIC_ACIA1_TAG "acia1"
 #define IIC_ACIA2_TAG "acia2"
-#define IICP_IWM_TAG    "iwm"
+#define IICP_IWM_TAG    "fdc"
 #define LASER128_UDC_TAG "l128udc"
 #define PRINTER_PORT_TAG "printer"
 #define MODEM_PORT_TAG "modem"
@@ -393,6 +393,9 @@ public:
 	void r2000bank_map(address_map &map);
 	void r4000bank_map(address_map &map);
 	void spectred_keyb_map(address_map &map);
+
+	bool m_35sel, m_hdsel, m_intdrive;
+
 private:
 	int m_speaker_state;
 	int m_cassette_state, m_cassette_out;
@@ -434,6 +437,9 @@ private:
 	bool m_isiic, m_isiicplus, m_iscec;
 	uint8_t m_migram[0x800];
 	uint16_t m_migpage;
+
+	bool m_zipunlocked;
+	int m_zipstage;
 
 	uint8_t *m_ram_ptr, *m_rom_ptr, *m_cec_ptr;
 	int m_ram_size;
@@ -486,21 +492,36 @@ private:
 
 uint8_t apple2e_state::mig_r(uint16_t offset)
 {
+	//printf("mig_r @ %x\n", offset + 0xc00);
 	// MIG RAM window
-	if (offset < 0x20)
+	if ((offset >= 0x200) && (offset < 0x220))
 	{
 		return m_migram[m_migpage + offset];
 	}
 
-	// increment MIG RAM window
-	if (offset == 0x20)
+	// increment MIG RAM window and return previous value
+	if ((offset >= 0x220) && (offset < 0x240))
 	{
+		uint8_t rv = m_migram[m_migpage + offset];
 		m_migpage += 0x20;
-		m_migpage &= 0x7ff; // make sure we wrap
+		m_migpage &= 0x7ff;
+		return rv;
+	}
+
+	if ((offset >= 0x240) && (offset < 0x260))
+	{
+		m_hdsel = false;
+		sony_set_sel_line(m_iicpiwm, 0);
+	}
+
+	if ((offset >= 0x260) && (offset < 0x280))
+	{
+		m_hdsel = true;
+		sony_set_sel_line(m_iicpiwm, 0x80);
 	}
 
 	// reset MIG RAM window
-	if (offset == 0xa0)
+	if (offset == 0x2a0)
 	{
 		m_migpage = 0;
 	}
@@ -510,22 +531,58 @@ uint8_t apple2e_state::mig_r(uint16_t offset)
 
 void apple2e_state::mig_w(uint16_t offset, uint8_t data)
 {
+	//printf("mig_w %x @ %x\n", data, offset + 0xc00);
+
+	if (offset == 0x40)
+	{
+		m_iicpiwm->device_reset();
+		return;
+	}
+
+	if ((offset >= 0x80) && (offset < 0xa0))
+	{
+		//printf("MIG: enable internal drive on d2\n");
+		m_intdrive = true;
+		return;
+	}
+
+	if ((offset >= 0xc0) && (offset < 0xe0))
+	{
+		//printf("MIG: disable internal drive\n");
+		m_intdrive = false;
+		return;
+	}
+
 	// MIG RAM window
-	if (offset < 0x20)
+	if ((offset >= 0x200) && (offset < 0x220))
 	{
 		m_migram[m_migpage + offset] = data;
 		return;
 	}
 
-	// increment MIG RAM window
-	if (offset == 0x20)
+	// increment MIG RAM window, but write value at old location first
+	if ((offset >= 0x220) && (offset < 0x240))
 	{
+		m_migram[m_migpage + offset] = data;
 		m_migpage += 0x20;
 		m_migpage &= 0x7ff; // make sure we wrap
+		return;
+	}
+
+	if ((offset >= 0x240) && (offset < 0x260))
+	{
+		m_35sel = false;
+		return;
+	}
+
+	if ((offset >= 0x260) && (offset < 0x280))
+	{
+		m_35sel = true;
+		return;
 	}
 
 	// reset MIG RAM window
-	if (offset == 0xa0)
+	if (offset == 0x2a0)
 	{
 		m_migpage = 0;
 	}
@@ -853,6 +910,11 @@ void apple2e_state::machine_start()
 	save_item(NAME(m_mockingboard4c));
 	save_item(NAME(m_intc8rom));
 	save_item(NAME(m_cec_bank));
+	save_item(NAME(m_35sel));
+	save_item(NAME(m_hdsel));
+	save_item(NAME(m_intdrive));
+	save_item(NAME(m_zipunlocked));
+	save_item(NAME(m_zipstage));
 }
 
 void apple2e_state::machine_reset()
@@ -875,6 +937,8 @@ void apple2e_state::machine_reset()
 	m_mockingboard4c = false;
 	m_intc8rom = false;
 	m_cec_bank = 0;
+	m_zipunlocked = false;
+	m_zipstage = 0;
 
 	// IIe prefers INTCXROM default to off, IIc has it always on
 	if (m_rom_ptr[0x3bc0] == 0x00)
@@ -1390,6 +1454,14 @@ void apple2e_state::do_io(address_space &space, int offset, bool is_iic)
 			{
 				m_romswitch = !m_romswitch;
 				update_slotrom_banks();
+
+				// MIG is reset when ROMSWITCH turns off
+				if ((m_isiicplus) && !(m_romswitch))
+				{
+					m_migpage = 0;
+					m_intdrive = false;
+					m_35sel = false;
+				}
 
 				// if LC is not enabled
 				if (!m_lcram)
@@ -1986,6 +2058,34 @@ WRITE8_MEMBER(apple2e_state::c000_iic_w)
 			m_strobe = 0;
 			break;
 
+		case 0x5a:  // IIC+ accelerator unlock
+			if (m_isiicplus)
+			{
+				if (data == 0x5a)
+				{
+					m_zipstage++;
+					if (m_zipstage == 4)
+					{
+						m_zipunlocked = true;
+					}
+				}
+				else if (data == 0xa5)
+				{
+					// put settings into effect and lock
+					m_zipunlocked = false;
+					m_zipstage = 0;
+				}
+				else
+				{
+					// disable acceleration and lock
+					m_zipunlocked = false;
+					m_zipstage = 0;
+				}
+			}
+			break;
+
+		case 0x5b:
+
 		case 0x78:
 		case 0x79:
 			m_vbl = false;
@@ -2113,6 +2213,11 @@ READ8_MEMBER(apple2e_state::c080_r)
 		}
 		else
 		{
+			if ((m_isiicplus) && (slot == 6))
+			{
+				return m_iicpiwm->read(offset % 0x10);
+			}
+
 			if (m_slotdevice[slot] != nullptr)
 			{
 				return m_slotdevice[slot]->read_c0nx(offset % 0x10);
@@ -2143,6 +2248,12 @@ WRITE8_MEMBER(apple2e_state::c080_w)
 	}
 	else
 	{
+		if ((m_isiicplus) && (slot == 6))
+		{
+			m_iicpiwm->write(offset % 0x10, data);
+			return;
+		}
+
 		if (m_slotdevice[slot] != nullptr)
 		{
 			m_slotdevice[slot]->write_c0nx(offset % 0x10, data);
@@ -2291,19 +2402,10 @@ READ8_MEMBER(apple2e_state::c400_cec_bank_r)  { return m_rom_ptr[0x4400 + offset
 
 READ8_MEMBER(apple2e_state::c800_r)
 {
-	if ((m_isiicplus) && (m_romswitch) && (offset >= 0x600) && (offset < 0x700))
+	if ((offset == 0x7ff) && !machine().side_effects_disabled())
 	{
-		return mig_r(offset-0x600);
-	}
-
-	if (offset == 0x7ff)
-	{
-		if (!machine().side_effects_disabled())
-		{
-			m_cnxx_slot = CNXX_UNCLAIMED;
-			update_slotrom_banks();
-		}
-
+		m_cnxx_slot = CNXX_UNCLAIMED;
+		update_slotrom_banks();
 		return 0xff;
 	}
 
@@ -2317,11 +2419,6 @@ READ8_MEMBER(apple2e_state::c800_r)
 
 READ8_MEMBER(apple2e_state::c800_int_r)
 {
-	if ((m_isiicplus) && (m_romswitch) && (offset >= 0x600) && (offset < 0x700))
-	{
-		return mig_r(offset-0x600);
-	}
-
 	if ((offset == 0x7ff) && !machine().side_effects_disabled())
 	{
 		m_cnxx_slot = CNXX_UNCLAIMED;
@@ -2339,9 +2436,9 @@ READ8_MEMBER(apple2e_state::c800_int_r)
 
 READ8_MEMBER(apple2e_state::c800_b2_int_r)
 {
-	if ((m_isiicplus) && (m_romswitch) && (offset >= 0x600) && (offset < 0x700))
+	if ((m_isiicplus) && (m_romswitch) && (((offset >= 0x400) && (offset < 0x500)) || ((offset >= 0x600) && (offset < 0x700))))
 	{
-		return mig_r(offset-0x600);
+		return mig_r(offset-0x400);
 	}
 
 	if ((offset == 0x7ff) && !machine().side_effects_disabled())
@@ -2356,9 +2453,9 @@ READ8_MEMBER(apple2e_state::c800_b2_int_r)
 
 WRITE8_MEMBER(apple2e_state::c800_w)
 {
-	if ((m_isiicplus) && (m_romswitch) && (offset >= 0x600) && (offset < 0x700))
+	if ((m_isiicplus) && (m_romswitch) && (((offset >= 0x400) && (offset < 0x500)) || ((offset >= 0x600) && (offset < 0x700))))
 	{
-		mig_w(offset-0x600, data);
+		mig_w(offset-0x400, data);
 		return;
 	}
 
@@ -2404,22 +2501,11 @@ WRITE8_MEMBER(apple2e_state::inh_w)
 
 READ8_MEMBER(apple2e_state::lc_romswitch_r)
 {
-	if ((offset >= 0xc00) && (offset < 0xd00))
-	{
-		return mig_r(offset-0xc00);
-	}
-
 	return m_rom_ptr[0x5000 + offset];
 }
 
 WRITE8_MEMBER(apple2e_state::lc_romswitch_w)
 {
-	if ((offset >= 0xc00) && (offset < 0xd00))
-	{
-		mig_w(offset-0xc00, data);
-		return;
-	}
-
 	lc_w(space, offset, data);
 }
 
@@ -2580,7 +2666,7 @@ uint8_t apple2e_state::read_floatingbus()
 
 	// calculate vertical scanning state
 	//
-	v_line  = i / kHClocks; // which vertical scanning line
+	v_line  = (i / kHClocks) + 188; // which vertical scanning line (MAME starts at blank, not the beginning of the scanning area)
 	v_state = kVLine0State + v_line; // V state bits
 	if ((v_line >= kVPresetLine)) // check for previous vertical state preset
 	{
@@ -2699,8 +2785,8 @@ void apple2e_state::apple2e_map(address_map &map)
 	map(0x0800, 0x1fff).m(m_0800bank, FUNC(address_map_bank_device::amap8));
 	map(0x2000, 0x3fff).m(m_2000bank, FUNC(address_map_bank_device::amap8));
 	map(0x4000, 0xbfff).m(m_4000bank, FUNC(address_map_bank_device::amap8));
-	map(0xc000, 0xc07f).rw(this, FUNC(apple2e_state::c000_r), FUNC(apple2e_state::c000_w));
-	map(0xc080, 0xc0ff).rw(this, FUNC(apple2e_state::c080_r), FUNC(apple2e_state::c080_w));
+	map(0xc000, 0xc07f).rw(FUNC(apple2e_state::c000_r), FUNC(apple2e_state::c000_w));
+	map(0xc080, 0xc0ff).rw(FUNC(apple2e_state::c080_r), FUNC(apple2e_state::c080_w));
 	map(0xc100, 0xc2ff).m(m_c100bank, FUNC(address_map_bank_device::amap8));
 	map(0xc300, 0xc3ff).m(m_c300bank, FUNC(address_map_bank_device::amap8));
 	map(0xc400, 0xc7ff).m(m_c400bank, FUNC(address_map_bank_device::amap8));
@@ -2716,8 +2802,8 @@ void apple2e_state::apple2c_map(address_map &map)
 	map(0x0800, 0x1fff).m(m_0800bank, FUNC(address_map_bank_device::amap8));
 	map(0x2000, 0x3fff).m(m_2000bank, FUNC(address_map_bank_device::amap8));
 	map(0x4000, 0xbfff).m(m_4000bank, FUNC(address_map_bank_device::amap8));
-	map(0xc000, 0xc07f).rw(this, FUNC(apple2e_state::c000_iic_r), FUNC(apple2e_state::c000_iic_w));
-	map(0xc080, 0xc0ff).rw(this, FUNC(apple2e_state::c080_r), FUNC(apple2e_state::c080_w));
+	map(0xc000, 0xc07f).rw(FUNC(apple2e_state::c000_iic_r), FUNC(apple2e_state::c000_iic_w));
+	map(0xc080, 0xc0ff).rw(FUNC(apple2e_state::c080_r), FUNC(apple2e_state::c080_w));
 	map(0xc098, 0xc09b).rw(m_acia1, FUNC(mos6551_device::read), FUNC(mos6551_device::write));
 	map(0xc0a8, 0xc0ab).rw(IIC_ACIA2_TAG, FUNC(mos6551_device::read), FUNC(mos6551_device::write));
 	map(0xc100, 0xc2ff).m(m_c100bank, FUNC(address_map_bank_device::amap8));
@@ -2735,11 +2821,11 @@ void apple2e_state::apple2c_memexp_map(address_map &map)
 	map(0x0800, 0x1fff).m(m_0800bank, FUNC(address_map_bank_device::amap8));
 	map(0x2000, 0x3fff).m(m_2000bank, FUNC(address_map_bank_device::amap8));
 	map(0x4000, 0xbfff).m(m_4000bank, FUNC(address_map_bank_device::amap8));
-	map(0xc000, 0xc07f).rw(this, FUNC(apple2e_state::c000_iic_r), FUNC(apple2e_state::c000_iic_w));
-	map(0xc080, 0xc0ff).rw(this, FUNC(apple2e_state::c080_r), FUNC(apple2e_state::c080_w));
+	map(0xc000, 0xc07f).rw(FUNC(apple2e_state::c000_iic_r), FUNC(apple2e_state::c000_iic_w));
+	map(0xc080, 0xc0ff).rw(FUNC(apple2e_state::c080_r), FUNC(apple2e_state::c080_w));
 	map(0xc098, 0xc09b).rw(m_acia1, FUNC(mos6551_device::read), FUNC(mos6551_device::write));
 	map(0xc0a8, 0xc0ab).rw(IIC_ACIA2_TAG, FUNC(mos6551_device::read), FUNC(mos6551_device::write));
-	map(0xc0c0, 0xc0c3).rw(this, FUNC(apple2e_state::memexp_r), FUNC(apple2e_state::memexp_w));
+	map(0xc0c0, 0xc0c3).rw(FUNC(apple2e_state::memexp_r), FUNC(apple2e_state::memexp_w));
 	map(0xc100, 0xc2ff).m(m_c100bank, FUNC(address_map_bank_device::amap8));
 	map(0xc300, 0xc3ff).m(m_c300bank, FUNC(address_map_bank_device::amap8));
 	map(0xc400, 0xc7ff).m(m_c400bank, FUNC(address_map_bank_device::amap8));
@@ -2755,12 +2841,12 @@ void apple2e_state::laser128_map(address_map &map)
 	map(0x0800, 0x1fff).m(m_0800bank, FUNC(address_map_bank_device::amap8));
 	map(0x2000, 0x3fff).m(m_2000bank, FUNC(address_map_bank_device::amap8));
 	map(0x4000, 0xbfff).m(m_4000bank, FUNC(address_map_bank_device::amap8));
-	map(0xc000, 0xc07f).rw(this, FUNC(apple2e_state::c000_r), FUNC(apple2e_state::c000_w));
-	map(0xc080, 0xc0ff).rw(this, FUNC(apple2e_state::c080_r), FUNC(apple2e_state::c080_w));
+	map(0xc000, 0xc07f).rw(FUNC(apple2e_state::c000_r), FUNC(apple2e_state::c000_w));
+	map(0xc080, 0xc0ff).rw(FUNC(apple2e_state::c080_r), FUNC(apple2e_state::c080_w));
 //  AM_RANGE(0xc098, 0xc09b) AM_DEVREADWRITE(IIC_ACIA1_TAG, mos6551_device, read, write)
 //  AM_RANGE(0xc0a8, 0xc0ab) AM_DEVREADWRITE(IIC_ACIA2_TAG, mos6551_device, read, write)
-	map(0xc0d0, 0xc0d3).rw(this, FUNC(apple2e_state::memexp_r), FUNC(apple2e_state::memexp_w));
-	map(0xc0e0, 0xc0ef).rw(m_laserudc, FUNC(applefdc_base_device::read), FUNC(applefdc_base_device::write));
+	map(0xc0d0, 0xc0d3).rw(FUNC(apple2e_state::memexp_r), FUNC(apple2e_state::memexp_w));
+	map(0xc0e0, 0xc0ef).rw(m_laserudc, FUNC(applefdc_base_device::bus_r), FUNC(applefdc_base_device::bus_w));
 	map(0xc100, 0xc2ff).m(m_c100bank, FUNC(address_map_bank_device::amap8));
 	map(0xc300, 0xc3ff).m(m_c300bank, FUNC(address_map_bank_device::amap8));
 	map(0xc400, 0xc7ff).m(m_c400bank, FUNC(address_map_bank_device::amap8));
@@ -2770,103 +2856,103 @@ void apple2e_state::laser128_map(address_map &map)
 
 void apple2e_state::r0000bank_map(address_map &map)
 {
-	map(0x0000, 0x01ff).rw(this, FUNC(apple2e_state::ram0000_r), FUNC(apple2e_state::ram0000_w));
-	map(0x0200, 0x03ff).rw(this, FUNC(apple2e_state::auxram0000_r), FUNC(apple2e_state::auxram0000_w));
+	map(0x0000, 0x01ff).rw(FUNC(apple2e_state::ram0000_r), FUNC(apple2e_state::ram0000_w));
+	map(0x0200, 0x03ff).rw(FUNC(apple2e_state::auxram0000_r), FUNC(apple2e_state::auxram0000_w));
 }
 
 void apple2e_state::r0200bank_map(address_map &map)
 {
-	map(0x0000, 0x01ff).rw(this, FUNC(apple2e_state::ram0200_r), FUNC(apple2e_state::ram0200_w)); // wr 0 rd 0
-	map(0x0200, 0x03ff).rw(this, FUNC(apple2e_state::auxram0200_r), FUNC(apple2e_state::ram0200_w)); // wr 0 rd 1
-	map(0x0400, 0x05ff).rw(this, FUNC(apple2e_state::ram0200_r), FUNC(apple2e_state::auxram0200_w)); // wr 1 rd 0
-	map(0x0600, 0x07ff).rw(this, FUNC(apple2e_state::auxram0200_r), FUNC(apple2e_state::auxram0200_w)); // wr 1 rd 1
+	map(0x0000, 0x01ff).rw(FUNC(apple2e_state::ram0200_r), FUNC(apple2e_state::ram0200_w)); // wr 0 rd 0
+	map(0x0200, 0x03ff).rw(FUNC(apple2e_state::auxram0200_r), FUNC(apple2e_state::ram0200_w)); // wr 0 rd 1
+	map(0x0400, 0x05ff).rw(FUNC(apple2e_state::ram0200_r), FUNC(apple2e_state::auxram0200_w)); // wr 1 rd 0
+	map(0x0600, 0x07ff).rw(FUNC(apple2e_state::auxram0200_r), FUNC(apple2e_state::auxram0200_w)); // wr 1 rd 1
 }
 
 void apple2e_state::r0400bank_map(address_map &map)
 {
-	map(0x0000, 0x03ff).rw(this, FUNC(apple2e_state::ram0400_r), FUNC(apple2e_state::ram0400_w)); // wr 0 rd 0
-	map(0x0400, 0x07ff).rw(this, FUNC(apple2e_state::auxram0400_r), FUNC(apple2e_state::ram0400_w));  // wr 0 rd 1
-	map(0x0800, 0x0bff).rw(this, FUNC(apple2e_state::ram0400_r), FUNC(apple2e_state::auxram0400_w));  // wr 1 rd 0
-	map(0x0c00, 0x0fff).rw(this, FUNC(apple2e_state::auxram0400_r), FUNC(apple2e_state::auxram0400_w)); // wr 1 rd 1
+	map(0x0000, 0x03ff).rw(FUNC(apple2e_state::ram0400_r), FUNC(apple2e_state::ram0400_w)); // wr 0 rd 0
+	map(0x0400, 0x07ff).rw(FUNC(apple2e_state::auxram0400_r), FUNC(apple2e_state::ram0400_w));  // wr 0 rd 1
+	map(0x0800, 0x0bff).rw(FUNC(apple2e_state::ram0400_r), FUNC(apple2e_state::auxram0400_w));  // wr 1 rd 0
+	map(0x0c00, 0x0fff).rw(FUNC(apple2e_state::auxram0400_r), FUNC(apple2e_state::auxram0400_w)); // wr 1 rd 1
 }
 
 void apple2e_state::r0800bank_map(address_map &map)
 {
-	map(0x0000, 0x17ff).rw(this, FUNC(apple2e_state::ram0800_r), FUNC(apple2e_state::ram0800_w));
-	map(0x2000, 0x37ff).rw(this, FUNC(apple2e_state::auxram0800_r), FUNC(apple2e_state::ram0800_w));
-	map(0x4000, 0x57ff).rw(this, FUNC(apple2e_state::ram0800_r), FUNC(apple2e_state::auxram0800_w));
-	map(0x6000, 0x77ff).rw(this, FUNC(apple2e_state::auxram0800_r), FUNC(apple2e_state::auxram0800_w));
+	map(0x0000, 0x17ff).rw(FUNC(apple2e_state::ram0800_r), FUNC(apple2e_state::ram0800_w));
+	map(0x2000, 0x37ff).rw(FUNC(apple2e_state::auxram0800_r), FUNC(apple2e_state::ram0800_w));
+	map(0x4000, 0x57ff).rw(FUNC(apple2e_state::ram0800_r), FUNC(apple2e_state::auxram0800_w));
+	map(0x6000, 0x77ff).rw(FUNC(apple2e_state::auxram0800_r), FUNC(apple2e_state::auxram0800_w));
 }
 
 void apple2e_state::r2000bank_map(address_map &map)
 {
-	map(0x0000, 0x1fff).rw(this, FUNC(apple2e_state::ram2000_r), FUNC(apple2e_state::ram2000_w));
-	map(0x2000, 0x3fff).rw(this, FUNC(apple2e_state::auxram2000_r), FUNC(apple2e_state::ram2000_w));
-	map(0x4000, 0x5fff).rw(this, FUNC(apple2e_state::ram2000_r), FUNC(apple2e_state::auxram2000_w));
-	map(0x6000, 0x7fff).rw(this, FUNC(apple2e_state::auxram2000_r), FUNC(apple2e_state::auxram2000_w));
+	map(0x0000, 0x1fff).rw(FUNC(apple2e_state::ram2000_r), FUNC(apple2e_state::ram2000_w));
+	map(0x2000, 0x3fff).rw(FUNC(apple2e_state::auxram2000_r), FUNC(apple2e_state::ram2000_w));
+	map(0x4000, 0x5fff).rw(FUNC(apple2e_state::ram2000_r), FUNC(apple2e_state::auxram2000_w));
+	map(0x6000, 0x7fff).rw(FUNC(apple2e_state::auxram2000_r), FUNC(apple2e_state::auxram2000_w));
 }
 
 void apple2e_state::r4000bank_map(address_map &map)
 {
-	map(0x00000, 0x07fff).rw(this, FUNC(apple2e_state::ram4000_r), FUNC(apple2e_state::ram4000_w));
-	map(0x08000, 0x0ffff).rw(this, FUNC(apple2e_state::auxram4000_r), FUNC(apple2e_state::ram4000_w));
-	map(0x10000, 0x17fff).rw(this, FUNC(apple2e_state::ram4000_r), FUNC(apple2e_state::auxram4000_w));
-	map(0x18000, 0x1ffff).rw(this, FUNC(apple2e_state::auxram4000_r), FUNC(apple2e_state::auxram4000_w));
-	map(0x20000, 0x23fff).rw(this, FUNC(apple2e_state::cec4000_r), FUNC(apple2e_state::ram4000_w));
-	map(0x24000, 0x27fff).rw(this, FUNC(apple2e_state::cec8000_r), FUNC(apple2e_state::ram8000_w));
+	map(0x00000, 0x07fff).rw(FUNC(apple2e_state::ram4000_r), FUNC(apple2e_state::ram4000_w));
+	map(0x08000, 0x0ffff).rw(FUNC(apple2e_state::auxram4000_r), FUNC(apple2e_state::ram4000_w));
+	map(0x10000, 0x17fff).rw(FUNC(apple2e_state::ram4000_r), FUNC(apple2e_state::auxram4000_w));
+	map(0x18000, 0x1ffff).rw(FUNC(apple2e_state::auxram4000_r), FUNC(apple2e_state::auxram4000_w));
+	map(0x20000, 0x23fff).rw(FUNC(apple2e_state::cec4000_r), FUNC(apple2e_state::ram4000_w));
+	map(0x24000, 0x27fff).rw(FUNC(apple2e_state::cec8000_r), FUNC(apple2e_state::ram8000_w));
 }
 
 void apple2e_state::c100bank_map(address_map &map)
 {
-	map(0x0000, 0x01ff).rw(this, FUNC(apple2e_state::c100_r), FUNC(apple2e_state::c100_w));
-	map(0x0200, 0x03ff).r(this, FUNC(apple2e_state::c100_int_r)).nopw();
-	map(0x0400, 0x05ff).r(this, FUNC(apple2e_state::c100_int_bank_r)).nopw();
-	map(0x0600, 0x07ff).r(this, FUNC(apple2e_state::c100_cec_r)).nopw();
-	map(0x0800, 0x09ff).r(this, FUNC(apple2e_state::c100_cec_bank_r)).nopw();
+	map(0x0000, 0x01ff).rw(FUNC(apple2e_state::c100_r), FUNC(apple2e_state::c100_w));
+	map(0x0200, 0x03ff).r(FUNC(apple2e_state::c100_int_r)).nopw();
+	map(0x0400, 0x05ff).r(FUNC(apple2e_state::c100_int_bank_r)).nopw();
+	map(0x0600, 0x07ff).r(FUNC(apple2e_state::c100_cec_r)).nopw();
+	map(0x0800, 0x09ff).r(FUNC(apple2e_state::c100_cec_bank_r)).nopw();
 
 }
 
 void apple2e_state::c300bank_map(address_map &map)
 {
-	map(0x0000, 0x00ff).rw(this, FUNC(apple2e_state::c300_r), FUNC(apple2e_state::c300_w));
-	map(0x0100, 0x01ff).r(this, FUNC(apple2e_state::c300_int_r)).nopw();
-	map(0x0200, 0x02ff).r(this, FUNC(apple2e_state::c300_int_bank_r)).nopw();
-	map(0x0300, 0x03ff).r(this, FUNC(apple2e_state::c300_cec_r)).nopw();
-	map(0x0400, 0x04ff).r(this, FUNC(apple2e_state::c300_cec_bank_r)).nopw();
+	map(0x0000, 0x00ff).rw(FUNC(apple2e_state::c300_r), FUNC(apple2e_state::c300_w));
+	map(0x0100, 0x01ff).r(FUNC(apple2e_state::c300_int_r)).nopw();
+	map(0x0200, 0x02ff).r(FUNC(apple2e_state::c300_int_bank_r)).nopw();
+	map(0x0300, 0x03ff).r(FUNC(apple2e_state::c300_cec_r)).nopw();
+	map(0x0400, 0x04ff).r(FUNC(apple2e_state::c300_cec_bank_r)).nopw();
 }
 
 void apple2e_state::c400bank_map(address_map &map)
 {
-	map(0x0000, 0x03ff).rw(this, FUNC(apple2e_state::c400_r), FUNC(apple2e_state::c400_w));
-	map(0x0400, 0x07ff).rw(this, FUNC(apple2e_state::c400_int_r), FUNC(apple2e_state::c400_w));
-	map(0x0800, 0x0bff).rw(this, FUNC(apple2e_state::c400_int_bank_r), FUNC(apple2e_state::c400_w));
-	map(0x0c00, 0x0fff).r(this, FUNC(apple2e_state::c400_cec_r)).nopw();
-	map(0x1000, 0x13ff).r(this, FUNC(apple2e_state::c400_cec_bank_r)).nopw();
+	map(0x0000, 0x03ff).rw(FUNC(apple2e_state::c400_r), FUNC(apple2e_state::c400_w));
+	map(0x0400, 0x07ff).rw(FUNC(apple2e_state::c400_int_r), FUNC(apple2e_state::c400_w));
+	map(0x0800, 0x0bff).rw(FUNC(apple2e_state::c400_int_bank_r), FUNC(apple2e_state::c400_w));
+	map(0x0c00, 0x0fff).r(FUNC(apple2e_state::c400_cec_r)).nopw();
+	map(0x1000, 0x13ff).r(FUNC(apple2e_state::c400_cec_bank_r)).nopw();
 }
 
 void apple2e_state::c800bank_map(address_map &map)
 {
-	map(0x0000, 0x07ff).rw(this, FUNC(apple2e_state::c800_r), FUNC(apple2e_state::c800_w));
-	map(0x0800, 0x0fff).rw(this, FUNC(apple2e_state::c800_int_r), FUNC(apple2e_state::c800_w));
-	map(0x1000, 0x17ff).rw(this, FUNC(apple2e_state::c800_b2_int_r), FUNC(apple2e_state::c800_w));
-	map(0x1800, 0x1fff).r(this, FUNC(apple2e_state::c800_cec_r)).nopw();
-	map(0x2000, 0x27ff).r(this, FUNC(apple2e_state::c800_cec_bank_r)).nopw();
+	map(0x0000, 0x07ff).rw(FUNC(apple2e_state::c800_r), FUNC(apple2e_state::c800_w));
+	map(0x0800, 0x0fff).rw(FUNC(apple2e_state::c800_int_r), FUNC(apple2e_state::c800_w));
+	map(0x1000, 0x17ff).rw(FUNC(apple2e_state::c800_b2_int_r), FUNC(apple2e_state::c800_w));
+	map(0x1800, 0x1fff).r(FUNC(apple2e_state::c800_cec_r)).nopw();
+	map(0x2000, 0x27ff).r(FUNC(apple2e_state::c800_cec_bank_r)).nopw();
 }
 
 void apple2e_state::inhbank_map(address_map &map)
 {
 	map(0x0000, 0x2fff).m(m_lcbank, FUNC(address_map_bank_device::amap8));
-	map(0x3000, 0x5fff).rw(this, FUNC(apple2e_state::inh_r), FUNC(apple2e_state::inh_w));
+	map(0x3000, 0x5fff).rw(FUNC(apple2e_state::inh_r), FUNC(apple2e_state::inh_w));
 }
 
 void apple2e_state::lcbank_map(address_map &map)
 {
-	map(0x00000, 0x02fff).rom().region("maincpu", 0x1000).w(this, FUNC(apple2e_state::lc_w));
-	map(0x03000, 0x05fff).rw(this, FUNC(apple2e_state::lc_r), FUNC(apple2e_state::lc_w));
-	map(0x06000, 0x08fff).rw(this, FUNC(apple2e_state::lc_romswitch_r), FUNC(apple2e_state::lc_romswitch_w));
-	map(0x09000, 0x0bfff).rom().region("maincpu", 0x5000).w(this, FUNC(apple2e_state::lc_w));
-	map(0x0c000, 0x0efff).rw(this, FUNC(apple2e_state::lc_r), FUNC(apple2e_state::lc_w));
-	map(0x0f000, 0x11fff).rom().region("maincpu", 0xd000).w(this, FUNC(apple2e_state::lc_w));
+	map(0x00000, 0x02fff).rom().region("maincpu", 0x1000).w(FUNC(apple2e_state::lc_w));
+	map(0x03000, 0x05fff).rw(FUNC(apple2e_state::lc_r), FUNC(apple2e_state::lc_w));
+	map(0x06000, 0x08fff).rw(FUNC(apple2e_state::lc_romswitch_r), FUNC(apple2e_state::lc_romswitch_w));
+	map(0x09000, 0x0bfff).rom().region("maincpu", 0x5000).w(FUNC(apple2e_state::lc_w));
+	map(0x0c000, 0x0efff).rw(FUNC(apple2e_state::lc_r), FUNC(apple2e_state::lc_w));
+	map(0x0f000, 0x11fff).rom().region("maincpu", 0xd000).w(FUNC(apple2e_state::lc_w));
 }
 
 void apple2e_state::spectred_keyb_map(address_map &map)
@@ -4130,10 +4216,26 @@ MACHINE_CONFIG_START(apple2e_state::apple2c)
 	MCFG_RAM_EXTRA_OPTIONS("128K")
 MACHINE_CONFIG_END
 
+static void apple2cp_set_enable_lines(device_t *device,int enable_mask)
+{
+	apple2e_state *state = device->machine().driver_data<apple2e_state>();
+
+//  printf("set_enable_lines: 35sel %d int %d enable_mask %d\n", state->m_35sel, state->m_intdrive, enable_mask);
+
+	if ((state->m_35sel) && (state->m_intdrive) && (enable_mask == 2))
+	{
+		sony_set_enable_lines(device, 1);
+	}
+	else
+	{
+		sony_set_enable_lines(device, 0);
+	}
+}
+
 const applefdc_interface a2cp_interface =
 {
 	sony_set_lines,         /* set_lines */
-	sony_set_enable_lines,  /* set_enable_lines */
+	apple2cp_set_enable_lines,  /* set_enable_lines */
 
 	sony_read_data,         /* read_data */
 	sony_write_data,    /* write_data */
@@ -4149,10 +4251,17 @@ static const floppy_interface apple2cp_floppy35_floppy_interface =
 
 MACHINE_CONFIG_START(apple2e_state::apple2cp)
 	apple2c(config);
+	MCFG_DEVICE_REPLACE("maincpu", M65C02, 1021800)        /* close to actual CPU frequency of 1.020484 MHz */
+	MCFG_DEVICE_PROGRAM_MAP(apple2c_memexp_map)
+
 	MCFG_DEVICE_REMOVE("sl4")
 	MCFG_DEVICE_REMOVE("sl6")
 	MCFG_IWM_ADD(IICP_IWM_TAG, a2cp_interface)
 	MCFG_LEGACY_FLOPPY_SONY_2_DRIVES_ADD(apple2cp_floppy35_floppy_interface)
+
+	MCFG_RAM_MODIFY(RAM_TAG)
+	MCFG_RAM_DEFAULT_SIZE("128K")
+	MCFG_RAM_EXTRA_OPTIONS("128K, 384K, 640K, 896K, 1152K")
 MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(apple2e_state::apple2c_iwm)
@@ -4557,4 +4666,4 @@ COMP( 1985, apple2c0,   apple2c, 0,      apple2c_iwm, apple2c,   apple2e_state, 
 COMP( 1986, apple2c3,   apple2c, 0,      apple2c_mem, apple2c,   apple2e_state, empty_init, "Apple Computer",   "Apple //c (Original Memory Expansion)", MACHINE_SUPPORTS_SAVE )
 COMP( 1986, apple2c4,   apple2c, 0,      apple2c_mem, apple2c,   apple2e_state, empty_init, "Apple Computer",   "Apple //c (rev 4)", MACHINE_SUPPORTS_SAVE )
 COMP( 1987, ceci,       0,       apple2, ceci,        ceci,      apple2e_state, empty_init, "Shaanxi Province Computer Factory", "China Education Computer I", MACHINE_SUPPORTS_SAVE )
-COMP( 1988, apple2cp,   apple2c, 0,      apple2cp,    apple2c,   apple2e_state, empty_init, "Apple Computer",   "Apple //c Plus", MACHINE_NOT_WORKING | MACHINE_SUPPORTS_SAVE )
+COMP( 1988, apple2cp,   apple2c, 0,      apple2cp,    apple2c,   apple2e_state, empty_init, "Apple Computer",   "Apple //c Plus", MACHINE_SUPPORTS_SAVE )

@@ -36,10 +36,10 @@
 
 
 #define MCFG_ECONET_CLK_CALLBACK(_write) \
-	devcb = &downcast<econet_device &>(*device).set_clk_wr_callback(DEVCB_##_write);
+	downcast<econet_device &>(*device).set_clk_wr_callback(DEVCB_##_write);
 
 #define MCFG_ECONET_DATA_CALLBACK(_write) \
-	devcb = &downcast<econet_device &>(*device).set_data_wr_callback(DEVCB_##_write);
+	downcast<econet_device &>(*device).set_data_wr_callback(DEVCB_##_write);
 
 
 
@@ -59,12 +59,14 @@ public:
 
 	template <class Object> devcb_base &set_clk_wr_callback(Object &&cb) { return m_write_clk.set_callback(std::forward<Object>(cb)); }
 	template <class Object> devcb_base &set_data_wr_callback(Object &&cb) { return m_write_data.set_callback(std::forward<Object>(cb)); }
+	auto clk_wr_callback() { return m_write_clk.bind(); }
+	auto data_wr_callback() { return m_write_data.bind(); }
 
 	void add_device(device_t *target, int address);
 
 	// writes for host (driver_device)
-	DECLARE_WRITE_LINE_MEMBER( clk_w );
-	DECLARE_WRITE_LINE_MEMBER( data_w );
+	DECLARE_WRITE_LINE_MEMBER( host_clk_w );
+	DECLARE_WRITE_LINE_MEMBER( host_data_w );
 
 	// writes for peripherals (device_t)
 	void clk_w(device_t *device, int state);

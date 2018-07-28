@@ -20,32 +20,32 @@ DEFINE_DEVICE_TYPE(NCR53C94, ncr53c94_device, "ncr53c94", "NCR 53C94 SCSI")
 
 void ncr5390_device::map(address_map &map)
 {
-	map(0x0, 0x0).rw(this, FUNC(ncr5390_device::tcounter_lo_r), FUNC(ncr5390_device::tcount_lo_w));
-	map(0x1, 0x1).rw(this, FUNC(ncr5390_device::tcounter_hi_r), FUNC(ncr5390_device::tcount_hi_w));
-	map(0x2, 0x2).rw(this, FUNC(ncr5390_device::fifo_r), FUNC(ncr5390_device::fifo_w));
-	map(0x3, 0x3).rw(this, FUNC(ncr5390_device::command_r), FUNC(ncr5390_device::command_w));
-	map(0x4, 0x4).rw(this, FUNC(ncr5390_device::status_r), FUNC(ncr5390_device::bus_id_w));
-	map(0x5, 0x5).rw(this, FUNC(ncr5390_device::istatus_r), FUNC(ncr5390_device::timeout_w));
-	map(0x6, 0x6).rw(this, FUNC(ncr5390_device::seq_step_r), FUNC(ncr5390_device::sync_period_w));
-	map(0x7, 0x7).rw(this, FUNC(ncr5390_device::fifo_flags_r), FUNC(ncr5390_device::sync_offset_w));
-	map(0x8, 0x8).rw(this, FUNC(ncr5390_device::conf_r), FUNC(ncr5390_device::conf_w));
-	map(0xa, 0xa).w(this, FUNC(ncr5390_device::test_w));
-	map(0x9, 0x9).w(this, FUNC(ncr5390_device::clock_w));
+	map(0x0, 0x0).rw(FUNC(ncr5390_device::tcounter_lo_r), FUNC(ncr5390_device::tcount_lo_w));
+	map(0x1, 0x1).rw(FUNC(ncr5390_device::tcounter_hi_r), FUNC(ncr5390_device::tcount_hi_w));
+	map(0x2, 0x2).rw(FUNC(ncr5390_device::fifo_r), FUNC(ncr5390_device::fifo_w));
+	map(0x3, 0x3).rw(FUNC(ncr5390_device::command_r), FUNC(ncr5390_device::command_w));
+	map(0x4, 0x4).rw(FUNC(ncr5390_device::status_r), FUNC(ncr5390_device::bus_id_w));
+	map(0x5, 0x5).rw(FUNC(ncr5390_device::istatus_r), FUNC(ncr5390_device::timeout_w));
+	map(0x6, 0x6).rw(FUNC(ncr5390_device::seq_step_r), FUNC(ncr5390_device::sync_period_w));
+	map(0x7, 0x7).rw(FUNC(ncr5390_device::fifo_flags_r), FUNC(ncr5390_device::sync_offset_w));
+	map(0x8, 0x8).rw(FUNC(ncr5390_device::conf_r), FUNC(ncr5390_device::conf_w));
+	map(0xa, 0xa).w(FUNC(ncr5390_device::test_w));
+	map(0x9, 0x9).w(FUNC(ncr5390_device::clock_w));
 }
 
 void ncr53c90a_device::map(address_map &map)
 {
 	ncr5390_device::map(map);
 
-	map(0xb, 0xb).rw(this, FUNC(ncr53c90a_device::conf2_r), FUNC(ncr53c90a_device::conf2_w));
+	map(0xb, 0xb).rw(FUNC(ncr53c90a_device::conf2_r), FUNC(ncr53c90a_device::conf2_w));
 }
 
 void ncr53c94_device::map(address_map &map)
 {
 	ncr53c90a_device::map(map);
 
-	map(0xc, 0xc).rw(this, FUNC(ncr53c94_device::conf3_r), FUNC(ncr53c94_device::conf3_w));
-	map(0xf, 0xf).w(this, FUNC(ncr53c94_device::fifo_align_w));
+	map(0xc, 0xc).rw(FUNC(ncr53c94_device::conf3_r), FUNC(ncr53c94_device::conf3_w));
+	map(0xf, 0xf).w(FUNC(ncr53c94_device::fifo_align_w));
 }
 
 ncr5390_device::ncr5390_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
@@ -338,10 +338,19 @@ void ncr5390_device::step(bool timeout)
 		step(false);
 		break;
 
+	case DISC_SEL_ARBITRATION_INIT:
+		// wait until a command is in the fifo
+		if (!fifo_pos || (dma_command && !(status & S_TC0)))
+			break;
+
+		command_length = derive_msg_size(fifo[0]);
+		state = DISC_SEL_ARBITRATION;
+		step(false);
+		break;
+
 	case DISC_SEL_ARBITRATION:
 		if(c == CD_SELECT) {
 			state = DISC_SEL_WAIT_REQ;
-			command_length = derive_msg_size(fifo[0]);
 		} else
 			state = DISC_SEL_ATN_WAIT_REQ;
 
@@ -432,7 +441,6 @@ void ncr5390_device::step(bool timeout)
 		case S_PHASE_DATA_OUT:
 		case S_PHASE_COMMAND:
 		case S_PHASE_MSG_OUT:
-			dma_set(dma_command ? DMA_OUT : DMA_NONE);
 			state = INIT_XFR_SEND_BYTE;
 
 			// can't send if the fifo is empty
@@ -449,8 +457,6 @@ void ncr5390_device::step(bool timeout)
 		case S_PHASE_DATA_IN:
 		case S_PHASE_STATUS:
 		case S_PHASE_MSG_IN:
-			dma_set(dma_command ? DMA_IN : DMA_NONE);
-
 			// can't receive if the fifo is full
 			if (fifo_pos == 16)
 				break;
@@ -473,7 +479,7 @@ void ncr5390_device::step(bool timeout)
 			break;
 
 		// check for command complete
-		if ((dma_command && tcounter == 0 && (dma_dir == DMA_IN || fifo_pos == 0)) // dma in/out: transfer counter == 0
+		if ((dma_command && (status & S_TC0) && (dma_dir == DMA_IN || fifo_pos == 0)) // dma in/out: transfer count == 0
 		|| (!dma_command && (xfr_phase & S_INP) == 0 && fifo_pos == 0)      // non-dma out: fifo empty
 		|| (!dma_command && (xfr_phase & S_INP) == S_INP && fifo_pos == 1)) // non-dma in: every byte
 			state = INIT_XFR_BUS_COMPLETE;
@@ -489,34 +495,31 @@ void ncr5390_device::step(bool timeout)
 		break;
 
 	case INIT_XFR_SEND_BYTE:
-		decrement_tcounter();
 		state = INIT_XFR_WAIT_REQ;
 		step(false);
 		break;
 
 	case INIT_XFR_RECV_BYTE_ACK:
-		decrement_tcounter();
 		state = INIT_XFR_WAIT_REQ;
 		scsi_bus->ctrl_w(scsi_refid, 0, S_ACK);
 		break;
 
 	case INIT_XFR_RECV_BYTE_NACK:
-		decrement_tcounter();
 		state = INIT_XFR_FUNCTION_COMPLETE;
 		step(false);
 		break;
 
 	case INIT_XFR_FUNCTION_COMPLETE:
-		// wait for the fifo to drain
-		if (dma_command && fifo_pos)
+		// wait for dma transfer to complete or fifo to drain
+		if (dma_command && !(status & S_TC0) && fifo_pos)
 			break;
 
 		function_complete();
 		break;
 
 	case INIT_XFR_BUS_COMPLETE:
-		// wait for the fifo to drain
-		if (dma_command && fifo_pos)
+		// wait for dma transfer to complete or fifo to drain
+		if (dma_command && !(status & S_TC0) && fifo_pos)
 			break;
 
 		bus_complete();
@@ -537,7 +540,7 @@ void ncr5390_device::step(bool timeout)
 
 	case INIT_XFR_SEND_PAD:
 		decrement_tcounter();
-		if(tcounter) {
+		if(!(status & S_TC0)) {
 			state = INIT_XFR_SEND_PAD_WAIT_REQ;
 			step(false);
 		} else
@@ -559,7 +562,7 @@ void ncr5390_device::step(bool timeout)
 
 	case INIT_XFR_RECV_PAD:
 		decrement_tcounter();
-		if(tcounter) {
+		if(!(status & S_TC0)) {
 			state = INIT_XFR_RECV_PAD_WAIT_REQ;
 			scsi_bus->ctrl_w(scsi_refid, 0, S_ACK);
 			step(false);
@@ -671,7 +674,7 @@ uint8_t ncr5390_device::fifo_pop()
 	uint8_t r = fifo[0];
 	fifo_pos--;
 	memmove(fifo, fifo+1, fifo_pos);
-	if((!fifo_pos) && dma_dir == DMA_OUT)
+	if((!fifo_pos) && dma_dir == DMA_OUT && !(status & S_TC0))
 		drq_set();
 	return r;
 }
@@ -679,7 +682,7 @@ uint8_t ncr5390_device::fifo_pop()
 void ncr5390_device::fifo_push(uint8_t val)
 {
 	fifo[fifo_pos++] = val;
-	if(!drq && dma_dir == DMA_IN)
+	if(!drq && dma_dir == DMA_IN && !(status & S_TC0))
 		drq_set();
 }
 
@@ -791,12 +794,13 @@ void ncr5390_device::start_command()
 	case CD_SELECT:
 	case CD_SELECT_ATN:
 	case CD_SELECT_ATN_STOP:
-		LOGMASKED(LOG_COMMAND, 
-			(c == CD_SELECT) ? "Select without ATN sequence\n" : 
-			(c == CD_SELECT_ATN) ? "Select with ATN sequence\n" : 
+		LOGMASKED(LOG_COMMAND,
+			(c == CD_SELECT) ? "Select without ATN sequence\n" :
+			(c == CD_SELECT_ATN) ? "Select with ATN sequence\n" :
 			"Select with ATN and stop sequence\n");
 		seq = 0;
-		state = DISC_SEL_ARBITRATION;
+		state = DISC_SEL_ARBITRATION_INIT;
+		dma_set(dma_command ? DMA_OUT : DMA_NONE);
 		arbitrate();
 		break;
 
@@ -814,6 +818,7 @@ void ncr5390_device::start_command()
 		LOGMASKED(LOG_COMMAND, "Transfer information\n");
 		state = INIT_XFR;
 		xfr_phase = scsi_bus->ctrl_r() & S_PHASE_MASK;
+		dma_set(dma_command ? ((xfr_phase & S_INP) ? DMA_IN : DMA_OUT) : DMA_NONE);
 		step(false);
 		break;
 
@@ -982,14 +987,15 @@ WRITE8_MEMBER(ncr5390_device::clock_w)
 void ncr5390_device::dma_set(int dir)
 {
 	dma_dir = dir;
-	if(dma_dir == DMA_OUT && fifo_pos != 16 && tcounter > fifo_pos)
+	if(dma_dir == DMA_OUT && fifo_pos != 16 && ((tcounter > fifo_pos) || !tcounter))
 		drq_set();
 }
 
 void ncr5390_device::dma_w(uint8_t val)
 {
 	fifo_push(val);
-	if(fifo_pos == 16)
+	decrement_tcounter();
+	if(fifo_pos == 16 || (status & S_TC0))
 		drq_clear();
 	step(false);
 }
@@ -997,7 +1003,8 @@ void ncr5390_device::dma_w(uint8_t val)
 uint8_t ncr5390_device::dma_r()
 {
 	uint8_t r = fifo_pop();
-	if(!fifo_pos)
+	decrement_tcounter();
+	if(!fifo_pos || (status & S_TC0))
 		drq_clear();
 	step(false);
 	return r;

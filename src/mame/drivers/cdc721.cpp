@@ -20,6 +20,7 @@ Control Data Corporation CDC 721 Terminal (Viking)
 #include "machine/output_latch.h"
 #include "machine/z80ctc.h"
 #include "video/tms9927.h"
+#include "emupal.h"
 #include "screen.h"
 
 
@@ -171,7 +172,7 @@ void cdc721_state::block0_map(address_map &map)
 
 void cdc721_state::block4_map(address_map &map)
 {
-	map(0x0000, 0x00ff).mirror(0x2700).ram().share("nvram").w(this, FUNC(cdc721_state::nvram_w));
+	map(0x0000, 0x00ff).mirror(0x2700).ram().share("nvram").w(FUNC(cdc721_state::nvram_w));
 	map(0x0800, 0x0bff).mirror(0x2400).ram().share("chargen"); // 2x P2114AL-2
 	map(0x8000, 0xbfff).rom().region("16krom", 0);
 	map(0xc000, 0xffff).ram();
@@ -187,7 +188,7 @@ void cdc721_state::blockc_map(address_map &map)
 {
 	map(0x0000, 0x1fff).ram();
 	map(0x2000, 0x3fff).ram().share("videoram");
-	map(0x4000, 0x40ff).mirror(0x2700).ram().share("nvram").w(this, FUNC(cdc721_state::nvram_w));
+	map(0x4000, 0x40ff).mirror(0x2700).ram().share("nvram").w(FUNC(cdc721_state::nvram_w));
 	map(0x4800, 0x4bff).mirror(0x2400).ram().share("chargen");
 }
 
@@ -199,8 +200,8 @@ void cdc721_state::io_map(address_map &map)
 	map(0x20, 0x27).rw("kbduart", FUNC(ins8250_device::ins8250_r), FUNC(ins8250_device::ins8250_w));
 	map(0x30, 0x33).rw("ppi", FUNC(i8255_device::read), FUNC(i8255_device::write));
 	map(0x40, 0x47).rw("comuart", FUNC(ins8250_device::ins8250_r), FUNC(ins8250_device::ins8250_w));
-	map(0x50, 0x50).w("ledlatch", FUNC(output_latch_device::write));
-	map(0x70, 0x70).w(this, FUNC(cdc721_state::block_select_w));
+	map(0x50, 0x50).w("ledlatch", FUNC(output_latch_device::bus_w));
+	map(0x70, 0x70).w(FUNC(cdc721_state::block_select_w));
 	map(0x80, 0x87).rw("pauart", FUNC(ins8250_device::ins8250_r), FUNC(ins8250_device::ins8250_w));
 	map(0x90, 0x97).rw("pbuart", FUNC(ins8250_device::ins8250_r), FUNC(ins8250_device::ins8250_w));
 }
@@ -356,15 +357,15 @@ MACHINE_CONFIG_START(cdc721_state::cdc721)
 	MCFG_I8255_OUT_PORTB_CB(WRITE8(*this, cdc721_state, interrupt_mask_w))
 	MCFG_I8255_OUT_PORTC_CB(WRITE8(*this, cdc721_state, misc_w))
 
-	MCFG_DEVICE_ADD("ledlatch", OUTPUT_LATCH, 0)
-	MCFG_OUTPUT_LATCH_BIT0_HANDLER(OUTPUT("error")) MCFG_DEVCB_INVERT
-	MCFG_OUTPUT_LATCH_BIT1_HANDLER(OUTPUT("alert")) MCFG_DEVCB_INVERT
-	MCFG_OUTPUT_LATCH_BIT2_HANDLER(OUTPUT("lock")) MCFG_DEVCB_INVERT
-	MCFG_OUTPUT_LATCH_BIT3_HANDLER(OUTPUT("message")) MCFG_DEVCB_INVERT
-	MCFG_OUTPUT_LATCH_BIT4_HANDLER(OUTPUT("prog1")) MCFG_DEVCB_INVERT
-	MCFG_OUTPUT_LATCH_BIT5_HANDLER(OUTPUT("prog2")) MCFG_DEVCB_INVERT
-	MCFG_OUTPUT_LATCH_BIT6_HANDLER(OUTPUT("prog3")) MCFG_DEVCB_INVERT
-	MCFG_OUTPUT_LATCH_BIT7_HANDLER(OUTPUT("dsr")) MCFG_DEVCB_INVERT
+	output_latch_device &ledlatch(OUTPUT_LATCH(config, "ledlatch"));
+	ledlatch.bit_handler<0>().set_output("error").invert();
+	ledlatch.bit_handler<1>().set_output("alert").invert();
+	ledlatch.bit_handler<2>().set_output("lock").invert();
+	ledlatch.bit_handler<3>().set_output("message").invert();
+	ledlatch.bit_handler<4>().set_output("prog1").invert();
+	ledlatch.bit_handler<5>().set_output("prog2").invert();
+	ledlatch.bit_handler<6>().set_output("prog3").invert();
+	ledlatch.bit_handler<7>().set_output("dsr").invert();
 
 	MCFG_DEVICE_ADD("comuart", INS8250, 1.8432_MHz_XTAL)
 	MCFG_INS8250_OUT_INT_CB(WRITELINE(*this, cdc721_state, int_w<0>))

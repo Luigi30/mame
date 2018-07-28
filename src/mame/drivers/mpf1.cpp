@@ -67,7 +67,7 @@ void mpf1_state::mpf1_map(address_map &map)
 
 void mpf1_state::mpf1_step(address_map &map)
 {
-	map(0x0000, 0xffff).r(this, FUNC(mpf1_state::step_r));
+	map(0x0000, 0xffff).r(FUNC(mpf1_state::step_r));
 }
 
 void mpf1_state::mpf1b_map(address_map &map)
@@ -380,7 +380,7 @@ MACHINE_CONFIG_START(mpf1_state::mpf1)
 	MCFG_CASSETTE_DEFAULT_STATE(CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED | CASSETTE_MOTOR_ENABLED)
 
 	/* video hardware */
-	MCFG_DEFAULT_LAYOUT(layout_mpf1)
+	config.set_default_layout(layout_mpf1);
 
 	/* sound hardware */
 	SPEAKER(config, "mono").front_center();
@@ -414,7 +414,7 @@ MACHINE_CONFIG_START(mpf1_state::mpf1b)
 	MCFG_CASSETTE_DEFAULT_STATE(CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED | CASSETTE_MOTOR_ENABLED)
 
 	/* video hardware */
-	MCFG_DEFAULT_LAYOUT(layout_mpf1b)
+	config.set_default_layout(layout_mpf1b);
 
 	/* sound hardware */
 	SPEAKER(config, "mono").front_center();
@@ -436,7 +436,7 @@ MACHINE_CONFIG_START(mpf1_state::mpf1p)
 	MCFG_Z80_DAISY_CHAIN(mpf1_daisy_chain)
 
 	/* video hardware */
-	MCFG_DEFAULT_LAYOUT(layout_mpf1p)
+	config.set_default_layout(layout_mpf1p);
 
 	/* devices */
 	MCFG_DEVICE_ADD(Z80PIO_TAG, Z80PIO, 2500000)

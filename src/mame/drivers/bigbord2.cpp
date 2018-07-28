@@ -82,6 +82,7 @@ X - change banks
 #include "machine/z80sio.h"
 #include "sound/beep.h"
 #include "video/mc6845.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -339,12 +340,12 @@ void bigbord2_state::bigbord2_io(address_map &map)
 	map(0x80, 0x83).rw(m_sio, FUNC(z80sio_device::ba_cd_r), FUNC(z80sio_device::ba_cd_w)); // u16
 	map(0x84, 0x87).rw(m_ctc1, FUNC(z80ctc_device::read), FUNC(z80ctc_device::write)); // u37 has issues
 	map(0x88, 0x8b).rw(m_ctc2, FUNC(z80ctc_device::read), FUNC(z80ctc_device::write)); // u21
-	map(0x8c, 0x8f).rw(m_dma, FUNC(z80dma_device::read), FUNC(z80dma_device::write)); // u62
+	map(0x8c, 0x8f).rw(m_dma, FUNC(z80dma_device::bus_r), FUNC(z80dma_device::bus_w)); // u62
 	map(0xc0, 0xc3).w("proglatch", FUNC(ls259_device::write_nibble_d3)); // u41 - eprom programming port
-	map(0xc4, 0xc7).r(this, FUNC(bigbord2_state::status_port_r)); // u11
+	map(0xc4, 0xc7).r(FUNC(bigbord2_state::status_port_r)); // u11
 	map(0xc8, 0xcb).w(m_syslatch1, FUNC(ls259_device::write_nibble_d3)); // u14
-	map(0xcc, 0xcf).w(this, FUNC(bigbord2_state::syslatch2_w));
-	map(0xd0, 0xd3).r(this, FUNC(bigbord2_state::kbd_r)); // u1
+	map(0xcc, 0xcf).w(FUNC(bigbord2_state::syslatch2_w));
+	map(0xd0, 0xd3).r(FUNC(bigbord2_state::kbd_r)); // u1
 	map(0xd4, 0xd7).rw(m_fdc, FUNC(mb8877_device::read), FUNC(mb8877_device::write)); // u10
 	//AM_RANGE(0xd8, 0xdb) AM_READWRITE(portd8_r, portd8_w) // various external data ports; DB = centronics printer
 	map(0xd9, 0xd9).w("outlatch1", FUNC(ls259_device::write_nibble_d3)); // u96
@@ -603,17 +604,17 @@ MACHINE_CONFIG_START(bigbord2_state::bigbord2)
 	MCFG_DEVICE_ADD("proglatch", LS259, 0) // U41
 	MCFG_ADDRESSABLE_LATCH_Q6_OUT_CB(WRITELINE("outlatch1", ls259_device, clear_w)) // FCRST - also resets the 8877
 
-	MCFG_DEVICE_ADD("syslatch1", LS259, 0) // U14
-	MCFG_ADDRESSABLE_LATCH_Q0_OUT_CB(MEMBANK("bankr")) // D_S
-	MCFG_DEVCB_CHAIN_OUTPUT(MEMBANK("bankv"))
-	MCFG_DEVCB_CHAIN_OUTPUT(MEMBANK("banka"))
-	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(WRITELINE(*this, bigbord2_state, side_select_w)) // SIDSEL
-	MCFG_ADDRESSABLE_LATCH_Q2_OUT_CB(WRITELINE(*this, bigbord2_state, smc1_w)) // SMC1
-	MCFG_ADDRESSABLE_LATCH_Q3_OUT_CB(WRITELINE(*this, bigbord2_state, smc2_w)) // SMC2
-	MCFG_ADDRESSABLE_LATCH_Q4_OUT_CB(WRITELINE("fdc", mb8877_device, dden_w)) // DDEN
-	MCFG_ADDRESSABLE_LATCH_Q5_OUT_CB(WRITELINE(*this, bigbord2_state, head_load_w)) // HLD
-	MCFG_ADDRESSABLE_LATCH_Q6_OUT_CB(WRITELINE(*this, bigbord2_state, disk_motor_w)) // MOTOR
-	MCFG_ADDRESSABLE_LATCH_Q7_OUT_CB(WRITELINE("beeper", beep_device, set_state)) // BELL
+	LS259(config, m_syslatch1, 0); // U14
+	m_syslatch1->q_out_cb<0>().set_membank(m_bankr); // D_S
+	m_syslatch1->q_out_cb<0>().append_membank(m_bankv);
+	m_syslatch1->q_out_cb<0>().append_membank(m_banka);
+	m_syslatch1->q_out_cb<1>().set(FUNC(bigbord2_state::side_select_w)); // SIDSEL
+	m_syslatch1->q_out_cb<2>().set(FUNC(bigbord2_state::smc1_w)); // SMC1
+	m_syslatch1->q_out_cb<3>().set(FUNC(bigbord2_state::smc2_w)); // SMC2
+	m_syslatch1->q_out_cb<4>().set(m_fdc, FUNC(mb8877_device::dden_w)); // DDEN
+	m_syslatch1->q_out_cb<5>().set(FUNC(bigbord2_state::head_load_w)); // HLD
+	m_syslatch1->q_out_cb<6>().set(FUNC(bigbord2_state::disk_motor_w)); // MOTOR
+	m_syslatch1->q_out_cb<7>().set("beeper", FUNC(beep_device::set_state)); // BELL
 
 	MCFG_DEVICE_ADD("outlatch1", LS259, 0) // U96
 

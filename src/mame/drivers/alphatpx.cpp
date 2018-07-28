@@ -75,6 +75,7 @@
 #include "machine/pit8253.h"
 #include "video/tms9927.h"
 #include "sound/beep.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 #include "debugger.h"
@@ -271,10 +272,10 @@ void alphatp_12_state::alphatp2_io(address_map &map)
 	map(0x04, 0x04).rw("uart", FUNC(i8251_device::data_r), FUNC(i8251_device::data_w));
 	map(0x05, 0x05).rw("uart", FUNC(i8251_device::status_r), FUNC(i8251_device::control_w));
 	map(0x10, 0x11).rw(m_kbdmcu, FUNC(i8041_device::upi41_master_r), FUNC(i8041_device::upi41_master_w));
-	map(0x12, 0x12).w(this, FUNC(alphatp_12_state::beep_w));
-	map(0x50, 0x53).rw(this, FUNC(alphatp_12_state::fdc_r), FUNC(alphatp_12_state::fdc_w));
-	map(0x54, 0x54).rw(this, FUNC(alphatp_12_state::fdc_stat_r), FUNC(alphatp_12_state::fdc_cmd_w));
-	map(0x78, 0x78).w(this, FUNC(alphatp_12_state::bank_w));
+	map(0x12, 0x12).w(FUNC(alphatp_12_state::beep_w));
+	map(0x50, 0x53).rw(FUNC(alphatp_12_state::fdc_r), FUNC(alphatp_12_state::fdc_w));
+	map(0x54, 0x54).rw(FUNC(alphatp_12_state::fdc_stat_r), FUNC(alphatp_12_state::fdc_cmd_w));
+	map(0x78, 0x78).w(FUNC(alphatp_12_state::bank_w));
 }
 
 
@@ -310,33 +311,33 @@ void alphatp_34_state::alphatp3_io(address_map &map)
 	//AM_RANGE(0x00, 0x00) AM_READ // unknown
 	map(0x04, 0x04).rw("uart", FUNC(i8251_device::data_r), FUNC(i8251_device::data_w));
 	map(0x05, 0x05).rw("uart", FUNC(i8251_device::status_r), FUNC(i8251_device::control_w));
-	map(0x08, 0x09).rw(this, FUNC(alphatp_34_state::comm88_r), FUNC(alphatp_34_state::comm88_w));
+	map(0x08, 0x09).rw(FUNC(alphatp_34_state::comm88_r), FUNC(alphatp_34_state::comm88_w));
 	map(0x10, 0x11).rw(m_kbdmcu, FUNC(i8041_device::upi41_master_r), FUNC(i8041_device::upi41_master_w));
-	map(0x12, 0x12).w(this, FUNC(alphatp_34_state::beep_w));
-	map(0x40, 0x41).r(this, FUNC(alphatp_34_state::start88_r));
+	map(0x12, 0x12).w(FUNC(alphatp_34_state::beep_w));
+	map(0x40, 0x41).r(FUNC(alphatp_34_state::start88_r));
 	//AM_RANGE(0x42, 0x42) AM_WRITE // unknown
-	map(0x50, 0x53).rw(this, FUNC(alphatp_34_state::fdc_r), FUNC(alphatp_34_state::fdc_w));
-	map(0x54, 0x54).rw(this, FUNC(alphatp_34_state::fdc_stat_r), FUNC(alphatp_34_state::fdc_cmd_w));
-	map(0x78, 0x78).w(this, FUNC(alphatp_34_state::bank_w));
+	map(0x50, 0x53).rw(FUNC(alphatp_34_state::fdc_r), FUNC(alphatp_34_state::fdc_w));
+	map(0x54, 0x54).rw(FUNC(alphatp_34_state::fdc_stat_r), FUNC(alphatp_34_state::fdc_cmd_w));
+	map(0x78, 0x78).w(FUNC(alphatp_34_state::bank_w));
 }
 
 void alphatp_34_state::alphatp30_8088_map(address_map &map)
 {
 	map(0x00000, 0x1ffff).ram();
-	map(0xe0000, 0xeffff).rw(this, FUNC(alphatp_34_state::gfxext_r), FUNC(alphatp_34_state::gfxext_w));
+	map(0xe0000, 0xeffff).rw(FUNC(alphatp_34_state::gfxext_r), FUNC(alphatp_34_state::gfxext_w));
 	map(0xfe000, 0xfffff).rom().region("16bit", 0);
 }
 
 void alphatp_34_state::alphatp30_8088_io(address_map &map)
 {
 	//AM_RANGE(0x008a, 0x008a) AM_READ // unknown
-	map(0xf800, 0xf800).w(this, FUNC(alphatp_34_state::gfxext1_w));
-	map(0xf900, 0xf900).w(this, FUNC(alphatp_34_state::gfxext2_w));
-	map(0xfa00, 0xfa01).w(this, FUNC(alphatp_34_state::gfxext3_w));
+	map(0xf800, 0xf800).w(FUNC(alphatp_34_state::gfxext1_w));
+	map(0xf900, 0xf900).w(FUNC(alphatp_34_state::gfxext2_w));
+	map(0xfa00, 0xfa01).w(FUNC(alphatp_34_state::gfxext3_w));
 	//AM_RANGE(0xfb00, 0xfb0f) AM_WRITE // unknown possibly gfx ext
 	map(0xffe0, 0xffe1).rw(m_pic, FUNC(pic8259_device::read), FUNC(pic8259_device::write));
 	map(0xffe4, 0xffe7).rw("pit", FUNC(pit8253_device::read), FUNC(pit8253_device::write));
-	map(0xffe9, 0xffea).rw(this, FUNC(alphatp_34_state::comm85_r), FUNC(alphatp_34_state::comm85_w));
+	map(0xffe9, 0xffea).rw(FUNC(alphatp_34_state::comm85_r), FUNC(alphatp_34_state::comm85_w));
 }
 
 READ8_MEMBER(alphatp_34_state::start88_r)
@@ -1231,11 +1232,11 @@ MACHINE_CONFIG_START(alphatp_12_state::alphatp2)
 
 	MCFG_PALETTE_ADD_MONOCHROME("palette")
 
-	MCFG_DEVICE_ADD("crtc", CRT5027, 12.8544_MHz_XTAL / 8)
-	MCFG_TMS9927_CHAR_WIDTH(8)
-	MCFG_TMS9927_HSYN_CALLBACK(INPUTLINE("maincpu", I8085_RST55_LINE))
-	MCFG_TMS9927_VSYN_CALLBACK(INPUTLINE("maincpu", I8085_RST65_LINE)) MCFG_DEVCB_XOR(1)
-	MCFG_VIDEO_SET_SCREEN("screen")
+	CRT5027(config, m_crtc, 12.8544_MHz_XTAL / 8);
+	m_crtc->set_char_width(8);
+	m_crtc->hsyn_wr_callback().set_inputline("maincpu", I8085_RST55_LINE);
+	m_crtc->vsyn_wr_callback().set_inputline("maincpu", I8085_RST65_LINE).exor(1);
+	m_crtc->set_screen("screen");
 
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_alphatp3)
 
@@ -1313,10 +1314,10 @@ MACHINE_CONFIG_START(alphatp_34_state::alphatp3)
 
 	MCFG_PALETTE_ADD_MONOCHROME("palette")
 
-	MCFG_DEVICE_ADD("crtc", CRT5037, 12.8544_MHz_XTAL / 8)
-	MCFG_TMS9927_CHAR_WIDTH(8)
-	MCFG_TMS9927_VSYN_CALLBACK(INPUTLINE("maincpu", I8085_RST65_LINE)) MCFG_DEVCB_XOR(1)
-	MCFG_VIDEO_SET_SCREEN("screen")
+	CRT5037(config, m_crtc, 12.8544_MHz_XTAL / 8);
+	m_crtc->set_char_width(8);
+	m_crtc->vsyn_wr_callback().set_inputline("maincpu", I8085_RST65_LINE).exor(1);
+	m_crtc->set_screen("screen");
 
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_alphatp3)
 
@@ -1346,7 +1347,7 @@ MACHINE_CONFIG_START(alphatp_34_state::alphatp30)
 
 	MCFG_DEVICE_ADD("pic8259", PIC8259, 0)
 	MCFG_PIC8259_OUT_INT_CB(INPUTLINE("i8088", 0))
-	MCFG_PIC8259_IN_SP_CB(GND)
+	MCFG_PIC8259_IN_SP_CB(CONSTANT(0))
 
 	MCFG_DEVICE_ADD("pit", PIT8253, 0)
 	MCFG_PIT8253_CLK0(100000)  // 15Mhz osc with unknown divisor
@@ -1435,7 +1436,7 @@ ROM_END
 // Alphatronic P30
 ROM_START( alphatp30 ) // P30 add-on card with 8088 needs to be emulated to boot DOS
 	ROM_REGION(0x1800, "boot", 0)
-	ROM_LOAD("hasl17.07.84.bin", 0x0000, 0x1000, CRC(6A91701B) SHA1(8A4F925D0FABAB37852A54D04E06DEB2AEAA349C))  // ...wait for INT6.5 or INT5.5 with RIM to write char in hsync or hsync GAP-time !!
+	ROM_LOAD("hasl17.07.84.bin", 0x0000, 0x1000, CRC(6a91701b) SHA1(8a4f925d0fabab37852a54d04e06deb2aeaa349c))  // ...wait for INT6.5 or INT5.5 with RIM to write char in hsync or hsync GAP-time !!
 
 	ROM_REGION(0x400, "kbdmcu", 0)
 	ROM_LOAD("caju_01_01_01.bin",  0x000, 0x400, CRC(e9b4359f) SHA1(835f4a580b4c108ef2f239039b765324adc7f078))

@@ -47,19 +47,19 @@ void wswan_state::wswan_mem(address_map &map)
 	map(0x00000, 0x03fff).rw(m_vdp, FUNC(wswan_video_device::vram_r), FUNC(wswan_video_device::vram_w));       // 16kb RAM / 4 colour tiles
 	map(0x04000, 0x0ffff).noprw();       // nothing
 	//AM_RANGE(0x10000, 0xeffff)    // cart range, setup at machine_start
-	map(0xf0000, 0xfffff).r(this, FUNC(wswan_state::bios_r));
+	map(0xf0000, 0xfffff).r(FUNC(wswan_state::bios_r));
 }
 
 void wscolor_state::wscolor_mem(address_map &map)
 {
 	map(0x00000, 0x0ffff).rw("vdp", FUNC(wswan_video_device::vram_r), FUNC(wswan_video_device::vram_w));       // 16kb RAM / 4 colour tiles, 16 colour tiles + palettes
 	//AM_RANGE(0x10000, 0xeffff)    // cart range, setup at machine_start
-	map(0xf0000, 0xfffff).r(this, FUNC(wscolor_state::bios_r));
+	map(0xf0000, 0xfffff).r(FUNC(wscolor_state::bios_r));
 }
 
 void wswan_state::wswan_io(address_map &map)
 {
-	map(0x00, 0xff).rw(this, FUNC(wswan_state::port_r), FUNC(wswan_state::port_w));   // I/O ports
+	map(0x00, 0xff).rw(FUNC(wswan_state::port_r), FUNC(wswan_state::port_w));   // I/O ports
 }
 
 static INPUT_PORTS_START( wswan )
@@ -132,7 +132,7 @@ MACHINE_CONFIG_START(wswan_state::wswan)
 	MCFG_SCREEN_RAW_PARAMS(3.072_MHz_XTAL, 256, 0, WSWAN_X_PIXELS, 159, 0, WSWAN_Y_PIXELS)
 	MCFG_SCREEN_PALETTE("palette")
 
-	MCFG_DEFAULT_LAYOUT(layout_wswan)
+	config.set_default_layout(layout_wswan);
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(60))
 

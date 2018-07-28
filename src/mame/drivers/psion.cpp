@@ -23,7 +23,6 @@
 #include "emu.h"
 #include "includes/psion.h"
 
-#include "rendlay.h"
 #include "screen.h"
 #include "softlist.h"
 #include "speaker.h"
@@ -251,13 +250,13 @@ READ8_MEMBER( psion1_state::switchoff_r )
 
 void psion1_state::psion1_mem(address_map &map)
 {
-	map(0x0000, 0x001f).rw(this, FUNC(psion1_state::hd63701_int_reg_r), FUNC(psion1_state::hd63701_int_reg_w));
+	map(0x0000, 0x001f).rw(FUNC(psion1_state::hd63701_int_reg_r), FUNC(psion1_state::hd63701_int_reg_w));
 	map(0x0040, 0x00ff).ram().share("sys_register");
 	map(0x2000, 0x2000).mirror(0x07fe).rw(m_lcdc, FUNC(hd44780_device::control_read), FUNC(hd44780_device::control_write));
 	map(0x2001, 0x2001).mirror(0x07fe).rw(m_lcdc, FUNC(hd44780_device::data_read), FUNC(hd44780_device::data_write));
-	map(0x2800, 0x2800).r(this, FUNC(psion1_state::reset_kb_counter_r));
-	map(0x2e00, 0x2e00).r(this, FUNC(psion1_state::switchoff_r));
-	map(0x3000, 0x3000).r(this, FUNC(psion1_state::inc_kb_counter_r));
+	map(0x2800, 0x2800).r(FUNC(psion1_state::reset_kb_counter_r));
+	map(0x2e00, 0x2e00).r(FUNC(psion1_state::switchoff_r));
+	map(0x3000, 0x3000).r(FUNC(psion1_state::inc_kb_counter_r));
 	map(0x4000, 0x47ff).ram().share("ram");
 	map(0xf000, 0xffff).rom();
 }
@@ -265,9 +264,9 @@ void psion1_state::psion1_mem(address_map &map)
 void psion_state::psioncm_mem(address_map &map)
 {
 	map.unmap_value_low();
-	map(0x0000, 0x001f).rw(this, FUNC(psion_state::hd63701_int_reg_r), FUNC(psion_state::hd63701_int_reg_w));
+	map(0x0000, 0x001f).rw(FUNC(psion_state::hd63701_int_reg_r), FUNC(psion_state::hd63701_int_reg_w));
 	map(0x0040, 0x00ff).ram().share("sys_register");
-	map(0x0100, 0x03ff).rw(this, FUNC(psion_state::io_r), FUNC(psion_state::io_w));
+	map(0x0100, 0x03ff).rw(FUNC(psion_state::io_r), FUNC(psion_state::io_w));
 	map(0x2000, 0x3fff).ram().share("ram");
 	map(0x8000, 0xffff).rom();
 }
@@ -275,9 +274,9 @@ void psion_state::psioncm_mem(address_map &map)
 void psion_state::psionla_mem(address_map &map)
 {
 	map.unmap_value_low();
-	map(0x0000, 0x001f).rw(this, FUNC(psion_state::hd63701_int_reg_r), FUNC(psion_state::hd63701_int_reg_w));
+	map(0x0000, 0x001f).rw(FUNC(psion_state::hd63701_int_reg_r), FUNC(psion_state::hd63701_int_reg_w));
 	map(0x0040, 0x00ff).ram().share("sys_register");
-	map(0x0100, 0x03ff).rw(this, FUNC(psion_state::io_r), FUNC(psion_state::io_w));
+	map(0x0100, 0x03ff).rw(FUNC(psion_state::io_r), FUNC(psion_state::io_w));
 	map(0x0400, 0x5fff).ram().share("ram");
 	map(0x8000, 0xffff).rom();
 }
@@ -285,9 +284,9 @@ void psion_state::psionla_mem(address_map &map)
 void psion_state::psionp350_mem(address_map &map)
 {
 	map.unmap_value_low();
-	map(0x0000, 0x001f).rw(this, FUNC(psion_state::hd63701_int_reg_r), FUNC(psion_state::hd63701_int_reg_w));
+	map(0x0000, 0x001f).rw(FUNC(psion_state::hd63701_int_reg_r), FUNC(psion_state::hd63701_int_reg_w));
 	map(0x0040, 0x00ff).ram().share("sys_register");
-	map(0x0100, 0x03ff).rw(this, FUNC(psion_state::io_r), FUNC(psion_state::io_w));
+	map(0x0100, 0x03ff).rw(FUNC(psion_state::io_r), FUNC(psion_state::io_w));
 	map(0x0400, 0x3fff).ram().share("ram");
 	map(0x4000, 0x7fff).bankrw("rambank");
 	map(0x8000, 0xffff).rom();
@@ -296,9 +295,9 @@ void psion_state::psionp350_mem(address_map &map)
 void psion_state::psionlam_mem(address_map &map)
 {
 	map.unmap_value_low();
-	map(0x0000, 0x001f).rw(this, FUNC(psion_state::hd63701_int_reg_r), FUNC(psion_state::hd63701_int_reg_w));
+	map(0x0000, 0x001f).rw(FUNC(psion_state::hd63701_int_reg_r), FUNC(psion_state::hd63701_int_reg_w));
 	map(0x0040, 0x00ff).ram().share("sys_register");
-	map(0x0100, 0x03ff).rw(this, FUNC(psion_state::io_r), FUNC(psion_state::io_w));
+	map(0x0100, 0x03ff).rw(FUNC(psion_state::io_r), FUNC(psion_state::io_w));
 	map(0x0400, 0x7fff).ram().share("ram");
 	map(0x8000, 0xbfff).bankr("rombank");
 	map(0xc000, 0xffff).rom();
@@ -307,9 +306,9 @@ void psion_state::psionlam_mem(address_map &map)
 void psion_state::psionlz_mem(address_map &map)
 {
 	map.unmap_value_low();
-	map(0x0000, 0x001f).rw(this, FUNC(psion_state::hd63701_int_reg_r), FUNC(psion_state::hd63701_int_reg_w));
+	map(0x0000, 0x001f).rw(FUNC(psion_state::hd63701_int_reg_r), FUNC(psion_state::hd63701_int_reg_w));
 	map(0x0040, 0x00ff).ram().share("sys_register");
-	map(0x0100, 0x03ff).rw(this, FUNC(psion_state::io_r), FUNC(psion_state::io_w));
+	map(0x0100, 0x03ff).rw(FUNC(psion_state::io_r), FUNC(psion_state::io_w));
 	map(0x0400, 0x3fff).ram().share("ram");
 	map(0x4000, 0x7fff).bankrw("rambank");
 	map(0x8000, 0xbfff).bankr("rombank");
@@ -504,7 +503,7 @@ void psion_state::machine_start()
 	save_item(NAME(m_port2));
 	save_item(NAME(m_port6_ddr));
 	save_item(NAME(m_port6));
-	save_pointer(NAME(m_paged_ram.get()), m_ram_bank_count * 0x4000);
+	save_pointer(NAME(m_paged_ram), m_ram_bank_count * 0x4000);
 }
 
 void psion_state::machine_reset()
@@ -583,7 +582,6 @@ MACHINE_CONFIG_START(psion_state::psion_2lines)
 	MCFG_SCREEN_VISIBLE_AREA(0, 6*16-1, 0, 9*2-1)
 	MCFG_SCREEN_PALETTE("palette")
 
-	MCFG_DEFAULT_LAYOUT(layout_lcd)
 	MCFG_PALETTE_ADD("palette", 2)
 	MCFG_PALETTE_INIT_OWNER(psion_state, psion)
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_psion)

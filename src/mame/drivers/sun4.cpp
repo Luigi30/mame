@@ -482,7 +482,7 @@
 #define DMA_INT_PEND    (0x00000001)    // interrupt pending, set when TC=1
 #define DMA_READ_ONLY   (DMA_TC | DMA_BYTE_ADDR | DMA_REQ_PEND | DMA_PACK_CNT | DMA_ERR_PEND | DMA_INT_PEND)
 #define DMA_WRITE_ONLY  (DMA_FLUSH)
-#define DMA_READ_WRITE  (DMA_EN_CNT | DMA_EN_DMA | DMA_WRITE | DMA_RESET | DMA_INT_EN)
+#define DMA_READ_WRITE  (DMA_EN_CNT | DMA_EN_DMA | DMA_WRITE | DMA_RESET | DMA_DRAIN | DMA_INT_EN)
 #define DMA_CTRL        (0)
 #define DMA_ADDR        (1)
 #define DMA_BYTE_COUNT  (2)
@@ -552,6 +552,14 @@ public:
 	{
 	}
 
+	void sun4c(machine_config &config);
+	void sun4(machine_config &config);
+
+	void init_sun4();
+	void init_sun4c();
+	void init_ss2();
+
+private:
 	virtual void machine_reset() override;
 	virtual void machine_start() override;
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
@@ -583,23 +591,18 @@ public:
 	DECLARE_WRITE_LINE_MEMBER( scc1_int );
 	DECLARE_WRITE_LINE_MEMBER( scc2_int );
 
-	void init_sun4();
-	void init_sun4c();
-	void init_ss2();
-
 	DECLARE_FLOPPY_FORMATS( floppy_formats );
 
 	uint32_t bw2_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
 
 	void ncr5390(device_t *device);
-	void sun4c(machine_config &config);
-	void sun4(machine_config &config);
+
 	void sun4_mem(address_map &map);
 	void sun4c_mem(address_map &map);
 	void type0space_map(address_map &map);
 	void type1space_map(address_map &map);
 	void type1space_s4_map(address_map &map);
-protected:
+
 	required_device<mb86901_device> m_maincpu;
 
 	required_device<mk48t12_device> m_timekpr;
@@ -626,7 +629,6 @@ protected:
 	uint32_t m_dma_pack_register;
 	int m_scsi_irq;
 
-private:
 	uint32_t *m_ram_ptr;
 	uint8_t m_segmap[16][4096];
 	uint32_t m_pagemap[16384];
@@ -1333,12 +1335,12 @@ void sun4_state::fcodes_command(int ref, const std::vector<std::string> &params)
 
 void sun4_state::sun4_mem(address_map &map)
 {
-	map(0x00000000, 0xffffffff).rw(this, FUNC(sun4_state::sun4_mmu_r), FUNC(sun4_state::sun4_mmu_w));
+	map(0x00000000, 0xffffffff).rw(FUNC(sun4_state::sun4_mmu_r), FUNC(sun4_state::sun4_mmu_w));
 }
 
 void sun4_state::sun4c_mem(address_map &map)
 {
-	map(0x00000000, 0xffffffff).rw(this, FUNC(sun4_state::sun4c_mmu_r), FUNC(sun4_state::sun4c_mmu_w));
+	map(0x00000000, 0xffffffff).rw(FUNC(sun4_state::sun4c_mmu_r), FUNC(sun4_state::sun4c_mmu_w));
 }
 
 /* Input ports */
@@ -1464,7 +1466,7 @@ WRITE32_MEMBER( sun4_state::ram_w )
 
 void sun4_state::type0space_map(address_map &map)
 {
-	map(0x00000000, 0x03ffffff).rw(this, FUNC(sun4_state::ram_r), FUNC(sun4_state::ram_w));
+	map(0x00000000, 0x03ffffff).rw(FUNC(sun4_state::ram_r), FUNC(sun4_state::ram_w));
 }
 
 void sun4_state::type1space_map(address_map &map)
@@ -1472,14 +1474,14 @@ void sun4_state::type1space_map(address_map &map)
 	map(0x00000000, 0x0000000f).rw(m_scc1, FUNC(z80scc_device::ba_cd_inv_r), FUNC(z80scc_device::ba_cd_inv_w)).umask32(0xff00ff00);
 	map(0x01000000, 0x0100000f).rw(m_scc2, FUNC(z80scc_device::ba_cd_inv_r), FUNC(z80scc_device::ba_cd_inv_w)).umask32(0xff00ff00);
 	map(0x02000000, 0x020007ff).rw(m_timekpr, FUNC(timekeeper_device::read), FUNC(timekeeper_device::write));
-	map(0x03000000, 0x0300000f).rw(this, FUNC(sun4_state::timer_r), FUNC(sun4_state::timer_w)).mirror(0xfffff0);
-	map(0x05000000, 0x05000003).rw(this, FUNC(sun4_state::irq_r), FUNC(sun4_state::irq_w));
+	map(0x03000000, 0x0300000f).rw(FUNC(sun4_state::timer_r), FUNC(sun4_state::timer_w)).mirror(0xfffff0);
+	map(0x05000000, 0x05000003).rw(FUNC(sun4_state::irq_r), FUNC(sun4_state::irq_w));
 	map(0x06000000, 0x0607ffff).rom().region("user1", 0);
-	map(0x07200000, 0x07200003).rw(this, FUNC(sun4_state::fdc_r), FUNC(sun4_state::fdc_w));
-	map(0x08000000, 0x08000003).r(this, FUNC(sun4_state::ss1_sl0_id));    // slot 0 contains SCSI/DMA/Ethernet
-	map(0x08400000, 0x0840000f).rw(this, FUNC(sun4_state::dma_r), FUNC(sun4_state::dma_w));
+	map(0x07200000, 0x07200003).rw(FUNC(sun4_state::fdc_r), FUNC(sun4_state::fdc_w));
+	map(0x08000000, 0x08000003).r(FUNC(sun4_state::ss1_sl0_id));    // slot 0 contains SCSI/DMA/Ethernet
+	map(0x08400000, 0x0840000f).rw(FUNC(sun4_state::dma_r), FUNC(sun4_state::dma_w));
 	map(0x08800000, 0x0880001f).m(m_scsi, FUNC(ncr5390_device::map)).umask32(0xff000000);
-	map(0x0e000000, 0x0e000003).r(this, FUNC(sun4_state::ss1_sl3_id));    // slot 3 contains video board
+	map(0x0e000000, 0x0e000003).r(FUNC(sun4_state::ss1_sl3_id));    // slot 3 contains video board
 	map(0x0e800000, 0x0e8fffff).ram().share("bw2_vram");
 }
 
@@ -1808,29 +1810,22 @@ WRITE32_MEMBER( sun4_state::dma_w )
 		{
 			// clear write-only bits
 			logerror("dma_w: ctrl: %08x\n", data);
-			uint32_t old_ctrl = m_dma[DMA_CTRL];
 
-			m_dma[DMA_CTRL] &= (DMA_WRITE_ONLY | DMA_READ_WRITE);
-			m_dma[DMA_CTRL] |= (data & (DMA_WRITE_ONLY | DMA_READ_WRITE));
+			mem_mask &= (DMA_READ_WRITE);
+			COMBINE_DATA(&m_dma[DMA_CTRL]);
 
-			uint32_t diff = old_ctrl ^ m_dma[DMA_CTRL];
-
-			if (diff & DMA_FLUSH)
+			if (data & DMA_RESET)
+				m_dma[DMA_CTRL] &= ~(DMA_ERR_PEND | DMA_PACK_CNT | DMA_INT_EN | DMA_FLUSH | DMA_DRAIN | DMA_WRITE | DMA_EN_DMA | DMA_REQ_PEND | DMA_EN_CNT | DMA_TC);
+			else if (data & DMA_FLUSH)
 			{
-				m_dma[DMA_CTRL] &= ~DMA_PACK_CNT;
-				m_dma[DMA_CTRL] &= ~DMA_ERR_PEND;
-				m_dma[DMA_CTRL] &= ~DMA_TC;
+				m_dma[DMA_CTRL] &= ~(DMA_PACK_CNT | DMA_ERR_PEND | DMA_TC);
 
 				dma_check_interrupts();
 			}
+			// TODO: DMA_DRAIN
 
-			if (diff & DMA_EN_DMA)
-			{
-				if ((data & DMA_EN_DMA) != 0 && (m_dma[DMA_CTRL] & DMA_REQ_PEND) != 0)
-				{
-					dma_transfer();
-				}
-			}
+			if (data & DMA_EN_DMA && (m_dma[DMA_CTRL] & DMA_REQ_PEND))
+				dma_transfer();
 			break;
 		}
 
@@ -1942,8 +1937,7 @@ MACHINE_CONFIG_START(sun4_state::sun4)
 	MCFG_Z80SCC_OUT_INT_CB(WRITELINE(*this, sun4_state, scc1_int))
 	MCFG_Z80SCC_OUT_TXDA_CB(WRITELINE(KEYBOARD_TAG, sun_keyboard_port_device, write_txd))
 
-	MCFG_DEVICE_ADD(KEYBOARD_TAG, SUNKBD_PORT, default_sun_keyboard_devices, "type4hle")
-	MCFG_SUNKBD_RXD_HANDLER(WRITELINE(SCC1_TAG, z80scc_device, rxa_w))
+	SUNKBD_PORT(config, KEYBOARD_TAG, default_sun_keyboard_devices, "type4hle").rxd_handler().set(m_scc1, FUNC(z80scc_device::rxa_w));
 
 	// RS232 serial ports
 	MCFG_DEVICE_ADD(SCC2_TAG, SCC8530N, 4.9152_MHz_XTAL)
@@ -2007,8 +2001,7 @@ MACHINE_CONFIG_START(sun4_state::sun4c)
 	MCFG_Z80SCC_OUT_INT_CB(WRITELINE(*this, sun4_state, scc1_int))
 	MCFG_Z80SCC_OUT_TXDA_CB(WRITELINE(KEYBOARD_TAG, sun_keyboard_port_device, write_txd))
 
-	MCFG_DEVICE_ADD(KEYBOARD_TAG, SUNKBD_PORT, default_sun_keyboard_devices, "type5hle")
-	MCFG_SUNKBD_RXD_HANDLER(WRITELINE(SCC1_TAG, z80scc_device, rxa_w))
+	SUNKBD_PORT(config, KEYBOARD_TAG, default_sun_keyboard_devices, "type5hle").rxd_handler().set(m_scc1, FUNC(z80scc_device::rxa_w));
 
 	// RS232 serial ports
 	MCFG_DEVICE_ADD(SCC2_TAG, SCC8530N, 4.9152_MHz_XTAL)

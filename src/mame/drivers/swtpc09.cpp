@@ -62,7 +62,7 @@
 
 void swtpc09_state::mp09_mem(address_map &map)
 {
-	map(0x0000, 0xfeff).rw(this, FUNC(swtpc09_state::main_r), FUNC(swtpc09_state::main_w));
+	map(0x0000, 0xfeff).rw(FUNC(swtpc09_state::main_r), FUNC(swtpc09_state::main_w));
 	map(0xff00, 0xffff).rom().region("maincpu", 0xff00);
 	map(0xff00, 0xff0f).mirror(0xf0).writeonly().share("dat");
 }
@@ -75,9 +75,9 @@ void swtpc09_state::flex_dmf2_mem(address_map &map)
 	map(0xe080, 0xe083).mirror(0xf000c).rw(m_pia, FUNC(pia6821_device::read), FUNC(pia6821_device::write));
 	map(0xe090, 0xe097).mirror(0xf0008).rw(m_ptm, FUNC(ptm6840_device::read), FUNC(ptm6840_device::write));
 	map(0xe0a0, 0xefff).mirror(0xf0000).noprw();
-	map(0xf000, 0xf01f).mirror(0xf0000).rw(this, FUNC(swtpc09_state::m6844_r), FUNC(swtpc09_state::m6844_w));
+	map(0xf000, 0xf01f).mirror(0xf0000).rw(FUNC(swtpc09_state::m6844_r), FUNC(swtpc09_state::m6844_w));
 	map(0xf020, 0xf023).mirror(0xf0000).rw(m_fdc, FUNC(fd1793_device::read), FUNC(fd1793_device::write));
-	map(0xf024, 0xf03f).mirror(0xf0000).rw(this, FUNC(swtpc09_state::dmf2_control_reg_r), FUNC(swtpc09_state::dmf2_control_reg_w));
+	map(0xf024, 0xf03f).mirror(0xf0000).rw(FUNC(swtpc09_state::dmf2_control_reg_r), FUNC(swtpc09_state::dmf2_control_reg_w));
 	//AM_RANGE(0xf042, 0xf7ff) AM_MIRROR(0xf0000) AM_NOP
 	map(0xf800, 0xffff).mirror(0xf0000).rom().region("maincpu", 0xf800);
 }
@@ -87,7 +87,7 @@ void swtpc09_state::flex_dc4_piaide_mem(address_map &map)
 	map(0x00000, 0xfffff).ram().share("mainram"); // by default everything is ram, 1MB ram emulated
 	map(0xe000, 0xe003).mirror(0xf0000).noprw();
 	map(0xe004, 0xe005).mirror(0xf0000).rw(m_acia, FUNC(acia6850_device::read), FUNC(acia6850_device::write));
-	map(0xe014, 0xe014).mirror(0xf0000).w(this, FUNC(swtpc09_state::dc4_control_reg_w));
+	map(0xe014, 0xe014).mirror(0xf0000).w(FUNC(swtpc09_state::dc4_control_reg_w));
 	map(0xe018, 0xe01b).mirror(0xf0000).rw(m_fdc, FUNC(fd1793_device::read), FUNC(fd1793_device::write));
 	//AM_RANGE(0xe01c, 0xe05f) AM_MIRROR(0xf0000) AM_NOP
 	map(0xe060, 0xe063).mirror(0xf000c).rw(m_piaide, FUNC(pia6821_device::read), FUNC(pia6821_device::write));
@@ -112,9 +112,9 @@ void swtpc09_state::uniflex_dmf2_mem(address_map &map)
 	map(0xe080, 0xe083).mirror(0xf000c).rw(m_pia, FUNC(pia6821_device::read), FUNC(pia6821_device::write));
 	map(0xe090, 0xe097).mirror(0xf0008).rw(m_ptm, FUNC(ptm6840_device::read), FUNC(ptm6840_device::write));
 	map(0xe0a0, 0xefff).mirror(0xf0000).noprw();
-	map(0xf000, 0xf01f).mirror(0xf0000).rw(this, FUNC(swtpc09_state::m6844_r), FUNC(swtpc09_state::m6844_w));
+	map(0xf000, 0xf01f).mirror(0xf0000).rw(FUNC(swtpc09_state::m6844_r), FUNC(swtpc09_state::m6844_w));
 	map(0xf020, 0xf023).mirror(0xf0000).rw(m_fdc, FUNC(fd1793_device::read), FUNC(fd1793_device::write));
-	map(0xf024, 0xf03f).mirror(0xf0000).rw(this, FUNC(swtpc09_state::dmf2_control_reg_r), FUNC(swtpc09_state::dmf2_control_reg_w));
+	map(0xf024, 0xf03f).mirror(0xf0000).rw(FUNC(swtpc09_state::dmf2_control_reg_r), FUNC(swtpc09_state::dmf2_control_reg_w));
 	//AM_RANGE(0xf042, 0xf7ff) AM_MIRROR(0xf0000) AM_NOP
 	map(0xf800, 0xffff).mirror(0xf0000).rom().region("maincpu", 0xf800);
 }
@@ -127,10 +127,10 @@ void swtpc09_state::uniflex_dmf3_mem(address_map &map)
 	map(0xe080, 0xe083).mirror(0xf000c).rw(m_pia, FUNC(pia6821_device::read), FUNC(pia6821_device::write));
 	map(0xe090, 0xe097).mirror(0xf0008).rw(m_ptm, FUNC(ptm6840_device::read), FUNC(ptm6840_device::write));
 	map(0xe0a0, 0xefff).mirror(0xf0000).noprw();
-	map(0xf000, 0xf01f).mirror(0xf0000).rw(this, FUNC(swtpc09_state::m6844_r), FUNC(swtpc09_state::m6844_w));
+	map(0xf000, 0xf01f).mirror(0xf0000).rw(FUNC(swtpc09_state::m6844_r), FUNC(swtpc09_state::m6844_w));
 	map(0xf020, 0xf023).mirror(0xf0000).rw(m_fdc, FUNC(fd1793_device::read), FUNC(fd1793_device::write));
-	map(0xf024, 0xf024).mirror(0xf0000).rw(this, FUNC(swtpc09_state::dmf3_control_reg_r), FUNC(swtpc09_state::dmf3_control_reg_w));
-	map(0xf025, 0xf025).mirror(0xf0000).rw(this, FUNC(swtpc09_state::dmf3_dma_address_reg_r), FUNC(swtpc09_state::dmf3_dma_address_reg_w));
+	map(0xf024, 0xf024).mirror(0xf0000).rw(FUNC(swtpc09_state::dmf3_control_reg_r), FUNC(swtpc09_state::dmf3_control_reg_w));
+	map(0xf025, 0xf025).mirror(0xf0000).rw(FUNC(swtpc09_state::dmf3_dma_address_reg_r), FUNC(swtpc09_state::dmf3_dma_address_reg_w));
 	//AM_RANGE(0xf030, 0xf03f) AM_MIRROR(0xf0000) AM_NOP
 	map(0xf040, 0xf04f).mirror(0xf0000).rw(m_via, FUNC(via6522_device::read), FUNC(via6522_device::write));
 	//AM_RANGE(0xf050, 0xf7ff) AM_MIRROR(0xf0000) AM_NOP
@@ -191,14 +191,14 @@ MACHINE_CONFIG_START(swtpc09_state::swtpc09_base)
 	MCFG_RS232_RXD_HANDLER(WRITELINE("acia", acia6850_device, write_rxd))
 	MCFG_RS232_CTS_HANDLER(WRITELINE("acia", acia6850_device, write_cts))
 
-	MCFG_DEVICE_ADD("acia", ACIA6850, 0)
-	MCFG_ACIA6850_TXD_HANDLER(WRITELINE("rs232", rs232_port_device, write_txd))
-	MCFG_ACIA6850_RTS_HANDLER(WRITELINE("rs232", rs232_port_device, write_rts))
-	MCFG_ACIA6850_IRQ_HANDLER(WRITELINE(*this, swtpc09_state, acia_interrupt))
+	ACIA6850(config, m_acia, 0);
+	m_acia->txd_handler().set("rs232", FUNC(rs232_port_device::write_txd));
+	m_acia->rts_handler().set("rs232", FUNC(rs232_port_device::write_rts));
+	m_acia->irq_handler().set(FUNC(swtpc09_state::acia_interrupt));
 
-	MCFG_DEVICE_ADD("brg", MC14411, 1.8432_MHz_XTAL)
-	MCFG_MC14411_F1_CB(WRITELINE("acia", acia6850_device, write_txc))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("acia", acia6850_device, write_rxc))
+	MC14411(config, m_brg, 1.8432_MHz_XTAL);
+	m_brg->out_f1_cb().set(m_acia, FUNC(acia6850_device::write_txc));
+	m_brg->out_f1_cb().append(m_acia, FUNC(acia6850_device::write_rxc));
 
 	MCFG_DEVICE_ADD("fdc", FD1793, 1_MHz_XTAL)
 	MCFG_FLOPPY_DRIVE_ADD("fdc:0", swtpc09_floppies, "dd", swtpc09_state::floppy_formats)

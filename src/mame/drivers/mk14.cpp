@@ -57,14 +57,16 @@ public:
 		, m_digits(*this, "digit%u", 0U)
 	{ }
 
+	void mk14(machine_config &config);
+
+private:
 	DECLARE_READ8_MEMBER(keyboard_r);
 	DECLARE_WRITE8_MEMBER(display_w);
 	DECLARE_WRITE8_MEMBER(port_a_w);
 	DECLARE_WRITE_LINE_MEMBER(cass_w);
 	DECLARE_READ_LINE_MEMBER(cass_r);
-	void mk14(machine_config &config);
 	void mem_map(address_map &map);
-private:
+
 	virtual void machine_reset() override;
 	virtual void machine_start() override;
 	required_device<cpu_device> m_maincpu;
@@ -117,7 +119,7 @@ void mk14_state::mem_map(address_map &map)
 	map(0x000, 0x1ff).mirror(0x600).rom(); // ROM
 	map(0x800, 0x87f).mirror(0x600).rw("ic8", FUNC(ins8154_device::ins8154_r), FUNC(ins8154_device::ins8154_w)); // I/O
 	map(0x880, 0x8ff).mirror(0x600).ram(); // 128 I/O chip RAM
-	map(0x900, 0x9ff).mirror(0x400).rw(this, FUNC(mk14_state::keyboard_r), FUNC(mk14_state::display_w));
+	map(0x900, 0x9ff).mirror(0x400).rw(FUNC(mk14_state::keyboard_r), FUNC(mk14_state::display_w));
 	map(0xb00, 0xbff).ram(); // VDU RAM
 	map(0xf00, 0xfff).ram(); // Standard RAM
 }
@@ -203,11 +205,11 @@ MACHINE_CONFIG_START(mk14_state::mk14)
 	/* basic machine hardware */
 	// IC1 1SP-8A/600 (8060) SC/MP Microprocessor
 	MCFG_DEVICE_ADD("maincpu", INS8060, XTAL(4'433'619))
-	MCFG_SCMP_CONFIG(WRITELINE(*this, mk14_state, cass_w), NOOP, READLINE(*this, mk14_state, cass_r), NOOP, READLINE(*this, mk14_state, cass_r), NOOP)
+	MCFG_SCMP_CONFIG(WRITELINE(*this, mk14_state, cass_w), NOOP, READLINE(*this, mk14_state, cass_r), CONSTANT(0), READLINE(*this, mk14_state, cass_r), NOOP)
 	MCFG_DEVICE_PROGRAM_MAP(mem_map)
 
 	/* video hardware */
-	MCFG_DEFAULT_LAYOUT(layout_mk14)
+	config.set_default_layout(layout_mk14);
 
 	// sound
 	SPEAKER(config, "speaker").front_center();
@@ -221,7 +223,7 @@ MACHINE_CONFIG_START(mk14_state::mk14)
 	/* devices */
 	MCFG_DEVICE_ADD("ic8", INS8154, 0)
 	MCFG_INS8154_OUT_A_CB(WRITE8(*this, mk14_state, port_a_w))
-	MCFG_INS8154_OUT_B_CB(WRITE8("dac8", dac_byte_interface, write))
+	MCFG_INS8154_OUT_B_CB(WRITE8("dac8", dac_byte_interface, data_w))
 
 	MCFG_CASSETTE_ADD( "cassette" )
 MACHINE_CONFIG_END

@@ -19,6 +19,7 @@
 #include "emu.h"
 #include "cpu/arm7/arm7.h"
 #include "cpu/arm7/arm7core.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -33,6 +34,14 @@ public:
 		m_palette(*this, "palette")
 	{ }
 
+	void rpc700(machine_config &config);
+	void rpc600(machine_config &config);
+	void sarpc(machine_config &config);
+	void sarpc_j233(machine_config &config);
+	void a7000(machine_config &config);
+	void a7000p(machine_config &config);
+
+private:
 	required_device<cpu_device> m_maincpu;
 	required_device<screen_device> m_screen;
 	required_device<palette_device> m_palette;
@@ -69,12 +78,7 @@ public:
 	TIMER_CALLBACK_MEMBER(IOMD_timer0_callback);
 	TIMER_CALLBACK_MEMBER(IOMD_timer1_callback);
 	TIMER_CALLBACK_MEMBER(flyback_timer_callback);
-	void rpc700(machine_config &config);
-	void rpc600(machine_config &config);
-	void sarpc(machine_config &config);
-	void sarpc_j233(machine_config &config);
-	void a7000(machine_config &config);
-	void a7000p(machine_config &config);
+
 	void a7000_mem(address_map &map);
 };
 
@@ -192,10 +196,11 @@ void riscpc_state::vidc20_dynamic_screen_change()
 			hblank_period = (m_vidc20_horz_reg[HCR] & 0x3ffc);
 			vblank_period = (m_vidc20_vert_reg[VCR] & 0x3fff);
 			/* note that we use the border registers as the visible area */
-			visarea.min_x = (m_vidc20_horz_reg[HBSR] & 0x3ffe);
-			visarea.max_x = (m_vidc20_horz_reg[HBER] & 0x3ffe)-1;
-			visarea.min_y = (m_vidc20_vert_reg[VBSR] & 0x1fff);
-			visarea.max_y = (m_vidc20_vert_reg[VBER] & 0x1fff)-1;
+			visarea.set(
+					(m_vidc20_horz_reg[HBSR] & 0x3ffe),
+					(m_vidc20_horz_reg[HBER] & 0x3ffe) - 1,
+					(m_vidc20_vert_reg[VBSR] & 0x1fff),
+					(m_vidc20_vert_reg[VBER] & 0x1fff) - 1);
 
 			m_screen->configure(hblank_period, vblank_period, visarea, m_screen->frame_period().attoseconds() );
 			logerror("VIDC20: successfully changed the screen to:\n Display Size = %d x %d\n Border Size %d x %d\n Cycle Period %d x %d\n",
@@ -771,10 +776,10 @@ void riscpc_state::a7000_mem(address_map &map)
 //  AM_RANGE(0x0302b000, 0x0302bfff) //Network podule
 //  AM_RANGE(0x03040000, 0x0304ffff) //podule space 0,1,2,3
 //  AM_RANGE(0x03070000, 0x0307ffff) //podule space 4,5,6,7
-	map(0x03200000, 0x032001ff).rw(this, FUNC(riscpc_state::a7000_iomd_r), FUNC(riscpc_state::a7000_iomd_w)); //IOMD Registers //mirrored at 0x03000000-0x1ff?
+	map(0x03200000, 0x032001ff).rw(FUNC(riscpc_state::a7000_iomd_r), FUNC(riscpc_state::a7000_iomd_w)); //IOMD Registers //mirrored at 0x03000000-0x1ff?
 //  AM_RANGE(0x03310000, 0x03310003) //Mouse Buttons
 
-	map(0x03400000, 0x037fffff).w(this, FUNC(riscpc_state::a7000_vidc20_w));
+	map(0x03400000, 0x037fffff).w(FUNC(riscpc_state::a7000_vidc20_w));
 //  AM_RANGE(0x08000000, 0x08ffffff) AM_MIRROR(0x07000000) //EASI space
 	map(0x10000000, 0x13ffffff).ram(); //SIMM 0 bank 0
 	map(0x14000000, 0x17ffffff).ram(); //SIMM 0 bank 1

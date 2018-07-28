@@ -78,10 +78,10 @@ void clshroad_state::clshroad_map(address_map &map)
 	map(0x9800, 0x9dff).ram();
 	map(0x9e00, 0x9fff).ram().share("spriteram");
 	map(0xa000, 0xa007).w("mainlatch", FUNC(ls259_device::write_d0));
-	map(0xa100, 0xa107).r(this, FUNC(clshroad_state::input_r));
-	map(0xa800, 0xafff).ram().w(this, FUNC(clshroad_state::vram_1_w)).share("vram_1"); // Layer 1
+	map(0xa100, 0xa107).r(FUNC(clshroad_state::input_r));
+	map(0xa800, 0xafff).ram().w(FUNC(clshroad_state::vram_1_w)).share("vram_1"); // Layer 1
 	map(0xb000, 0xb003).writeonly().share("vregs"); // Scroll
-	map(0xc000, 0xc7ff).ram().w(this, FUNC(clshroad_state::vram_0_w)).share("vram_0"); // Layer 0
+	map(0xc000, 0xc7ff).ram().w(FUNC(clshroad_state::vram_0_w)).share("vram_0"); // Layer 0
 }
 
 void clshroad_state::clshroad_sound_map(address_map &map)
@@ -283,11 +283,11 @@ MACHINE_CONFIG_START(clshroad_state::firebatl)
 	MCFG_DEVICE_PROGRAM_MAP(clshroad_sound_map)
 	MCFG_DEVICE_PERIODIC_INT_DRIVER(clshroad_state, sound_timer_irq, 120)    /* periodic interrupt, don't know about the frequency */
 
-	MCFG_DEVICE_ADD("mainlatch", LS259, 0)
-	MCFG_ADDRESSABLE_LATCH_Q0_OUT_CB(INPUTLINE("audiocpu", INPUT_LINE_RESET)) MCFG_DEVCB_INVERT
-	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(WRITELINE(*this, clshroad_state, main_irq_mask_w))
-	MCFG_ADDRESSABLE_LATCH_Q3_OUT_CB(WRITELINE(*this, clshroad_state, sound_irq_mask_w))
-	MCFG_ADDRESSABLE_LATCH_Q4_OUT_CB(WRITELINE(*this, clshroad_state, flipscreen_w))
+	ls259_device &mainlatch(LS259(config, "mainlatch"));
+	mainlatch.q_out_cb<0>().set_inputline(m_audiocpu, INPUT_LINE_RESET).invert();
+	mainlatch.q_out_cb<1>().set(FUNC(clshroad_state::main_irq_mask_w));
+	mainlatch.q_out_cb<3>().set(FUNC(clshroad_state::sound_irq_mask_w));
+	mainlatch.q_out_cb<4>().set(FUNC(clshroad_state::flipscreen_w));
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
@@ -324,11 +324,11 @@ MACHINE_CONFIG_START(clshroad_state::clshroad)
 	//MCFG_DEVICE_VBLANK_INT_DRIVER("screen", clshroad_state,  irq0_line_hold)   /* IRQ, no NMI */
 	MCFG_DEVICE_PERIODIC_INT_DRIVER(clshroad_state, sound_timer_irq, 60)    /* periodic interrupt, don't know about the frequency */
 
-	MCFG_DEVICE_ADD("mainlatch", LS259, 0)
-	MCFG_ADDRESSABLE_LATCH_Q0_OUT_CB(NOOP) // never writes here?
-	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(WRITELINE(*this, clshroad_state, main_irq_mask_w))
-	MCFG_ADDRESSABLE_LATCH_Q3_OUT_CB(WRITELINE(*this, clshroad_state, sound_irq_mask_w))
-	MCFG_ADDRESSABLE_LATCH_Q4_OUT_CB(WRITELINE(*this, clshroad_state, flipscreen_w))
+	ls259_device &mainlatch(LS259(config, "mainlatch"));
+	mainlatch.q_out_cb<0>().set_nop(); // never writes here?
+	mainlatch.q_out_cb<1>().set(FUNC(clshroad_state::main_irq_mask_w));
+	mainlatch.q_out_cb<3>().set(FUNC(clshroad_state::sound_irq_mask_w));
+	mainlatch.q_out_cb<4>().set(FUNC(clshroad_state::flipscreen_w));
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)

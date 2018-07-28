@@ -296,13 +296,13 @@ WRITE8_MEMBER( tiki100_state::system_w )
 void tiki100_state::tiki100_mem(address_map &map)
 {
 	map.unmap_value_high();
-	map(0x0000, 0xffff).rw(this, FUNC(tiki100_state::mrq_r), FUNC(tiki100_state::mrq_w));
+	map(0x0000, 0xffff).rw(FUNC(tiki100_state::mrq_r), FUNC(tiki100_state::mrq_w));
 }
 
 void tiki100_state::tiki100_io(address_map &map)
 {
 	map.unmap_value_high();
-	map(0x0000, 0xffff).rw(this, FUNC(tiki100_state::iorq_r), FUNC(tiki100_state::iorq_w));
+	map(0x0000, 0xffff).rw(FUNC(tiki100_state::iorq_r), FUNC(tiki100_state::iorq_w));
 }
 
 /* Input Ports */
@@ -735,8 +735,8 @@ MACHINE_CONFIG_START(tiki100_state::tiki100)
 
 	MCFG_DEVICE_ADD(Z80PIO_TAG, Z80PIO, 8_MHz_XTAL / 4)
 	MCFG_Z80PIO_OUT_INT_CB(INPUTLINE(Z80_TAG, INPUT_LINE_IRQ0))
-	MCFG_Z80PIO_IN_PA_CB(READ8("cent_data_in", input_buffer_device, read))
-	MCFG_Z80PIO_OUT_PA_CB(WRITE8("cent_data_out", output_latch_device, write))
+	MCFG_Z80PIO_IN_PA_CB(READ8("cent_data_in", input_buffer_device, bus_r))
+	MCFG_Z80PIO_OUT_PA_CB(WRITE8("cent_data_out", output_latch_device, bus_w))
 	MCFG_Z80PIO_IN_PB_CB(READ8(*this, tiki100_state, pio_pb_r))
 	MCFG_Z80PIO_OUT_PB_CB(WRITE8(*this, tiki100_state, pio_pb_w))
 
@@ -758,13 +758,13 @@ MACHINE_CONFIG_START(tiki100_state::tiki100)
 	MCFG_DEVICE_ADD(RS232_B_TAG, RS232_PORT, default_rs232_devices, nullptr)
 	MCFG_RS232_RXD_HANDLER(WRITELINE(Z80DART_TAG, z80dart_device, rxb_w))
 
-	MCFG_CENTRONICS_ADD(CENTRONICS_TAG, centronics_devices, "printer")
-	MCFG_CENTRONICS_DATA_INPUT_BUFFER("cent_data_in")
-	MCFG_CENTRONICS_ACK_HANDLER(WRITELINE(*this, tiki100_state, write_centronics_ack))
-	MCFG_CENTRONICS_BUSY_HANDLER(WRITELINE(*this, tiki100_state, write_centronics_busy))
-	MCFG_CENTRONICS_PERROR_HANDLER(WRITELINE(*this, tiki100_state, write_centronics_perror))
+	CENTRONICS(config, m_centronics, centronics_devices, "printer");
+	m_centronics->set_data_input_buffer("cent_data_in");
+	m_centronics->ack_handler().set(FUNC(tiki100_state::write_centronics_ack));
+	m_centronics->busy_handler().set(FUNC(tiki100_state::write_centronics_busy));
+	m_centronics->perror_handler().set(FUNC(tiki100_state::write_centronics_perror));
 
-	MCFG_DEVICE_ADD("cent_data_in", INPUT_BUFFER, 0)
+	INPUT_BUFFER(config, "cent_data_in");
 	MCFG_CENTRONICS_OUTPUT_LATCH_ADD("cent_data_out", CENTRONICS_TAG)
 
 	MCFG_CASSETTE_ADD(CASSETTE_TAG)

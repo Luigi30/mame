@@ -16,6 +16,7 @@
 #include "cpu/lh5801/lh5801.h"
 #include "machine/lh5810.h"
 #include "machine/upd1990a.h"
+#include "emupal.h"
 #include "screen.h"
 
 #include "pc1500.lh"
@@ -34,6 +35,9 @@ public:
 	{
 	}
 
+	void pc1500(machine_config &config);
+
+private:
 	required_device<cpu_device> m_maincpu;
 	required_device<upd1990a_device> m_rtc;
 
@@ -53,7 +57,6 @@ public:
 
 	DECLARE_READ8_MEMBER( pc1500_kb_r );
 	DECLARE_PALETTE_INIT(pc1500);
-	void pc1500(machine_config &config);
 	void pc1500_mem(address_map &map);
 	void pc1500_mem_io(address_map &map);
 };
@@ -281,7 +284,7 @@ MACHINE_CONFIG_START(pc1500_state::pc1500)
 	MCFG_SCREEN_VISIBLE_AREA(0, 156-1, 0, 7-1)
 	MCFG_SCREEN_PALETTE("palette")
 
-	MCFG_DEFAULT_LAYOUT(layout_pc1500)
+	config.set_default_layout(layout_pc1500);
 	MCFG_PALETTE_ADD("palette", 2)
 	MCFG_PALETTE_INIT_OWNER(pc1500_state, pc1500)
 

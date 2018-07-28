@@ -805,21 +805,21 @@ void dkong_state::dkong_map(address_map &map)
 	map(0x0000, 0x4fff).rom();
 	map(0x6000, 0x6bff).ram();
 	map(0x7000, 0x73ff).ram().share("sprite_ram"); /* sprite set 1 */
-	map(0x7400, 0x77ff).ram().w(this, FUNC(dkong_state::dkong_videoram_w)).share("video_ram");
+	map(0x7400, 0x77ff).ram().w(FUNC(dkong_state::dkong_videoram_w)).share("video_ram");
 	map(0x7800, 0x780f).rw(m_dma8257, FUNC(i8257_device::read), FUNC(i8257_device::write));   /* P8257 control registers */
 	map(0x7c00, 0x7c00).portr("IN0").w("ls175.3d", FUNC(latch8_device::write));    /* IN0, sound CPU intf */
-	map(0x7c80, 0x7c80).portr("IN1").w(this, FUNC(dkong_state::radarscp_grid_color_w));/* IN1 */
+	map(0x7c80, 0x7c80).portr("IN1").w(FUNC(dkong_state::radarscp_grid_color_w));/* IN1 */
 
-	map(0x7d00, 0x7d00).r(this, FUNC(dkong_state::dkong_in2_r));                               /* IN2 */
+	map(0x7d00, 0x7d00).r(FUNC(dkong_state::dkong_in2_r));                               /* IN2 */
 	map(0x7d00, 0x7d07).w(m_dev_6h, FUNC(latch8_device::bit0_w));          /* Sound signals */
 
-	map(0x7d80, 0x7d80).portr("DSW0").w(this, FUNC(dkong_state::dkong_audio_irq_w));   /* DSW0 */
-	map(0x7d81, 0x7d81).w(this, FUNC(dkong_state::radarscp_grid_enable_w));
-	map(0x7d82, 0x7d82).w(this, FUNC(dkong_state::dkong_flipscreen_w));
-	map(0x7d83, 0x7d83).w(this, FUNC(dkong_state::dkong_spritebank_w));                       /* 2 PSL Signal */
-	map(0x7d84, 0x7d84).w(this, FUNC(dkong_state::nmi_mask_w));
-	map(0x7d85, 0x7d85).w(this, FUNC(dkong_state::p8257_drq_w));          /* P8257 ==> /DRQ0 /DRQ1 */
-	map(0x7d86, 0x7d87).w(this, FUNC(dkong_state::dkong_palettebank_w));
+	map(0x7d80, 0x7d80).portr("DSW0").w(FUNC(dkong_state::dkong_audio_irq_w));   /* DSW0 */
+	map(0x7d81, 0x7d81).w(FUNC(dkong_state::radarscp_grid_enable_w));
+	map(0x7d82, 0x7d82).w(FUNC(dkong_state::dkong_flipscreen_w));
+	map(0x7d83, 0x7d83).w(FUNC(dkong_state::dkong_spritebank_w));                       /* 2 PSL Signal */
+	map(0x7d84, 0x7d84).w(FUNC(dkong_state::nmi_mask_w));
+	map(0x7d85, 0x7d85).w(FUNC(dkong_state::p8257_drq_w));          /* P8257 ==> /DRQ0 /DRQ1 */
+	map(0x7d86, 0x7d87).w(FUNC(dkong_state::dkong_palettebank_w));
 }
 
 void dkong_state::dkongjr_map(address_map &map)
@@ -828,24 +828,24 @@ void dkong_state::dkongjr_map(address_map &map)
 	map(0x6000, 0x6bff).ram();
 	map(0x6c00, 0x6fff).ram();                                              /* DK3 bootleg only */
 	map(0x7000, 0x73ff).ram().share("sprite_ram"); /* sprite set 1 */
-	map(0x7400, 0x77ff).ram().w(this, FUNC(dkong_state::dkong_videoram_w)).share("video_ram");
+	map(0x7400, 0x77ff).ram().w(FUNC(dkong_state::dkong_videoram_w)).share("video_ram");
 	map(0x7800, 0x780f).rw(m_dma8257, FUNC(i8257_device::read), FUNC(i8257_device::write));   /* P8257 control registers */
 
 	map(0x7c00, 0x7c00).portr("IN0").w("ls174.3d", FUNC(latch8_device::write));    /* IN0, sound interface */
 
 	map(0x7c80, 0x7c87).w("ls259.4h", FUNC(latch8_device::bit0_w));     /* latch for sound and signals above */
-	map(0x7c80, 0x7c80).portr("IN1").w(this, FUNC(dkong_state::dkongjr_gfxbank_w));
+	map(0x7c80, 0x7c80).portr("IN1").w(FUNC(dkong_state::dkongjr_gfxbank_w));
 
-	map(0x7d00, 0x7d00).r(this, FUNC(dkong_state::dkong_in2_r));                                /* IN2 */
+	map(0x7d00, 0x7d00).r(FUNC(dkong_state::dkong_in2_r));                                /* IN2 */
 	map(0x7d00, 0x7d07).w(m_dev_6h, FUNC(latch8_device::bit0_w));      /* Sound addrs */
 
 	map(0x7d80, 0x7d87).w("ls259.5h", FUNC(latch8_device::bit0_w));     /* latch for sound and signals above*/
-	map(0x7d80, 0x7d80).portr("DSW0").w(this, FUNC(dkong_state::dkong_audio_irq_w));   /* DSW0 */
-	map(0x7d82, 0x7d82).w(this, FUNC(dkong_state::dkong_flipscreen_w));
-	map(0x7d83, 0x7d83).w(this, FUNC(dkong_state::dkong_spritebank_w));                       /* 2 PSL Signal */
-	map(0x7d84, 0x7d84).w(this, FUNC(dkong_state::nmi_mask_w));
-	map(0x7d85, 0x7d85).w(this, FUNC(dkong_state::p8257_drq_w));        /* P8257 ==> /DRQ0 /DRQ1 */
-	map(0x7d86, 0x7d87).w(this, FUNC(dkong_state::dkong_palettebank_w));
+	map(0x7d80, 0x7d80).portr("DSW0").w(FUNC(dkong_state::dkong_audio_irq_w));   /* DSW0 */
+	map(0x7d82, 0x7d82).w(FUNC(dkong_state::dkong_flipscreen_w));
+	map(0x7d83, 0x7d83).w(FUNC(dkong_state::dkong_spritebank_w));                       /* 2 PSL Signal */
+	map(0x7d84, 0x7d84).w(FUNC(dkong_state::nmi_mask_w));
+	map(0x7d85, 0x7d85).w(FUNC(dkong_state::p8257_drq_w));        /* P8257 ==> /DRQ0 /DRQ1 */
+	map(0x7d86, 0x7d87).w(FUNC(dkong_state::dkong_palettebank_w));
 
 	map(0x8000, 0x9fff).rom();                                             /* bootleg DKjr only */
 	map(0xb000, 0xbfff).rom();                                             /* pestplce only */
@@ -858,25 +858,25 @@ void dkong_state::dkong3_map(address_map &map)
 	map(0x6000, 0x67ff).ram();
 	map(0x6800, 0x6fff).ram();
 	map(0x7000, 0x73ff).ram().share("sprite_ram"); /* sprite set 1 */
-	map(0x7400, 0x77ff).ram().w(this, FUNC(dkong_state::dkong_videoram_w)).share("video_ram");
+	map(0x7400, 0x77ff).ram().w(FUNC(dkong_state::dkong_videoram_w)).share("video_ram");
 	map(0x7c00, 0x7c00).portr("IN0").w("latch1", FUNC(latch8_device::write));
 	map(0x7c80, 0x7c80).portr("IN1").w("latch2", FUNC(latch8_device::write));
 	map(0x7d00, 0x7d00).portr("DSW0").w("latch3", FUNC(latch8_device::write));
-	map(0x7d80, 0x7d80).portr("DSW1").w(this, FUNC(dkong_state::dkong3_2a03_reset_w));
-	map(0x7e80, 0x7e80).w(this, FUNC(dkong_state::dkong3_coin_counter_w));
-	map(0x7e81, 0x7e81).w(this, FUNC(dkong_state::dkong3_gfxbank_w));
-	map(0x7e82, 0x7e82).w(this, FUNC(dkong_state::dkong_flipscreen_w));
-	map(0x7e83, 0x7e83).w(this, FUNC(dkong_state::dkong_spritebank_w));                 /* 2 PSL Signal */
-	map(0x7e84, 0x7e84).w(this, FUNC(dkong_state::nmi_mask_w));
-	map(0x7e85, 0x7e85).w(this, FUNC(dkong_state::dkong_z80dma_rdy_w));  /* ==> DMA Chip */
-	map(0x7e86, 0x7e87).w(this, FUNC(dkong_state::dkong_palettebank_w));
+	map(0x7d80, 0x7d80).portr("DSW1").w(FUNC(dkong_state::dkong3_2a03_reset_w));
+	map(0x7e80, 0x7e80).w(FUNC(dkong_state::dkong3_coin_counter_w));
+	map(0x7e81, 0x7e81).w(FUNC(dkong_state::dkong3_gfxbank_w));
+	map(0x7e82, 0x7e82).w(FUNC(dkong_state::dkong_flipscreen_w));
+	map(0x7e83, 0x7e83).w(FUNC(dkong_state::dkong_spritebank_w));                 /* 2 PSL Signal */
+	map(0x7e84, 0x7e84).w(FUNC(dkong_state::nmi_mask_w));
+	map(0x7e85, 0x7e85).w(FUNC(dkong_state::dkong_z80dma_rdy_w));  /* ==> DMA Chip */
+	map(0x7e86, 0x7e87).w(FUNC(dkong_state::dkong_palettebank_w));
 	map(0x8000, 0x9fff).rom();                                       /* DK3 and bootleg DKjr only */
 }
 
 void dkong_state::dkong3_io_map(address_map &map)
 {
 	map.global_mask(0xff);
-	map(0x00, 0x00).rw(m_z80dma, FUNC(z80dma_device::read), FUNC(z80dma_device::write));  /* dma controller */
+	map(0x00, 0x00).rw(m_z80dma, FUNC(z80dma_device::bus_r), FUNC(z80dma_device::bus_w));  /* dma controller */
 }
 
 /* Epos conversions */
@@ -884,7 +884,7 @@ void dkong_state::dkong3_io_map(address_map &map)
 void dkong_state::epos_readport(address_map &map)
 {
 	map.global_mask(0xff);
-	map(0x00, 0xff).r(this, FUNC(dkong_state::epos_decrypt_rom));  /* Switch protection logic */
+	map(0x00, 0xff).r(FUNC(dkong_state::epos_decrypt_rom));  /* Switch protection logic */
 }
 
 /* S2650 conversions */
@@ -895,36 +895,36 @@ void dkong_state::s2650_map(address_map &map)
 	map(0x1000, 0x13ff).ram().share("sprite_ram");  /* 0x7000 */
 	map(0x1400, 0x1400).mirror(0x007f).portr("IN0").w("ls175.3d", FUNC(latch8_device::write));
 	map(0x1480, 0x1480).portr("IN1");
-	map(0x1500, 0x1500).mirror(0x007f).r(this, FUNC(dkong_state::dkong_in2_r));                                 /* IN2 */
+	map(0x1500, 0x1500).mirror(0x007f).r(FUNC(dkong_state::dkong_in2_r));                                 /* IN2 */
 	map(0x1500, 0x1507).w(m_dev_6h, FUNC(latch8_device::bit0_w));       /* Sound signals */
-	map(0x1580, 0x1580).portr("DSW0").w(this, FUNC(dkong_state::dkong_audio_irq_w));     /* DSW0 */
-	map(0x1582, 0x1582).w(this, FUNC(dkong_state::dkong_flipscreen_w));
-	map(0x1583, 0x1583).w(this, FUNC(dkong_state::dkong_spritebank_w));                         /* 2 PSL Signal */
+	map(0x1580, 0x1580).portr("DSW0").w(FUNC(dkong_state::dkong_audio_irq_w));     /* DSW0 */
+	map(0x1582, 0x1582).w(FUNC(dkong_state::dkong_flipscreen_w));
+	map(0x1583, 0x1583).w(FUNC(dkong_state::dkong_spritebank_w));                         /* 2 PSL Signal */
 	map(0x1584, 0x1584).noprw();                                               /* Possibly still interrupt enable */
-	map(0x1585, 0x1585).w(this, FUNC(dkong_state::p8257_drq_w));          /* P8257 ==> /DRQ0 /DRQ1 */
-	map(0x1586, 0x1587).w(this, FUNC(dkong_state::dkong_palettebank_w));
+	map(0x1585, 0x1585).w(FUNC(dkong_state::p8257_drq_w));          /* P8257 ==> /DRQ0 /DRQ1 */
+	map(0x1586, 0x1587).w(FUNC(dkong_state::dkong_palettebank_w));
 	map(0x1600, 0x17ff).ram();                                               /* 0x6400  spriteram location */
-	map(0x1800, 0x1bff).ram().w(this, FUNC(dkong_state::dkong_videoram_w)).share("video_ram");        /* 0x7400 */
+	map(0x1800, 0x1bff).ram().w(FUNC(dkong_state::dkong_videoram_w)).share("video_ram");        /* 0x7400 */
 	map(0x1C00, 0x1f7f).ram();                                               /* 0x6000 */
 	map(0x1f80, 0x1f8f).rw(m_dma8257, FUNC(i8257_device::read), FUNC(i8257_device::write));   /* P8257 control registers */
 	/* 0x6800 not remapped */
 	map(0x2000, 0x2fff).rom();
-	map(0x3000, 0x3fff).rw(this, FUNC(dkong_state::s2650_mirror_r), FUNC(dkong_state::s2650_mirror_w));
+	map(0x3000, 0x3fff).rw(FUNC(dkong_state::s2650_mirror_r), FUNC(dkong_state::s2650_mirror_w));
 	map(0x4000, 0x4fff).rom();
-	map(0x5000, 0x5fff).rw(this, FUNC(dkong_state::s2650_mirror_r), FUNC(dkong_state::s2650_mirror_w));
+	map(0x5000, 0x5fff).rw(FUNC(dkong_state::s2650_mirror_r), FUNC(dkong_state::s2650_mirror_w));
 	map(0x6000, 0x6fff).rom();
-	map(0x7000, 0x7fff).rw(this, FUNC(dkong_state::s2650_mirror_r), FUNC(dkong_state::s2650_mirror_w));
+	map(0x7000, 0x7fff).rw(FUNC(dkong_state::s2650_mirror_r), FUNC(dkong_state::s2650_mirror_w));
 }
 
 void dkong_state::s2650_io_map(address_map &map)
 {
-	map(0x00, 0x00).r(this, FUNC(dkong_state::s2650_port0_r));
-	map(0x01, 0x01).r(this, FUNC(dkong_state::s2650_port1_r));
+	map(0x00, 0x00).r(FUNC(dkong_state::s2650_port0_r));
+	map(0x01, 0x01).r(FUNC(dkong_state::s2650_port1_r));
 }
 
 void dkong_state::s2650_data_map(address_map &map)
 {
-	map(S2650_DATA_PORT, S2650_DATA_PORT).w(this, FUNC(dkong_state::s2650_data_w));
+	map(S2650_DATA_PORT, S2650_DATA_PORT).w(FUNC(dkong_state::s2650_data_w));
 }
 
 
@@ -1695,7 +1695,7 @@ WRITE_LINE_MEMBER(dkong_state::busreq_w )
 MACHINE_CONFIG_START(dkong_state::dkong_base)
 
 	/* basic machine hardware */
-	MCFG_DEVICE_ADD("maincpu", Z80, CLOCK_1H)
+	MCFG_DEVICE_ADD(m_maincpu, Z80, CLOCK_1H)
 	MCFG_DEVICE_PROGRAM_MAP(dkong_map)
 
 	MCFG_MACHINE_START_OVERRIDE(dkong_state,dkong2b)
@@ -1710,7 +1710,7 @@ MACHINE_CONFIG_START(dkong_state::dkong_base)
 	MCFG_I8257_REVERSE_RW_MODE(1) // why?
 
 	/* video hardware */
-	MCFG_SCREEN_ADD("screen", RASTER)
+	MCFG_SCREEN_ADD(m_screen, RASTER)
 	MCFG_SCREEN_RAW_PARAMS(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART)
 	MCFG_SCREEN_UPDATE_DRIVER(dkong_state, screen_update_dkong)
 	MCFG_SCREEN_PALETTE("palette")
@@ -1767,13 +1767,13 @@ MACHINE_CONFIG_END
 MACHINE_CONFIG_START(dkong_state::dk_braze)
 	dkong2b(config);
 
-	MCFG_EEPROM_SERIAL_93C46_8BIT_ADD("eeprom")
+	MCFG_DEVICE_ADD("eeprom", EEPROM_SERIAL_93C46_8BIT)
 MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(dkong_state::dkj_braze)
 	dkongjr(config);
 
-	MCFG_EEPROM_SERIAL_93C46_8BIT_ADD("eeprom")
+	MCFG_DEVICE_ADD("eeprom", EEPROM_SERIAL_93C46_8BIT)
 MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(dkong_state::ddk_braze)
@@ -1785,13 +1785,13 @@ MACHINE_CONFIG_END
 MACHINE_CONFIG_START(dkong_state::dk3_braze)
 	dkong3(config);
 
-	MCFG_EEPROM_SERIAL_93C46_8BIT_ADD("eeprom")
+	MCFG_DEVICE_ADD("eeprom", EEPROM_SERIAL_93C46_8BIT)
 MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(dkong_state::dkong3)
 
 	/* basic machine hardware */
-	MCFG_DEVICE_ADD("maincpu", Z80, XTAL(8'000'000) / 2) /* verified in schematics */
+	MCFG_DEVICE_ADD(m_maincpu, Z80, XTAL(8'000'000) / 2) /* verified in schematics */
 	MCFG_DEVICE_PROGRAM_MAP(dkong3_map)
 	MCFG_DEVICE_IO_MAP(dkong3_io_map)
 
@@ -1803,13 +1803,13 @@ MACHINE_CONFIG_START(dkong_state::dkong3)
 	MCFG_Z80DMA_OUT_MREQ_CB(WRITE8(*this, dkong_state, memory_write_byte))
 
 	/* video hardware */
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_RAW_PARAMS(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART)
-	MCFG_SCREEN_UPDATE_DRIVER(dkong_state, screen_update_dkong)
-	MCFG_SCREEN_PALETTE("palette")
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE(*this, dkong_state, vblank_irq))
-	MCFG_DEVCB_CHAIN_OUTPUT(INPUTLINE("n2a03a", INPUT_LINE_NMI))
-	MCFG_DEVCB_CHAIN_OUTPUT(INPUTLINE("n2a03b", INPUT_LINE_NMI))
+	SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+	m_screen->set_raw(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART);
+	m_screen->set_screen_update(FUNC(dkong_state::screen_update_dkong));
+	m_screen->set_palette(m_palette);
+	m_screen->screen_vblank().set(FUNC(dkong_state::vblank_irq));
+	m_screen->screen_vblank().append_inputline(m_dev_n2a03a, INPUT_LINE_NMI);
+	m_screen->screen_vblank().append_inputline(m_dev_n2a03b, INPUT_LINE_NMI);
 
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_dkong)
 	MCFG_PALETTE_ADD("palette", DK3_PALETTE_LENGTH)
@@ -1839,8 +1839,7 @@ MACHINE_CONFIG_START(dkong_state::pestplce)
 	/* video hardware */
 	MCFG_PALETTE_MODIFY("palette")
 	MCFG_PALETTE_INIT_OWNER(dkong_state,dkong2b)  /* wrong! */
-	MCFG_SCREEN_MODIFY("screen")
-	MCFG_SCREEN_UPDATE_DRIVER(dkong_state, screen_update_pestplce)
+	m_screen->set_screen_update(FUNC(dkong_state::screen_update_pestplce));
 MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(dkong_state::dkong3b)
@@ -1861,15 +1860,14 @@ MACHINE_CONFIG_START(dkong_state::s2650)
 	dkong2b(config);
 
 	/* basic machine hardware */
-	MCFG_DEVICE_REPLACE("maincpu", S2650, CLOCK_1H / 2)    /* ??? */
+	MCFG_DEVICE_REPLACE(m_maincpu, S2650, CLOCK_1H / 2)    /* ??? */
 	MCFG_DEVICE_PROGRAM_MAP(s2650_map)
 	MCFG_DEVICE_IO_MAP(s2650_io_map)
 	MCFG_DEVICE_DATA_MAP(s2650_data_map)
 	MCFG_S2650_SENSE_INPUT(READLINE("screen", screen_device, vblank))
 	MCFG_S2650_FLAG_OUTPUT(WRITELINE(*this, dkong_state, s2650_fo_w))
 
-	MCFG_DEVICE_MODIFY("screen")
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE(*this, dkong_state, s2650_interrupt))
+	m_screen->screen_vblank().set(FUNC(dkong_state::s2650_interrupt));
 
 	MCFG_DEVICE_MODIFY("dma8257")
 	MCFG_I8257_IN_MEMR_CB(READ8(*this, dkong_state, hb_dma_read_byte))
@@ -1878,11 +1876,11 @@ MACHINE_CONFIG_START(dkong_state::s2650)
 	MCFG_MACHINE_START_OVERRIDE(dkong_state,s2650)
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_START(dkong_state::herbiedk)
+void dkong_state::herbiedk(machine_config &config)
+{
 	s2650(config);
-	MCFG_DEVICE_MODIFY("maincpu")
-	MCFG_S2650_SENSE_INPUT(READLINE("screen", screen_device, vblank)) MCFG_DEVCB_INVERT // ???
-MACHINE_CONFIG_END
+	downcast<s2650_device &>(*m_maincpu).sense_handler().set(m_screen, FUNC(screen_device::vblank)).invert(); // ???
+}
 
 MACHINE_CONFIG_START(dkong_state::spclforc)
 	herbiedk(config);
@@ -1891,8 +1889,7 @@ MACHINE_CONFIG_START(dkong_state::spclforc)
 	MCFG_DEVICE_REMOVE("soundcpu")
 
 	/* video hardware */
-	MCFG_SCREEN_MODIFY("screen")
-	MCFG_SCREEN_UPDATE_DRIVER(dkong_state, screen_update_spclforc)
+	m_screen->set_screen_update(FUNC(dkong_state::screen_update_spclforc));
 MACHINE_CONFIG_END
 
 /*************************************

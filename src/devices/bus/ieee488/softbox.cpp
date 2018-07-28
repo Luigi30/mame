@@ -26,9 +26,7 @@
 #define I8251_TAG       "ic15"
 #define I8255_0_TAG     "ic17"
 #define I8255_1_TAG     "ic16"
-#define COM8116_TAG     "ic14"
 #define RS232_TAG       "rs232"
-#define CORVUS_HDC_TAG  "corvus"
 
 
 
@@ -88,10 +86,10 @@ void softbox_device::softbox_io(address_map &map)
 	map.global_mask(0xff);
 	map(0x08, 0x08).rw(I8251_TAG, FUNC(i8251_device::data_r), FUNC(i8251_device::data_w));
 	map(0x09, 0x09).rw(I8251_TAG, FUNC(i8251_device::status_r), FUNC(i8251_device::control_w));
-	map(0x0c, 0x0c).w(this, FUNC(softbox_device::dbrg_w));
+	map(0x0c, 0x0c).w(FUNC(softbox_device::dbrg_w));
 	map(0x10, 0x13).rw(I8255_0_TAG, FUNC(i8255_device::read), FUNC(i8255_device::write));
 	map(0x14, 0x17).rw(I8255_1_TAG, FUNC(i8255_device::read), FUNC(i8255_device::write));
-	map(0x18, 0x18).rw(CORVUS_HDC_TAG, FUNC(corvus_hdc_device::read), FUNC(corvus_hdc_device::write));
+	map(0x18, 0x18).rw(m_hdc, FUNC(corvus_hdc_device::read), FUNC(corvus_hdc_device::write));
 }
 
 
@@ -102,7 +100,7 @@ void softbox_device::softbox_io(address_map &map)
 
 READ8_MEMBER( softbox_device::ppi0_pa_r )
 {
-	return m_bus->dio_r() ^ 0xff;
+	return m_bus->read_dio() ^ 0xff;
 }
 
 WRITE8_MEMBER( softbox_device::ppi0_pb_w )
@@ -262,11 +260,11 @@ MACHINE_CONFIG_START(softbox_device::device_add_mconfig)
 	MCFG_I8255_IN_PORTC_CB(READ8(*this, softbox_device, ppi1_pc_r))
 	MCFG_I8255_OUT_PORTC_CB(WRITE8(*this, softbox_device, ppi1_pc_w))
 
-	MCFG_DEVICE_ADD(COM8116_TAG, COM8116, XTAL(5'068'800))
-	MCFG_COM8116_FR_HANDLER(WRITELINE(I8251_TAG, i8251_device, write_rxc))
-	MCFG_COM8116_FT_HANDLER(WRITELINE(I8251_TAG, i8251_device, write_txc))
+	COM8116(config, m_dbrg, 5.0688_MHz_XTAL);
+	m_dbrg->fr_handler().set(I8251_TAG, FUNC(i8251_device::write_rxc));
+	m_dbrg->ft_handler().set(I8251_TAG, FUNC(i8251_device::write_txc));
 
-	MCFG_DEVICE_ADD(CORVUS_HDC_TAG, CORVUS_HDC, 0)
+	MCFG_DEVICE_ADD(m_hdc, CORVUS_HDC, 0)
 	MCFG_HARDDISK_ADD("harddisk1")
 	MCFG_HARDDISK_INTERFACE("corvus_hdd")
 	MCFG_HARDDISK_ADD("harddisk2")
@@ -322,8 +320,8 @@ softbox_device::softbox_device(const machine_config &mconfig, const char *tag, d
 	: device_t(mconfig, SOFTBOX, tag, owner, clock)
 	, device_ieee488_interface(mconfig, *this)
 	, m_maincpu(*this, Z80_TAG)
-	, m_dbrg(*this, COM8116_TAG)
-	, m_hdc(*this, CORVUS_HDC_TAG)
+	, m_dbrg(*this, "ic14")
+	, m_hdc(*this, "corvus")
 	, m_leds(*this, "led%u", 0U)
 	, m_ifc(0)
 {
@@ -383,6 +381,6 @@ void softbox_device::ieee488_ifc(int state)
 
 WRITE8_MEMBER( softbox_device::dbrg_w )
 {
-	m_dbrg->str_w(data & 0x0f);
-	m_dbrg->stt_w(data >> 4);
+	m_dbrg->write_str(data & 0x0f);
+	m_dbrg->write_stt(data >> 4);
 }

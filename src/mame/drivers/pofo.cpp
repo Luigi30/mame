@@ -43,7 +43,7 @@
 #include "sound/pcd3311.h"
 #include "video/hd61830.h"
 
-#include "rendlay.h"
+#include "emupal.h"
 #include "screen.h"
 #include "softlist.h"
 #include "speaker.h"
@@ -92,7 +92,7 @@ public:
 
 	void portfolio(machine_config &config);
 
-protected:
+private:
 	virtual void machine_start() override;
 	virtual void machine_reset() override;
 
@@ -148,7 +148,6 @@ protected:
 	DECLARE_READ8_MEMBER(hd61830_rd_r);
 	IRQ_CALLBACK_MEMBER(portfolio_int_ack);
 
-private:
 	required_device<cpu_device> m_maincpu;
 	required_device<hd61830_device> m_lcdc;
 	required_device<pcd3311_device> m_dtmf;
@@ -783,7 +782,7 @@ WRITE8_MEMBER( portfolio_state::io_w )
 
 void portfolio_state::portfolio_mem(address_map &map)
 {
-	map(0x00000, 0xfffff).rw(this, FUNC(portfolio_state::mem_r), FUNC(portfolio_state::mem_w));
+	map(0x00000, 0xfffff).rw(FUNC(portfolio_state::mem_r), FUNC(portfolio_state::mem_w));
 }
 
 
@@ -793,7 +792,7 @@ void portfolio_state::portfolio_mem(address_map &map)
 
 void portfolio_state::portfolio_io(address_map &map)
 {
-	map(0x0000, 0xffff).rw(this, FUNC(portfolio_state::io_r), FUNC(portfolio_state::io_w));
+	map(0x0000, 0xffff).rw(FUNC(portfolio_state::io_r), FUNC(portfolio_state::io_w));
 }
 
 
@@ -1030,8 +1029,6 @@ MACHINE_CONFIG_START(portfolio_state::portfolio)
 	MCFG_SCREEN_SIZE(240, 64)
 	MCFG_SCREEN_VISIBLE_AREA(0, 240-1, 0, 64-1)
 	MCFG_SCREEN_PALETTE("palette")
-
-	MCFG_DEFAULT_LAYOUT(layout_lcd)
 
 	MCFG_PALETTE_ADD("palette", 2)
 	MCFG_PALETTE_INIT_OWNER(portfolio_state, portfolio)

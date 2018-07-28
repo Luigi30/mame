@@ -288,6 +288,7 @@ to the same bank as defined through A20.
 #include "machine/timer.h"
 #include "machine/315_5649.h"
 #include "sound/scsp.h"
+#include "emupal.h"
 #include "rendlay.h"
 #include "screen.h"
 #include "speaker.h"
@@ -304,8 +305,8 @@ to the same bank as defined through A20.
 class coolridr_state : public driver_device
 {
 public:
-	coolridr_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
+	coolridr_state(const machine_config &mconfig, device_type type, const char *tag) :
+		driver_device(mconfig, type, tag),
 		m_textBytesToWrite(0x00),
 		m_blitterSerialCount(0x00),
 		m_blitterMode(0x00),
@@ -2812,15 +2813,15 @@ void coolridr_state::system_h1_map(address_map &map)
 	map(0x00000000, 0x001fffff).rom().share("share1").nopw();
 	map(0x01000000, 0x01ffffff).rom().region("gfx_data", 0x0000000);
 
-	map(0x03c00000, 0x03c1ffff).mirror(0x00200000).ram().w(this, FUNC(coolridr_state::sysh1_dma_w)).share("fb_vram"); /* mostly mapped at 0x03e00000 */
+	map(0x03c00000, 0x03c1ffff).mirror(0x00200000).ram().w(FUNC(coolridr_state::sysh1_dma_w)).share("fb_vram"); /* mostly mapped at 0x03e00000 */
 
 	map(0x03f00000, 0x03f0ffff).ram().share("share3"); /*Communication area RAM*/
 	map(0x03f40000, 0x03f4ffff).ram().share("txt_vram");//text tilemap + "lineram"
-	map(0x04000000, 0x0400000f).rw(this, FUNC(coolridr_state::sysh1_unk_blit_r), FUNC(coolridr_state::sysh1_unk_blit_w)).share("sysh1_txt_blit");
-	map(0x04000010, 0x04000013).w(this, FUNC(coolridr_state::sysh1_blit_mode_w));
-	map(0x04000014, 0x04000017).w(this, FUNC(coolridr_state::sysh1_blit_data_w));
-	map(0x04000018, 0x0400001b).w(this, FUNC(coolridr_state::sysh1_fb_mode_w));
-	map(0x0400001c, 0x0400001f).w(this, FUNC(coolridr_state::sysh1_fb_data_w));
+	map(0x04000000, 0x0400000f).rw(FUNC(coolridr_state::sysh1_unk_blit_r), FUNC(coolridr_state::sysh1_unk_blit_w)).share("sysh1_txt_blit");
+	map(0x04000010, 0x04000013).w(FUNC(coolridr_state::sysh1_blit_mode_w));
+	map(0x04000014, 0x04000017).w(FUNC(coolridr_state::sysh1_blit_data_w));
+	map(0x04000018, 0x0400001b).w(FUNC(coolridr_state::sysh1_fb_mode_w));
+	map(0x0400001c, 0x0400001f).w(FUNC(coolridr_state::sysh1_fb_data_w));
 
 	map(0x06000000, 0x060fffff).ram().share("sysh1_workrah");
 	map(0x20000000, 0x201fffff).rom().share("share1");
@@ -2831,7 +2832,7 @@ void coolridr_state::system_h1_map(address_map &map)
 void coolridr_state::aquastge_h1_map(address_map &map)
 {
 	system_h1_map(map);
-	map(0x03c00000, 0x03c0ffff).mirror(0x00200000).ram().w(this, FUNC(coolridr_state::sysh1_dma_w)).share("fb_vram"); /* mostly mapped at 0x03e00000 */
+	map(0x03c00000, 0x03c0ffff).mirror(0x00200000).ram().w(FUNC(coolridr_state::sysh1_dma_w)).share("fb_vram"); /* mostly mapped at 0x03e00000 */
 	map(0x03f50000, 0x03f5ffff).ram(); // video registers
 	map(0x03e10000, 0x03e1ffff).ram().share("share3"); /*Communication area RAM*/
 	map(0x03f00000, 0x03f0ffff).ram();  /*Communication area RAM*/
@@ -2956,18 +2957,18 @@ void coolridr_state::coolridr_submap(address_map &map)
 
 	map(0x01000000, 0x0100ffff).ram(); //communication RAM
 
-	map(0x03000000, 0x0307ffff).rw(this, FUNC(coolridr_state::h1_soundram_r), FUNC(coolridr_state::h1_soundram_w)); //.share("soundram");
+	map(0x03000000, 0x0307ffff).rw(FUNC(coolridr_state::h1_soundram_r), FUNC(coolridr_state::h1_soundram_w)); //.share("soundram");
 	map(0x03100000, 0x03100fff).rw("scsp1", FUNC(scsp_device::read), FUNC(scsp_device::write));
-	map(0x03200000, 0x0327ffff).rw(this, FUNC(coolridr_state::h1_soundram2_r), FUNC(coolridr_state::h1_soundram2_w)); //.share("soundram2");
+	map(0x03200000, 0x0327ffff).rw(FUNC(coolridr_state::h1_soundram2_r), FUNC(coolridr_state::h1_soundram2_w)); //.share("soundram2");
 	map(0x03300000, 0x03300fff).rw("scsp2", FUNC(scsp_device::read), FUNC(scsp_device::write));
 
-	map(0x04000000, 0x0400003f).rw(this, FUNC(coolridr_state::sysh1_sound_dma_r), FUNC(coolridr_state::sysh1_sound_dma_w)).share("sound_dma");
+	map(0x04000000, 0x0400003f).rw(FUNC(coolridr_state::sysh1_sound_dma_r), FUNC(coolridr_state::sysh1_sound_dma_w)).share("sound_dma");
 //  map(0x04200000, 0x0420003f).ram(); /* unknown */
 
 	map(0x05000000, 0x05000fff).ram();
 	map(0x05200000, 0x052001ff).ram();
 	map(0x05300000, 0x0530ffff).ram().share("share3"); /*Communication area RAM*/
-//  map(0x05fffe00, 0x05ffffff).rw(this, FUNC(coolridr_state::sh7032_r), FUNC(coolridr_state::sh7032_w)); // SH-7032H internal i/o
+//  map(0x05fffe00, 0x05ffffff).rw(FUNC(coolridr_state::sh7032_r), FUNC(coolridr_state::sh7032_w)); // SH-7032H internal i/o
 	map(0x06000000, 0x060001ff).ram().share("nvram"); // backup RAM
 	map(0x06100000, 0x0610001f).rw("io", FUNC(sega_315_5649_device::read), FUNC(sega_315_5649_device::write)).umask32(0x00ff00ff);
 	map(0x06200000, 0x06200fff).ram(); //network related?
@@ -2995,7 +2996,7 @@ void coolridr_state::system_h1_sound_map(address_map &map)
 	map(0x200000, 0x27ffff).ram().region("scsp2", 0).share("soundram2");
 	map(0x300000, 0x300fff).rw("scsp2", FUNC(scsp_device::read), FUNC(scsp_device::write));
 	map(0x800000, 0x80ffff).mirror(0x200000).ram();
-	map(0x900001, 0x900001).w(this, FUNC(coolridr_state::sound_to_sh1_w));
+	map(0x900001, 0x900001).w(FUNC(coolridr_state::sound_to_sh1_w));
 }
 
 
@@ -3226,9 +3227,9 @@ void coolridr_state::machine_start()
 	decode[1].current_object = 0;
 	debug_randompal = 9;
 
-	save_pointer(NAME(m_h1_vram.get()), VRAM_SIZE);
-	save_pointer(NAME(m_h1_pcg.get()), VRAM_SIZE);
-	save_pointer(NAME(m_h1_pal.get()), VRAM_SIZE);
+	save_pointer(NAME(m_h1_vram), VRAM_SIZE);
+	save_pointer(NAME(m_h1_pcg), VRAM_SIZE);
+	save_pointer(NAME(m_h1_pal), VRAM_SIZE);
 }
 
 void coolridr_state::machine_reset()
@@ -3277,17 +3278,17 @@ MACHINE_CONFIG_START(coolridr_state::coolridr)
 
 	MCFG_NVRAM_ADD_0FILL("nvram")
 
-	MCFG_DEVICE_ADD("io", SEGA_315_5649, 0)
-	MCFG_315_5649_OUT_PB_CB(WRITE8(*this, coolridr_state, lamps_w))
-	MCFG_315_5649_IN_PC_CB(IOPORT("IN0"))
-	MCFG_315_5649_IN_PD_CB(IOPORT("P1"))
-	MCFG_315_5649_IN_PE_CB(IOPORT("P2"))
-	MCFG_315_5649_AN0_CB(IOPORT("AN0"))
-	MCFG_315_5649_AN1_CB(IOPORT("AN1"))
-	MCFG_315_5649_AN2_CB(IOPORT("AN2"))
-	MCFG_315_5649_AN4_CB(IOPORT("AN4"))
-	MCFG_315_5649_AN5_CB(IOPORT("AN5"))
-	MCFG_315_5649_AN6_CB(IOPORT("AN6"))
+	sega_315_5649_device &io(SEGA_315_5649(config, "io", 0));
+	io.out_pb_callback().set(FUNC(coolridr_state::lamps_w));
+	io.in_pc_callback().set_ioport("IN0");
+	io.in_pd_callback().set_ioport("P1");
+	io.in_pe_callback().set_ioport("P2");
+	io.an_port_callback<0>().set_ioport("AN0");
+	io.an_port_callback<1>().set_ioport("AN1");
+	io.an_port_callback<2>().set_ioport("AN2");
+	io.an_port_callback<4>().set_ioport("AN4");
+	io.an_port_callback<5>().set_ioport("AN5");
+	io.an_port_callback<6>().set_ioport("AN6");
 
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_coolridr)
 
@@ -3307,7 +3308,7 @@ MACHINE_CONFIG_START(coolridr_state::coolridr)
 
 	MCFG_PALETTE_ADD_RRRRRGGGGGBBBBB("palette")
 
-	MCFG_DEFAULT_LAYOUT(layout_dualhsxs)
+	config.set_default_layout(layout_dualhsxs);
 
 	SPEAKER(config, "lspeaker").front_left();
 	SPEAKER(config, "rspeaker").front_right();
@@ -3331,10 +3332,9 @@ MACHINE_CONFIG_START(coolridr_state::aquastge)
 	MCFG_DEVICE_MODIFY("sub")
 	MCFG_DEVICE_PROGRAM_MAP(aquastge_submap)
 
-	MCFG_DEVICE_REMOVE("io")
-	MCFG_DEVICE_ADD("io", SEGA_315_5649, 0)
-	MCFG_315_5649_IN_PC_CB(IOPORT("IN0"))
-	MCFG_315_5649_IN_PD_CB(IOPORT("IN1"))
+	sega_315_5649_device &io(SEGA_315_5649(config.replace(), "io", 0));
+	io.in_pc_callback().set_ioport("IN0");
+	io.in_pd_callback().set_ioport("IN1");
 MACHINE_CONFIG_END
 
 ROM_START( coolridr )

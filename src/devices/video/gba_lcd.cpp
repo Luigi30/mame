@@ -13,7 +13,6 @@
 #include "emu.h"
 #include "gba_lcd.h"
 
-#include "rendlay.h"
 #include "screen.h"
 
 
@@ -1772,9 +1771,9 @@ void gba_lcd_device::device_start()
 
 	save_item(NAME(m_regs));
 
-	save_pointer(NAME(m_pram.get()), 0x400 / 4);
-	save_pointer(NAME(m_vram.get()), 0x18000 / 4);
-	save_pointer(NAME(m_oam.get()), 0x400 / 4);
+	save_pointer(NAME(m_pram), 0x400 / 4);
+	save_pointer(NAME(m_vram), 0x18000 / 4);
+	save_pointer(NAME(m_oam), 0x400 / 4);
 
 	save_item(NAME(m_bg2x.status));
 	save_item(NAME(m_bg2x.update));
@@ -1810,7 +1809,6 @@ MACHINE_CONFIG_START(gba_lcd_device::device_add_mconfig)
 	MCFG_SCREEN_UPDATE_DEVICE(DEVICE_SELF, gba_lcd_device, screen_update)
 	MCFG_SCREEN_PALETTE("palette")
 
-	MCFG_DEFAULT_LAYOUT(layout_lcd)
 	MCFG_PALETTE_ADD("palette", 32768)
 	MCFG_PALETTE_INIT_OWNER(gba_lcd_device, gba)
 MACHINE_CONFIG_END

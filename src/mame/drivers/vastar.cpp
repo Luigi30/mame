@@ -143,10 +143,10 @@ WRITE_LINE_MEMBER(vastar_state::nmi_mask_w)
 void vastar_state::main_map(address_map &map)
 {
 	map(0x0000, 0x7fff).rom();
-	map(0x8000, 0x8fff).ram().w(this, FUNC(vastar_state::bg2videoram_w)).share("bg2videoram").mirror(0x2000);
-	map(0x9000, 0x9fff).ram().w(this, FUNC(vastar_state::bg1videoram_w)).share("bg1videoram").mirror(0x2000);
+	map(0x8000, 0x8fff).ram().w(FUNC(vastar_state::bg2videoram_w)).share("bg2videoram").mirror(0x2000);
+	map(0x9000, 0x9fff).ram().w(FUNC(vastar_state::bg1videoram_w)).share("bg1videoram").mirror(0x2000);
 	map(0xc000, 0xc000).writeonly().share("sprite_priority");   /* sprite/BG priority */
-	map(0xc400, 0xcfff).ram().w(this, FUNC(vastar_state::fgvideoram_w)).share("fgvideoram"); // fg videoram + sprites
+	map(0xc400, 0xcfff).ram().w(FUNC(vastar_state::fgvideoram_w)).share("fgvideoram"); // fg videoram + sprites
 	map(0xe000, 0xe000).rw("watchdog", FUNC(watchdog_timer_device::reset_r), FUNC(watchdog_timer_device::reset_w));
 	map(0xf000, 0xf7ff).ram().share("sharedram");
 }
@@ -432,10 +432,10 @@ MACHINE_CONFIG_START(vastar_state::vastar)
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(600))   /* 10 CPU slices per frame - seems enough to ensure proper synchronization of the CPUs */
 
-	MCFG_DEVICE_ADD("mainlatch", LS259, 0)
-	MCFG_ADDRESSABLE_LATCH_Q0_OUT_CB(WRITELINE(*this, vastar_state, nmi_mask_w))
-	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(WRITELINE(*this, vastar_state, flip_screen_w))
-	MCFG_ADDRESSABLE_LATCH_Q2_OUT_CB(INPUTLINE("sub", INPUT_LINE_RESET)) MCFG_DEVCB_INVERT
+	ls259_device &mainlatch(LS259(config, "mainlatch"));
+	mainlatch.q_out_cb<0>().set(FUNC(vastar_state::nmi_mask_w));
+	mainlatch.q_out_cb<1>().set(FUNC(vastar_state::flip_screen_w));
+	mainlatch.q_out_cb<2>().set_inputline(m_subcpu, INPUT_LINE_RESET).invert();
 
 	MCFG_WATCHDOG_ADD("watchdog")
 

@@ -354,6 +354,7 @@ Super Missile Attack Board Layout
 #include "machine/watchdog.h"
 #include "sound/pokey.h"
 #include "sound/ay8910.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -379,13 +380,20 @@ public:
 		, m_leds(*this, "led%u", 0U)
 	{ }
 
+	void missileb(machine_config &config);
+	void missile(machine_config &config);
+	void missilea(machine_config &config);
+
+	void init_missilem();
+	void init_suprmatk();
+
+	DECLARE_CUSTOM_INPUT_MEMBER(get_vblank);
+
+private:
 	DECLARE_WRITE8_MEMBER(missile_w);
 	DECLARE_READ8_MEMBER(missile_r);
 	DECLARE_WRITE8_MEMBER(bootleg_w);
 	DECLARE_READ8_MEMBER(bootleg_r);
-	DECLARE_CUSTOM_INPUT_MEMBER(get_vblank);
-	void init_missilem();
-	void init_suprmatk();
 	uint32_t screen_update_missile(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 
 	inline int scanline_to_v(int scanline);
@@ -398,13 +406,9 @@ public:
 
 	TIMER_CALLBACK_MEMBER(clock_irq);
 	TIMER_CALLBACK_MEMBER(adjust_cpu_speed);
-	void missileb(machine_config &config);
-	void missile(machine_config &config);
-	void missilea(machine_config &config);
 	void bootleg_main_map(address_map &map);
 	void main_map(address_map &map);
 
-protected:
 	virtual void machine_start() override;
 	virtual void machine_reset() override;
 
@@ -681,8 +685,8 @@ uint32_t missile_state::screen_update_missile(screen_device &screen, bitmap_ind1
 	uint8_t *videoram = m_videoram;
 	int x, y;
 
-	/* draw the bitmap to the screen, looping over Y */
-	for (y = cliprect.min_y; y <= cliprect.max_y; y++)
+	// draw the bitmap to the screen, looping over Y
+	for (y = cliprect.top(); y <= cliprect.bottom(); y++)
 	{
 		uint16_t *dst = &bitmap.pix16(y);
 
@@ -690,18 +694,18 @@ uint32_t missile_state::screen_update_missile(screen_device &screen, bitmap_ind1
 		uint8_t *src = &videoram[effy * 64];
 		uint8_t *src3 = nullptr;
 
-		/* compute the base of the 3rd pixel row */
+		// compute the base of the 3rd pixel row
 		if (effy >= 224)
 			src3 = &videoram[get_bit3_addr(effy << 8)];
 
-		/* loop over X */
-		for (x = cliprect.min_x; x <= cliprect.max_x; x++)
+		// loop over X
+		for (x = cliprect.left(); x <= cliprect.right(); x++)
 		{
 			uint8_t pix = src[x / 4] >> (x & 3);
 			pix = ((pix >> 2) & 4) | ((pix << 1) & 2);
 
-			/* if we're in the lower region, get the 3rd bit */
-			if (src3 != nullptr)
+			// if we're in the lower region, get the 3rd bit
+			if (src3)
 				pix |= (src3[(x / 8) * 2] >> (x & 7)) & 1;
 
 			dst[x] = pix;
@@ -954,13 +958,13 @@ READ8_MEMBER(missile_state::bootleg_r)
 /* complete memory map derived from schematics (implemented above) */
 void missile_state::main_map(address_map &map)
 {
-	map(0x0000, 0xffff).rw(this, FUNC(missile_state::missile_r), FUNC(missile_state::missile_w)).share("videoram");
+	map(0x0000, 0xffff).rw(FUNC(missile_state::missile_r), FUNC(missile_state::missile_w)).share("videoram");
 }
 
 /* adjusted from the above to get the bootlegs to boot */
 void missile_state::bootleg_main_map(address_map &map)
 {
-	map(0x0000, 0xffff).rw(this, FUNC(missile_state::bootleg_r), FUNC(missile_state::bootleg_w)).share("videoram");
+	map(0x0000, 0xffff).rw(FUNC(missile_state::bootleg_r), FUNC(missile_state::bootleg_w)).share("videoram");
 }
 
 /*************************************
@@ -1021,9 +1025,9 @@ static INPUT_PORTS_START( missile )
 	PORT_DIPNAME( 0x04, 0x04, "Bonus Credit for 4 Coins" ) PORT_DIPLOCATION("R8:!3")
 	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x08, 0x00, "Trackball Size" ) PORT_DIPLOCATION("R8:!4")
-	PORT_DIPSETTING(    0x00, "Large" )
-	PORT_DIPSETTING(    0x08, "Mini" )
+	PORT_DIPNAME( 0x08, 0x08, "Trackball Size" ) PORT_DIPLOCATION("R8:!4")
+	PORT_DIPSETTING(    0x00, "Mini" ) // Faster Cursor Speed
+	PORT_DIPSETTING(    0x08, "Large" ) // Slower Cursor Speed
 	PORT_DIPNAME( 0x70, 0x70, "Bonus City" ) PORT_DIPLOCATION("R8:!5,!6,!7")
 	PORT_DIPSETTING(    0x10, "8000" )
 	PORT_DIPSETTING(    0x70, "10000" )
@@ -1111,9 +1115,9 @@ static INPUT_PORTS_START( suprmatk )
 	PORT_DIPNAME( 0x04, 0x04, "Bonus Credit for 4 Coins" ) PORT_DIPLOCATION("R8:3")
 	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x08, 0x00, "Trackball Size" ) PORT_DIPLOCATION("R8:4")
-	PORT_DIPSETTING(    0x00, "Large" )
-	PORT_DIPSETTING(    0x08, "Mini" )
+	PORT_DIPNAME( 0x08, 0x08, "Trackball Size" ) PORT_DIPLOCATION("R8:4")
+	PORT_DIPSETTING(    0x00, "Mini" ) // Faster Cursor Speed
+	PORT_DIPSETTING(    0x08, "Large" ) // Slower Cursor Speed
 	PORT_DIPNAME( 0x70, 0x70, "Bonus City" ) PORT_DIPLOCATION("R8:5,6,7")
 	PORT_DIPSETTING(    0x10, "8000" )
 	PORT_DIPSETTING(    0x70, "10000" )

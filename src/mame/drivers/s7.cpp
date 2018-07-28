@@ -86,6 +86,15 @@ public:
 		, m_digits(*this, "digit%u", 0U)
 	{ }
 
+	void s7(machine_config &config);
+
+	void init_s7();
+
+	DECLARE_INPUT_CHANGED_MEMBER(main_nmi);
+	DECLARE_INPUT_CHANGED_MEMBER(audio_nmi);
+	DECLARE_INPUT_CHANGED_MEMBER(diag_coin);
+
+private:
 	DECLARE_READ8_MEMBER(sound_r);
 	DECLARE_WRITE8_MEMBER(dig0_w);
 	DECLARE_WRITE8_MEMBER(dig1_w);
@@ -112,15 +121,10 @@ public:
 	DECLARE_WRITE_LINE_MEMBER(pia30_ca2_w) { }; //ST4
 	DECLARE_WRITE_LINE_MEMBER(pia30_cb2_w) { }; //ST3
 	DECLARE_WRITE_LINE_MEMBER(pia_irq);
-	DECLARE_INPUT_CHANGED_MEMBER(main_nmi);
-	DECLARE_INPUT_CHANGED_MEMBER(audio_nmi);
-	DECLARE_INPUT_CHANGED_MEMBER(diag_coin);
 	DECLARE_MACHINE_RESET(s7);
-	void init_s7();
-	void s7(machine_config &config);
 	void s7_audio_map(address_map &map);
 	void s7_main_map(address_map &map);
-private:
+
 	uint8_t m_sound_data;
 	uint8_t m_strobe;
 	uint8_t m_kbdrow;
@@ -147,7 +151,7 @@ void s7_state::s7_main_map(address_map &map)
 {
 	map.global_mask(0x7fff);
 	map(0x0000, 0x00ff).ram().mirror(0x1000);
-	map(0x0100, 0x01ff).rw(this, FUNC(s7_state::nvram_r), FUNC(s7_state::nvram_w));
+	map(0x0100, 0x01ff).rw(FUNC(s7_state::nvram_r), FUNC(s7_state::nvram_w));
 	map(0x0200, 0x03ff).ram().mirror(0x1000);
 	map(0x1100, 0x11ff).ram();
 	map(0x2100, 0x2103).rw(m_pia21, FUNC(pia6821_device::read), FUNC(pia6821_device::write)); // sound+solenoids
@@ -417,7 +421,7 @@ void s7_state::machine_start()
 	m_digits.resolve();
 	m_memprotect = 0;
 	save_item(NAME(m_nvram));
-	machine().device<nvram_device>("nvram")->set_base(m_nvram, sizeof(m_nvram));
+	subdevice<nvram_device>("nvram")->set_base(m_nvram, sizeof(m_nvram));
 }
 
 MACHINE_RESET_MEMBER( s7_state, s7 )
@@ -437,7 +441,7 @@ MACHINE_CONFIG_START(s7_state::s7)
 	MCFG_MACHINE_RESET_OVERRIDE(s7_state, s7)
 
 	/* Video */
-	MCFG_DEFAULT_LAYOUT(layout_s7)
+	config.set_default_layout(layout_s7);
 
 	/* Sound */
 	genpin_audio(config);
@@ -501,15 +505,15 @@ MACHINE_CONFIG_START(s7_state::s7)
 	MCFG_DEVICE_ADD("hc55516", HC55516, 0)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "speech", 1.00)
 
-	MCFG_DEVICE_ADD("pias", PIA6821, 0)
-	MCFG_PIA_READPB_HANDLER(READ8(*this, s7_state, sound_r))
-	MCFG_PIA_WRITEPA_HANDLER(WRITE8("dac", dac_byte_interface, write))
-	MCFG_PIA_WRITEPB_HANDLER(NOOP)
-	MCFG_PIA_READCA1_HANDLER(VCC)
-	MCFG_PIA_CA2_HANDLER(WRITELINE("hc55516", hc55516_device, digit_w))
-	MCFG_PIA_CB2_HANDLER(WRITELINE("hc55516", hc55516_device, clock_w))
-	MCFG_PIA_IRQA_HANDLER(INPUTLINE("audiocpu", M6808_IRQ_LINE))
-	MCFG_PIA_IRQB_HANDLER(INPUTLINE("audiocpu", M6808_IRQ_LINE))
+	PIA6821(config, m_pias, 0);
+	m_pias->readpb_handler().set(FUNC(s7_state::sound_r));
+	m_pias->writepa_handler().set("dac", FUNC(dac_byte_interface::data_w));
+	m_pias->writepb_handler().set_nop();
+	m_pias->readca1_handler().set_constant(1);
+	m_pias->ca2_handler().set(m_hc55516, FUNC(hc55516_device::digit_w));
+	m_pias->cb2_handler().set(m_hc55516, FUNC(hc55516_device::clock_w));
+	m_pias->irqa_handler().set_inputline(m_audiocpu, M6808_IRQ_LINE); // FIXME: needs an input merger
+	m_pias->irqb_handler().set_inputline(m_audiocpu, M6808_IRQ_LINE);
 MACHINE_CONFIG_END
 
 

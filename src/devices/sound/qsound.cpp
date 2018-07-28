@@ -120,7 +120,7 @@ DEFINE_DEVICE_TYPE(QSOUND, qsound_device, "qsound", "QSound")
 
 // DSP internal ROM region
 ROM_START( qsound )
-	ROM_REGION( 0x2000, "dsp", 0 )
+	ROM_REGION16_BE( 0x2000, "dsp", 0 )
 	ROM_LOAD16_WORD_SWAP( "dl-1425.bin", 0x0000, 0x2000, CRC(d6cf5ef5) SHA1(555f50fe5cdf127619da7d854c03f4a244a0c501) )
 	ROM_IGNORE( 0x4000 )
 ROM_END
@@ -227,6 +227,14 @@ void qsound_device::device_start()
 	save_item(NAME(m_channel));
 }
 
+//-------------------------------------------------
+//  device_clock_changed
+//-------------------------------------------------
+
+void qsound_device::device_clock_changed()
+{
+	m_stream->set_sample_rate(clock() / 2 / 1248);
+}
 
 //-------------------------------------------------
 //  device_reset - device-specific reset
@@ -266,7 +274,7 @@ void qsound_device::rom_bank_updated()
 void qsound_device::dsp_io_map(address_map &map)
 {
 	map.unmap_value_high();
-	map(0x0000, 0x7fff).mirror(0x8000).r(this, FUNC(qsound_device::dsp_sample_r));
+	map(0x0000, 0x7fff).mirror(0x8000).r(FUNC(qsound_device::dsp_sample_r));
 }
 
 

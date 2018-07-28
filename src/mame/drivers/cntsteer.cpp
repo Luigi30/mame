@@ -36,6 +36,7 @@
 #include "sound/ay8910.h"
 #include "sound/dac.h"
 #include "sound/volt_reg.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -43,8 +44,8 @@
 class cntsteer_state : public driver_device
 {
 public:
-	cntsteer_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
+	cntsteer_state(const machine_config &mconfig, device_type type, const char *tag) :
+		driver_device(mconfig, type, tag),
 		m_spriteram(*this, "spriteram"),
 		m_videoram(*this, "videoram"),
 		m_colorram(*this, "colorram"),
@@ -54,7 +55,8 @@ public:
 		m_subcpu(*this, "subcpu"),
 		m_gfxdecode(*this, "gfxdecode"),
 		m_palette(*this, "palette"),
-		m_soundlatch(*this, "soundlatch") { }
+		m_soundlatch(*this, "soundlatch")
+	{ }
 
 	/* memory pointers */
 	required_shared_ptr<uint8_t> m_spriteram;
@@ -584,23 +586,23 @@ void cntsteer_state::gekitsui_cpu1_map(address_map &map)
 	map(0x0000, 0x0fff).ram().share("share1");
 	map(0x1000, 0x11ff).ram().share("spriteram");
 	map(0x1200, 0x1fff).ram();
-	map(0x2000, 0x23ff).ram().w(this, FUNC(cntsteer_state::cntsteer_foreground_vram_w)).share("videoram");
-	map(0x2400, 0x27ff).ram().w(this, FUNC(cntsteer_state::cntsteer_foreground_attr_w)).share("colorram");
-	map(0x3000, 0x3003).w(this, FUNC(cntsteer_state::zerotrgt_ctrl_w));
+	map(0x2000, 0x23ff).ram().w(FUNC(cntsteer_state::cntsteer_foreground_vram_w)).share("videoram");
+	map(0x2400, 0x27ff).ram().w(FUNC(cntsteer_state::cntsteer_foreground_attr_w)).share("colorram");
+	map(0x3000, 0x3003).w(FUNC(cntsteer_state::zerotrgt_ctrl_w));
 	map(0x8000, 0xffff).rom();
 }
 
 void cntsteer_state::gekitsui_cpu2_map(address_map &map)
 {
 	map(0x0000, 0x0fff).ram().share("share1");
-	map(0x1000, 0x1fff).ram().w(this, FUNC(cntsteer_state::cntsteer_background_w)).share("videoram2");
+	map(0x1000, 0x1fff).ram().w(FUNC(cntsteer_state::cntsteer_background_w)).share("videoram2");
 	map(0x3000, 0x3000).portr("DSW0");
 	map(0x3001, 0x3001).portr("P2");
 	map(0x3002, 0x3002).portr("P1");
 	map(0x3003, 0x3003).portr("COINS");
-	map(0x3000, 0x3004).w(this, FUNC(cntsteer_state::zerotrgt_vregs_w));
-	map(0x3005, 0x3005).w(this, FUNC(cntsteer_state::gekitsui_sub_irq_ack));
-	map(0x3007, 0x3007).w(this, FUNC(cntsteer_state::cntsteer_sound_w));
+	map(0x3000, 0x3004).w(FUNC(cntsteer_state::zerotrgt_vregs_w));
+	map(0x3005, 0x3005).w(FUNC(cntsteer_state::gekitsui_sub_irq_ack));
+	map(0x3007, 0x3007).w(FUNC(cntsteer_state::cntsteer_sound_w));
 	map(0x4000, 0xffff).rom();
 }
 
@@ -608,26 +610,26 @@ void cntsteer_state::cntsteer_cpu1_map(address_map &map)
 {
 	map(0x0000, 0x0fff).ram().share("share1");
 	map(0x1000, 0x11ff).ram().share("spriteram");
-	map(0x2000, 0x23ff).ram().w(this, FUNC(cntsteer_state::cntsteer_foreground_vram_w)).share("videoram");
-	map(0x2400, 0x27ff).ram().w(this, FUNC(cntsteer_state::cntsteer_foreground_attr_w)).share("colorram");
-	map(0x3000, 0x3000).w(this, FUNC(cntsteer_state::cntsteer_sub_nmi_w));
-	map(0x3001, 0x3001).w(this, FUNC(cntsteer_state::cntsteer_sub_irq_w));
+	map(0x2000, 0x23ff).ram().w(FUNC(cntsteer_state::cntsteer_foreground_vram_w)).share("videoram");
+	map(0x2400, 0x27ff).ram().w(FUNC(cntsteer_state::cntsteer_foreground_attr_w)).share("colorram");
+	map(0x3000, 0x3000).w(FUNC(cntsteer_state::cntsteer_sub_nmi_w));
+	map(0x3001, 0x3001).w(FUNC(cntsteer_state::cntsteer_sub_irq_w));
 	map(0x8000, 0xffff).rom();
 }
 
 void cntsteer_state::cntsteer_cpu2_map(address_map &map)
 {
 	map(0x0000, 0x0fff).ram().share("share1");
-	map(0x1000, 0x1fff).ram().w(this, FUNC(cntsteer_state::cntsteer_background_w)).share("videoram2");
-	map(0x2000, 0x2fff).rw(this, FUNC(cntsteer_state::cntsteer_background_mirror_r), FUNC(cntsteer_state::cntsteer_background_w));
+	map(0x1000, 0x1fff).ram().w(FUNC(cntsteer_state::cntsteer_background_w)).share("videoram2");
+	map(0x2000, 0x2fff).rw(FUNC(cntsteer_state::cntsteer_background_mirror_r), FUNC(cntsteer_state::cntsteer_background_w));
 	map(0x3000, 0x3000).portr("DSW0");
-	map(0x3001, 0x3001).r(this, FUNC(cntsteer_state::cntsteer_adx_r));
+	map(0x3001, 0x3001).r(FUNC(cntsteer_state::cntsteer_adx_r));
 	map(0x3002, 0x3002).portr("P1");
 	map(0x3003, 0x3003).portr("COINS");
-	map(0x3000, 0x3004).w(this, FUNC(cntsteer_state::cntsteer_vregs_w));
-	map(0x3005, 0x3005).w(this, FUNC(cntsteer_state::gekitsui_sub_irq_ack));
-	map(0x3006, 0x3006).w(this, FUNC(cntsteer_state::cntsteer_main_irq_w));
-	map(0x3007, 0x3007).w(this, FUNC(cntsteer_state::cntsteer_sound_w));
+	map(0x3000, 0x3004).w(FUNC(cntsteer_state::cntsteer_vregs_w));
+	map(0x3005, 0x3005).w(FUNC(cntsteer_state::gekitsui_sub_irq_ack));
+	map(0x3006, 0x3006).w(FUNC(cntsteer_state::cntsteer_main_irq_w));
+	map(0x3007, 0x3007).w(FUNC(cntsteer_state::cntsteer_sound_w));
 	map(0x3007, 0x3007).nopr(); //m6809 bug.
 	map(0x4000, 0xffff).rom();
 }
@@ -667,7 +669,7 @@ void cntsteer_state::sound_map(address_map &map)
 	map(0x6000, 0x6000).w("ay2", FUNC(ay8910_device::data_w));
 	map(0x8000, 0x8000).w("ay2", FUNC(ay8910_device::address_w));
 	map(0xa000, 0xa000).r(m_soundlatch, FUNC(generic_latch_8_device::read));
-	map(0xd000, 0xd000).w(this, FUNC(cntsteer_state::nmimask_w));
+	map(0xd000, 0xd000).w(FUNC(cntsteer_state::nmimask_w));
 	map(0xe000, 0xffff).rom();
 }
 
@@ -936,15 +938,15 @@ MACHINE_CONFIG_START(cntsteer_state::cntsteer)
 	MCFG_MACHINE_RESET_OVERRIDE(cntsteer_state,cntsteer)
 
 	/* video hardware */
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500) /* not accurate */)
-	MCFG_SCREEN_SIZE(256, 256)
-	MCFG_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
-	MCFG_SCREEN_UPDATE_DRIVER(cntsteer_state, screen_update_cntsteer)
-	MCFG_SCREEN_PALETTE("palette")
-	MCFG_SCREEN_VBLANK_CALLBACK(INPUTLINE("maincpu", INPUT_LINE_NMI)) // ?
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE(*this, cntsteer_state, subcpu_vblank_irq)) // ?
+	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen.set_refresh_hz(60);
+	screen.set_vblank_time(ATTOSECONDS_IN_USEC(2500) /* not accurate */);
+	screen.set_size(256, 256);
+	screen.set_visarea(0*8, 32*8-1, 1*8, 31*8-1);
+	screen.set_screen_update(FUNC(cntsteer_state::screen_update_cntsteer));
+	screen.set_palette(m_palette);
+	screen.screen_vblank().set_inputline(m_maincpu, INPUT_LINE_NMI); // ?
+	screen.screen_vblank().append(FUNC(cntsteer_state::subcpu_vblank_irq)); // ?
 
 	MCFG_QUANTUM_PERFECT_CPU("maincpu")
 	MCFG_QUANTUM_PERFECT_CPU("subcpu")
@@ -958,10 +960,10 @@ MACHINE_CONFIG_START(cntsteer_state::cntsteer)
 	/* sound hardware */
 	SPEAKER(config, "speaker").front_center();
 
-	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+	GENERIC_LATCH_8(config, m_soundlatch);
 
 	MCFG_DEVICE_ADD("ay1", AY8910, 1500000)
-	MCFG_AY8910_PORT_A_WRITE_CB(WRITE8("dac", dac_byte_interface, write))
+	MCFG_AY8910_PORT_A_WRITE_CB(WRITE8("dac", dac_byte_interface, data_w))
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "speaker", 0.5)
 
 	MCFG_DEVICE_ADD("ay2", AY8910, 1500000)

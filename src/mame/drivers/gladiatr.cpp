@@ -232,7 +232,7 @@ WRITE8_MEMBER(gladiatr_state::gladiator_adpcm_w)
 	// bit 6 = bank offset
 	membank("bank2")->set_entry((data & 0x40) ? 1 : 0);
 
-	m_msm->data_w(data);            // bit 0..3
+	m_msm->write_data(data);        // bit 0..3
 	m_msm->reset_w(BIT(data, 5));   // bit 5
 	m_msm->vclk_w (BIT(data, 4));   // bit 4
 }
@@ -242,7 +242,7 @@ WRITE8_MEMBER(ppking_state::ppking_adpcm_w)
 	// bit 6 = bank offset
 	//membank("bank2")->set_entry((data & 0x40) ? 1 : 0);
 
-	m_msm->data_w(data);            // bit 0..3
+	m_msm->write_data(data);        // bit 0..3
 	m_msm->reset_w(BIT(data, 5));   // bit 5
 	m_msm->vclk_w (BIT(data, 4));   // bit 4
 }
@@ -619,19 +619,19 @@ void ppking_state::ppking_cpu1_map(address_map &map)
 {
 	map(0x0000, 0xbfff).rom();
 	map(0xc000, 0xcbff).ram().share("spriteram");
-	map(0xcc00, 0xcfff).w(this, FUNC(ppking_state::ppking_video_registers_w));
-	map(0xd000, 0xd7ff).ram().w(this, FUNC(ppking_state::paletteram_w)).share("paletteram");
-	map(0xd800, 0xdfff).ram().w(this, FUNC(ppking_state::videoram_w)).share("videoram");
-	map(0xe000, 0xe7ff).ram().w(this, FUNC(ppking_state::colorram_w)).share("colorram");
-	map(0xe800, 0xefff).ram().w(this, FUNC(ppking_state::textram_w)).share("textram");
+	map(0xcc00, 0xcfff).w(FUNC(ppking_state::ppking_video_registers_w));
+	map(0xd000, 0xd7ff).ram().w(FUNC(ppking_state::paletteram_w)).share("paletteram");
+	map(0xd800, 0xdfff).ram().w(FUNC(ppking_state::videoram_w)).share("videoram");
+	map(0xe000, 0xe7ff).ram().w(FUNC(ppking_state::colorram_w)).share("colorram");
+	map(0xe800, 0xefff).ram().w(FUNC(ppking_state::textram_w)).share("textram");
 	map(0xf000, 0xf7ff).ram().share("nvram"); /* battery backed RAM */
 }
 
 
 void ppking_state::ppking_cpu3_map(address_map &map)
 {
-	map(0x1000, 0x1fff).w(this, FUNC(ppking_state::ppking_adpcm_w));
-	map(0x2000, 0x2fff).r(this, FUNC(ppking_state::adpcm_command_r));
+	map(0x1000, 0x1fff).w(FUNC(ppking_state::ppking_adpcm_w));
+	map(0x2000, 0x2fff).r(FUNC(ppking_state::adpcm_command_r));
 	map(0x8000, 0xffff).rom().nopw();
 }
 
@@ -640,19 +640,19 @@ void ppking_state::ppking_cpu1_io(address_map &map)
 //  ADDRESS_MAP_GLOBAL_MASK(0xff)
 	map(0xc000, 0xc007).w("mainlatch", FUNC(ls259_device::write_d0));
 //  map(0xc004, 0xc004) AM_NOP // WRITE(ppking_irq_patch_w)
-	map(0xc09e, 0xc09f).r(this, FUNC(ppking_state::ppking_qx0_r)).w(this, FUNC(ppking_state::ppking_qx0_w));
+	map(0xc09e, 0xc09f).r(FUNC(ppking_state::ppking_qx0_r)).w(FUNC(ppking_state::ppking_qx0_w));
 	map(0xc0bf, 0xc0bf).noprw(); // watchdog
-	map(0xc0c0, 0xc0c1).r(this, FUNC(ppking_state::ppking_qxcomu_r)).w(this, FUNC(ppking_state::ppking_qxcomu_w));
+	map(0xc0c0, 0xc0c1).r(FUNC(ppking_state::ppking_qxcomu_r)).w(FUNC(ppking_state::ppking_qxcomu_w));
 }
 
 void ppking_state::ppking_cpu2_io(address_map &map)
 {
 	map.global_mask(0xff);
 	map(0x00, 0x01).rw("ymsnd", FUNC(ym2203_device::read), FUNC(ym2203_device::write));
-	map(0x20, 0x21).r(this, FUNC(ppking_state::ppking_qx1_r)).w(this, FUNC(ppking_state::ppking_qx1_w));
-	map(0x40, 0x40).w(this, FUNC(ppking_state::cpu2_irq_ack_w));
-	map(0x80, 0x81).rw(this, FUNC(ppking_state::ppking_qx3_r), FUNC(ppking_state::ppking_qx3_w));
-	map(0xe0, 0xe0).w(this, FUNC(ppking_state::adpcm_command_w));
+	map(0x20, 0x21).r(FUNC(ppking_state::ppking_qx1_r)).w(FUNC(ppking_state::ppking_qx1_w));
+	map(0x40, 0x40).w(FUNC(ppking_state::cpu2_irq_ack_w));
+	map(0x80, 0x81).rw(FUNC(ppking_state::ppking_qx3_r), FUNC(ppking_state::ppking_qx3_w));
+	map(0xe0, 0xe0).w(FUNC(ppking_state::adpcm_command_w));
 }
 
 
@@ -663,11 +663,11 @@ void gladiatr_state::gladiatr_cpu1_map(address_map &map)
 	map(0x0000, 0x5fff).rom();
 	map(0x6000, 0xbfff).bankr("bank1");
 	map(0xc000, 0xcbff).ram().share("spriteram");
-	map(0xcc00, 0xcfff).w(this, FUNC(gladiatr_state::gladiatr_video_registers_w));
-	map(0xd000, 0xd7ff).ram().w(this, FUNC(gladiatr_state::paletteram_w)).share("paletteram");
-	map(0xd800, 0xdfff).ram().w(this, FUNC(gladiatr_state::videoram_w)).share("videoram");
-	map(0xe000, 0xe7ff).ram().w(this, FUNC(gladiatr_state::colorram_w)).share("colorram");
-	map(0xe800, 0xefff).ram().w(this, FUNC(gladiatr_state::textram_w)).share("textram");
+	map(0xcc00, 0xcfff).w(FUNC(gladiatr_state::gladiatr_video_registers_w));
+	map(0xd000, 0xd7ff).ram().w(FUNC(gladiatr_state::paletteram_w)).share("paletteram");
+	map(0xd800, 0xdfff).ram().w(FUNC(gladiatr_state::videoram_w)).share("videoram");
+	map(0xe000, 0xe7ff).ram().w(FUNC(gladiatr_state::colorram_w)).share("colorram");
+	map(0xe800, 0xefff).ram().w(FUNC(gladiatr_state::textram_w)).share("textram");
 	map(0xf000, 0xf7ff).ram().share("nvram"); /* battery backed RAM */
 }
 
@@ -679,8 +679,8 @@ void gladiatr_state_base::cpu2_map(address_map &map)
 
 void gladiatr_state::gladiatr_cpu3_map(address_map &map)
 {
-	map(0x1000, 0x1fff).w(this, FUNC(gladiatr_state::gladiator_adpcm_w));
-	map(0x2000, 0x2fff).r(this, FUNC(gladiatr_state::adpcm_command_r));
+	map(0x1000, 0x1fff).w(FUNC(gladiatr_state::gladiator_adpcm_w));
+	map(0x2000, 0x2fff).r(FUNC(gladiatr_state::adpcm_command_r));
 	map(0x4000, 0xffff).bankr("bank2").nopw();
 }
 
@@ -688,7 +688,7 @@ void gladiatr_state::gladiatr_cpu3_map(address_map &map)
 void gladiatr_state::gladiatr_cpu1_io(address_map &map)
 {
 	map(0xc000, 0xc007).w("mainlatch", FUNC(ls259_device::write_d0));
-	map(0xc004, 0xc004).w(this, FUNC(gladiatr_state::gladiatr_irq_patch_w)); /* !!! patch to 2nd CPU IRQ !!! */
+	map(0xc004, 0xc004).w(FUNC(gladiatr_state::gladiatr_irq_patch_w)); /* !!! patch to 2nd CPU IRQ !!! */
 	map(0xc09e, 0xc09f).rw(m_ucpu, FUNC(upi41_cpu_device::upi41_master_r), FUNC(upi41_cpu_device::upi41_master_w));
 	map(0xc0bf, 0xc0bf).noprw(); // watchdog_reset_w doesn't work
 }
@@ -702,7 +702,7 @@ void gladiatr_state::gladiatr_cpu2_io(address_map &map)
 	map(0x60, 0x61).rw(m_cctl, FUNC(upi41_cpu_device::upi41_master_r), FUNC(upi41_cpu_device::upi41_master_w));
 	map(0x80, 0x81).rw(m_ccpu, FUNC(upi41_cpu_device::upi41_master_r), FUNC(upi41_cpu_device::upi41_master_w));
 	map(0xa0, 0xa7).w("filtlatch", FUNC(ls259_device::write_d0));
-	map(0xe0, 0xe0).w(this, FUNC(gladiatr_state::adpcm_command_w));
+	map(0xe0, 0xe0).w(FUNC(gladiatr_state::adpcm_command_w));
 }
 
 
@@ -1028,18 +1028,18 @@ MACHINE_CONFIG_START(gladiatr_state::gladiatr)
 	MCFG_ADDRESSABLE_LATCH_Q4_OUT_CB(INPUTLINE("sub", INPUT_LINE_RESET)) // shadowed by aforementioned hack
 	MCFG_ADDRESSABLE_LATCH_Q7_OUT_CB(WRITELINE(*this, gladiatr_state, flipscreen_w))
 
-	MCFG_DEVICE_ADD("cctl", I8741, 12_MHz_XTAL/2) /* verified on pcb */
-	MCFG_MCS48_PORT_T0_IN_CB(IOPORT("COINS")) MCFG_DEVCB_RSHIFT(3)
-	MCFG_MCS48_PORT_T1_IN_CB(IOPORT("COINS")) MCFG_DEVCB_RSHIFT(2)
-	MCFG_MCS48_PORT_P1_IN_CB(READ8(*this, gladiatr_state, cctl_p1_r))
-	MCFG_MCS48_PORT_P2_IN_CB(READ8(*this, gladiatr_state, cctl_p2_r))
+	I8741(config, m_cctl, 12_MHz_XTAL/2); /* verified on pcb */
+	m_cctl->t0_in_cb().set_ioport("COINS").bit(3);
+	m_cctl->t1_in_cb().set_ioport("COINS").bit(2);
+	m_cctl->p1_in_cb().set(FUNC(gladiatr_state::cctl_p1_r));
+	m_cctl->p2_in_cb().set(FUNC(gladiatr_state::cctl_p2_r));
 
-	MCFG_DEVICE_ADD("ccpu", I8741, 12_MHz_XTAL/2) /* verified on pcb */
-	MCFG_MCS48_PORT_P1_IN_CB(IOPORT("IN0"))
-	MCFG_MCS48_PORT_P2_IN_CB(IOPORT("IN1"))
-	MCFG_MCS48_PORT_P2_OUT_CB(WRITE8(*this, gladiatr_state, ccpu_p2_w))
-	MCFG_MCS48_PORT_T0_IN_CB(IOPORT("COINS")) MCFG_DEVCB_RSHIFT(1)
-	MCFG_MCS48_PORT_T1_IN_CB(IOPORT("COINS")) MCFG_DEVCB_RSHIFT(0)
+	I8741(config, m_ccpu, 12_MHz_XTAL/2); /* verified on pcb */
+	m_ccpu->p1_in_cb().set_ioport("IN0");
+	m_ccpu->p2_in_cb().set_ioport("IN1");
+	m_ccpu->p2_out_cb().set(FUNC(gladiatr_state::ccpu_p2_w));
+	m_ccpu->t0_in_cb().set_ioport("COINS").bit(1);
+	m_ccpu->t1_in_cb().set_ioport("COINS").bit(0);
 
 	MCFG_DEVICE_ADD("ucpu", I8741, 12_MHz_XTAL/2) /* verified on pcb */
 	MCFG_MCS48_PORT_P1_IN_CB(READ8(*this, gladiatr_state, ucpu_p1_r))

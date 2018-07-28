@@ -57,17 +57,13 @@ Usage of terminal:
 #include "machine/pic8259.h"
 #include "machine/pit8253.h"
 #include "bus/rs232/rs232.h"
+#include "emupal.h"
 #include "screen.h"
 
 
 class okean240_state : public driver_device
 {
 public:
-	enum
-	{
-		TIMER_OKEAN_BOOT
-	};
-
 	okean240_state(const machine_config &mconfig, device_type type, const char *tag)
 		: driver_device(mconfig, type, tag)
 		, m_term_data(0)
@@ -78,6 +74,18 @@ public:
 		, m_io_modifiers(*this, "MODIFIERS")
 		, m_maincpu(*this, "maincpu")
 	{ }
+
+	void okean240a(machine_config &config);
+	void okean240t(machine_config &config);
+	void okean240(machine_config &config);
+
+	void init_okean240();
+
+private:
+	enum
+	{
+		TIMER_OKEAN_BOOT
+	};
 
 	DECLARE_READ8_MEMBER(okean240_kbd_status_r);
 	DECLARE_READ8_MEMBER(okean240a_kbd_status_r);
@@ -91,17 +99,13 @@ public:
 	DECLARE_READ8_MEMBER(okean240a_port42_r);
 	void kbd_put(u8 data);
 	DECLARE_WRITE8_MEMBER(scroll_w);
-	void init_okean240();
 	uint32_t screen_update_okean240(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
 
-	void okean240a(machine_config &config);
-	void okean240t(machine_config &config);
-	void okean240(machine_config &config);
 	void okean240_io(address_map &map);
 	void okean240_mem(address_map &map);
 	void okean240a_io(address_map &map);
 	void okean240t_io(address_map &map);
-private:
+
 	virtual void machine_start() override;
 	virtual void machine_reset() override;
 	virtual void video_start() override;
@@ -235,9 +239,9 @@ void okean240_state::okean240_io(address_map &map)
 	map(0x40, 0x43).rw("ppikbd", FUNC(i8255_device::read), FUNC(i8255_device::write));
 	map(0x60, 0x63).rw("pit", FUNC(pit8253_device::read), FUNC(pit8253_device::write));
 	map(0x80, 0x81).rw("pic", FUNC(pic8259_device::read), FUNC(pic8259_device::write));
-	map(0x80, 0x80).r(this, FUNC(okean240_state::okean240_kbd_status_r));
-	map(0xa0, 0xa0).r(this, FUNC(okean240_state::term_r));
-	map(0xa1, 0xa1).r(this, FUNC(okean240_state::term_status_r));
+	map(0x80, 0x80).r(FUNC(okean240_state::okean240_kbd_status_r));
+	map(0xa0, 0xa0).r(FUNC(okean240_state::term_r));
+	map(0xa1, 0xa1).r(FUNC(okean240_state::term_status_r));
 	map(0xc0, 0xc3).rw("ppic", FUNC(i8255_device::read), FUNC(i8255_device::write));
 	map(0xe0, 0xe3).rw("ppie", FUNC(i8255_device::read), FUNC(i8255_device::write));
 }
@@ -248,7 +252,7 @@ void okean240_state::okean240a_io(address_map &map)
 	map(0x40, 0x43).rw("ppikbd", FUNC(i8255_device::read), FUNC(i8255_device::write));
 	map(0x60, 0x63).rw("pit", FUNC(pit8253_device::read), FUNC(pit8253_device::write));
 	map(0x80, 0x81).rw("pic", FUNC(pic8259_device::read), FUNC(pic8259_device::write));
-	map(0x80, 0x80).r(this, FUNC(okean240_state::okean240a_kbd_status_r));
+	map(0x80, 0x80).r(FUNC(okean240_state::okean240a_kbd_status_r));
 	map(0xa0, 0xa0).rw("uart", FUNC(i8251_device::data_r), FUNC(i8251_device::data_w));
 	map(0xa1, 0xa1).rw("uart", FUNC(i8251_device::status_r), FUNC(i8251_device::control_w));
 	map(0xc0, 0xc3).rw("ppic", FUNC(i8255_device::read), FUNC(i8255_device::write));
@@ -272,7 +276,7 @@ void okean240_state::okean240t_io(address_map &map)
 	map(0x40, 0x43).rw("ppikbd", FUNC(i8255_device::read), FUNC(i8255_device::write));
 	map(0x60, 0x63).rw("pit", FUNC(pit8253_device::read), FUNC(pit8253_device::write));
 	map(0x80, 0x81).rw("pic", FUNC(pic8259_device::read), FUNC(pic8259_device::write));
-	map(0x80, 0x80).r(this, FUNC(okean240_state::okean240_kbd_status_r));
+	map(0x80, 0x80).r(FUNC(okean240_state::okean240_kbd_status_r));
 	map(0xa0, 0xa0).rw("uart", FUNC(i8251_device::data_r), FUNC(i8251_device::data_w));
 	map(0xa1, 0xa1).rw("uart", FUNC(i8251_device::status_r), FUNC(i8251_device::control_w));
 	map(0xc0, 0xc3).rw("ppic", FUNC(i8255_device::read), FUNC(i8255_device::write));
@@ -529,10 +533,10 @@ MACHINE_CONFIG_START(okean240_state::okean240t)
 
 	MCFG_DEVICE_ADD("ppie", I8255, 0)
 
-	MCFG_DEVICE_ADD("pit", PIT8253, 0)
-	MCFG_PIT8253_CLK1(3072000) // artificial rate
-	MCFG_PIT8253_OUT1_HANDLER(WRITELINE("uart", i8251_device, write_txc))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("uart", i8251_device, write_rxc))
+	pit8253_device &pit(PIT8253(config, "pit", 0));
+	pit.set_clk<1>(3072000); // artificial rate
+	pit.out_handler<1>().set("uart", FUNC(i8251_device::write_txc));
+	pit.out_handler<1>().append("uart", FUNC(i8251_device::write_rxc));
 
 	MCFG_DEVICE_ADD("pic", PIC8259, 0)
 

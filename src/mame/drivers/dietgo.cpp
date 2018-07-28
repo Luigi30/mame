@@ -29,6 +29,7 @@ PAL16R6A 11H
 #include "machine/decocrpt.h"
 #include "machine/deco102.h"
 #include "machine/gen_latch.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -61,7 +62,7 @@ void dietgo_state::dietgo_map(address_map &map)
 	map(0x222000, 0x2227ff).writeonly().share("pf2_rowscroll");
 	map(0x280000, 0x2807ff).ram().share("spriteram");
 	map(0x300000, 0x300bff).ram().w("palette", FUNC(palette_device::write16)).share("palette");
-	map(0x340000, 0x343fff).rw(this, FUNC(dietgo_state::dietgo_protection_region_0_104_r), FUNC(dietgo_state::dietgo_protection_region_0_104_w)).share("prot16ram"); /* Protection device */
+	map(0x340000, 0x343fff).rw(FUNC(dietgo_state::dietgo_protection_region_0_104_r), FUNC(dietgo_state::dietgo_protection_region_0_104_w)).share("prot16ram"); /* Protection device */
 	map(0x380000, 0x38ffff).ram(); // mainram
 }
 
@@ -251,13 +252,13 @@ MACHINE_CONFIG_START(dietgo_state::dietgo)
 	MCFG_DECO_SPRITE_GFX_REGION(2)
 	MCFG_DECO_SPRITE_GFXDECODE("gfxdecode")
 
-	MCFG_DECO104_ADD("ioprot104")
-	MCFG_DECO146_IN_PORTA_CB(IOPORT("INPUTS"))
-	MCFG_DECO146_IN_PORTB_CB(IOPORT("SYSTEM"))
-	MCFG_DECO146_IN_PORTC_CB(IOPORT("DSW"))
-	MCFG_DECO146_SOUNDLATCH_IRQ_CB(INPUTLINE("audiocpu", 0))
-	MCFG_DECO146_SET_INTERFACE_SCRAMBLE_INTERLEAVE
-	MCFG_DECO146_SET_USE_MAGIC_ADDRESS_XOR
+	DECO104PROT(config, m_deco104, 0);
+	m_deco104->port_a_cb().set_ioport("INPUTS");
+	m_deco104->port_b_cb().set_ioport("SYSTEM");
+	m_deco104->port_c_cb().set_ioport("DSW");
+	m_deco104->soundlatch_irq_cb().set_inputline(m_audiocpu, 0);
+	m_deco104->set_interface_scramble_interleave();
+	m_deco104->set_use_magic_read_address_xor(true);
 
 	/* sound hardware */
 	SPEAKER(config, "mono").front_center();

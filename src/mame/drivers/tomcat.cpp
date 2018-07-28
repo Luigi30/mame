@@ -59,7 +59,7 @@ public:
 
 	void tomcat(machine_config &config);
 
-protected:
+private:
 	DECLARE_WRITE8_MEMBER(adcon_w);
 	DECLARE_READ16_MEMBER(tomcat_inputs_r);
 	DECLARE_WRITE16_MEMBER(main_latch_w);
@@ -81,7 +81,6 @@ protected:
 	void sound_map(address_map &map);
 	void tomcat_map(address_map &map);
 
-private:
 	required_device<tms5220_device> m_tms;
 	required_shared_ptr<uint16_t> m_shared_ram;
 	uint8_t m_nvram[0x800];
@@ -229,17 +228,17 @@ WRITE8_MEMBER(tomcat_state::tomcat_nvram_w)
 void tomcat_state::tomcat_map(address_map &map)
 {
 	map(0x000000, 0x00ffff).rom();
-	map(0x402001, 0x402001).r("adc", FUNC(adc0808_device::data_r)).w(this, FUNC(tomcat_state::adcon_w));
-	map(0x404000, 0x404001).r(this, FUNC(tomcat_state::tomcat_inputs_r)).w("avg", FUNC(avg_tomcat_device::go_word_w));
+	map(0x402001, 0x402001).r("adc", FUNC(adc0808_device::data_r)).w(FUNC(tomcat_state::adcon_w));
+	map(0x404000, 0x404001).r(FUNC(tomcat_state::tomcat_inputs_r)).w("avg", FUNC(avg_tomcat_device::go_word_w));
 	map(0x406000, 0x406001).w("avg", FUNC(avg_tomcat_device::reset_word_w));
-	map(0x408000, 0x408001).r(this, FUNC(tomcat_state::tomcat_inputs2_r)).w("watchdog", FUNC(watchdog_timer_device::reset16_w));
-	map(0x40a000, 0x40a001).rw(this, FUNC(tomcat_state::tomcat_320bio_r), FUNC(tomcat_state::tomcat_irqclr_w));
-	map(0x40e000, 0x40e01f).w(this, FUNC(tomcat_state::main_latch_w));
+	map(0x408000, 0x408001).r(FUNC(tomcat_state::tomcat_inputs2_r)).w("watchdog", FUNC(watchdog_timer_device::reset16_w));
+	map(0x40a000, 0x40a001).rw(FUNC(tomcat_state::tomcat_320bio_r), FUNC(tomcat_state::tomcat_irqclr_w));
+	map(0x40e000, 0x40e01f).w(FUNC(tomcat_state::main_latch_w));
 	map(0x800000, 0x803fff).ram().share("vectorram");
 	map(0xffa000, 0xffbfff).ram().share("shared_ram");
 	map(0xffc000, 0xffcfff).ram();
 	map(0xffd000, 0xffdfff).rw("m48t02", FUNC(timekeeper_device::read), FUNC(timekeeper_device::write)).umask16(0xff00);
-	map(0xffd000, 0xffdfff).rw(this, FUNC(tomcat_state::tomcat_nvram_r), FUNC(tomcat_state::tomcat_nvram_w)).umask16(0x00ff);
+	map(0xffd000, 0xffdfff).rw(FUNC(tomcat_state::tomcat_nvram_r), FUNC(tomcat_state::tomcat_nvram_w)).umask16(0x00ff);
 }
 
 void tomcat_state::dsp_map(address_map &map)
@@ -266,7 +265,7 @@ void tomcat_state::sound_map(address_map &map)
 {
 	map(0x0000, 0x1fff).ram();
 	map(0x2000, 0x2001).rw("ymsnd", FUNC(ym2151_device::read), FUNC(ym2151_device::write));
-	map(0x3000, 0x30df).w(this, FUNC(tomcat_state::soundlatches_w));
+	map(0x3000, 0x30df).w(FUNC(tomcat_state::soundlatches_w));
 	map(0x30e0, 0x30e0).noprw(); // COINRD Inputs: D7 = Coin L, D6 = Coin R, D5 = SOUNDFLAG
 	map(0x5000, 0x507f).ram(); // 6532 ram
 	map(0x5080, 0x509f).rw("riot", FUNC(riot6532_device::read), FUNC(riot6532_device::write));
@@ -300,7 +299,7 @@ void tomcat_state::machine_start()
 	((uint16_t*)m_shared_ram)[0x0002] = 0xf600;
 	((uint16_t*)m_shared_ram)[0x0003] = 0x0000;
 
-	machine().device<nvram_device>("nvram")->set_base(m_nvram, 0x800);
+	subdevice<nvram_device>("nvram")->set_base(m_nvram, 0x800);
 
 	save_item(NAME(m_nvram));
 	save_item(NAME(m_dsp_BIO));
@@ -345,15 +344,15 @@ MACHINE_CONFIG_START(tomcat_state::tomcat)
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(4000))
 
-	MCFG_DEVICE_ADD("mainlatch", LS259, 0)
-	MCFG_ADDRESSABLE_LATCH_Q0_OUT_CB(OUTPUT("led1")) MCFG_DEVCB_INVERT
-	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(OUTPUT("led2")) MCFG_DEVCB_INVERT
-	MCFG_ADDRESSABLE_LATCH_Q2_OUT_CB(WRITELINE(*this, tomcat_state, mres_w))
-	MCFG_ADDRESSABLE_LATCH_Q3_OUT_CB(WRITELINE(*this, tomcat_state, sndres_w))
-	MCFG_ADDRESSABLE_LATCH_Q4_OUT_CB(WRITELINE(*this, tomcat_state, lnkmode_w))
-	MCFG_ADDRESSABLE_LATCH_Q5_OUT_CB(WRITELINE(*this, tomcat_state, err_w))
-	MCFG_ADDRESSABLE_LATCH_Q6_OUT_CB(WRITELINE(*this, tomcat_state, ack_w))
-	MCFG_ADDRESSABLE_LATCH_Q7_OUT_CB(WRITELINE(*this, tomcat_state, txbuff_w))
+	LS259(config, m_mainlatch);
+	m_mainlatch->q_out_cb<0>().set_output("led1").invert();
+	m_mainlatch->q_out_cb<1>().set_output("led2").invert();
+	m_mainlatch->q_out_cb<2>().set(FUNC(tomcat_state::mres_w));
+	m_mainlatch->q_out_cb<3>().set(FUNC(tomcat_state::sndres_w));
+	m_mainlatch->q_out_cb<4>().set(FUNC(tomcat_state::lnkmode_w));
+	m_mainlatch->q_out_cb<5>().set(FUNC(tomcat_state::err_w));
+	m_mainlatch->q_out_cb<6>().set(FUNC(tomcat_state::ack_w));
+	m_mainlatch->q_out_cb<7>().set(FUNC(tomcat_state::txbuff_w));
 
 	MCFG_NVRAM_ADD_0FILL("nvram")
 

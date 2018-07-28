@@ -93,11 +93,11 @@ void raiden_state::main_map(address_map &map)
 	map(0x07000, 0x07fff).ram().share("spriteram");
 	map(0x08000, 0x08fff).ram().share("shared_ram");
 	map(0x0a000, 0x0a00d).rw(m_seibu_sound, FUNC(seibu_sound_device::main_r), FUNC(seibu_sound_device::main_w)).umask16(0x00ff);
-	map(0x0c000, 0x0c7ff).w(this, FUNC(raiden_state::raiden_text_w)).share("videoram");
+	map(0x0c000, 0x0c7ff).w(FUNC(raiden_state::raiden_text_w)).share("videoram");
 	map(0x0e000, 0x0e001).portr("P1_P2");
 	map(0x0e002, 0x0e003).portr("DSW");
 	map(0x0e004, 0x0e005).nopw(); // watchdog?
-	map(0x0e006, 0x0e006).w(this, FUNC(raiden_state::raiden_control_w));
+	map(0x0e006, 0x0e006).w(FUNC(raiden_state::raiden_control_w));
 	map(0x0f000, 0x0f03f).writeonly().share("scroll_ram");
 	map(0xa0000, 0xfffff).rom();
 }
@@ -105,8 +105,8 @@ void raiden_state::main_map(address_map &map)
 void raiden_state::sub_map(address_map &map)
 {
 	map(0x00000, 0x01fff).ram();
-	map(0x02000, 0x027ff).ram().w(this, FUNC(raiden_state::raiden_background_w)).share("back_data");
-	map(0x02800, 0x02fff).ram().w(this, FUNC(raiden_state::raiden_foreground_w)).share("fore_data");
+	map(0x02000, 0x027ff).ram().w(FUNC(raiden_state::raiden_background_w)).share("back_data");
+	map(0x02800, 0x02fff).ram().w(FUNC(raiden_state::raiden_foreground_w)).share("fore_data");
 	map(0x03000, 0x03fff).ram().w(m_palette, FUNC(palette_device::write16)).share("palette");
 	map(0x04000, 0x04fff).ram().share("shared_ram");
 	map(0x07ffe, 0x07fff).nopw(); // ?
@@ -127,8 +127,8 @@ void raiden_state::raidenu_main_map(address_map &map)
 	map(0x0b000, 0x0b001).portr("P1_P2");
 	map(0x0b002, 0x0b003).portr("DSW");
 	map(0x0b004, 0x0b005).nopw(); // watchdog?
-	map(0x0b006, 0x0b006).w(this, FUNC(raiden_state::raiden_control_w));
-	map(0x0c000, 0x0c7ff).w(this, FUNC(raiden_state::raiden_text_w)).share("videoram");
+	map(0x0b006, 0x0b006).w(FUNC(raiden_state::raiden_control_w));
+	map(0x0c000, 0x0c7ff).w(FUNC(raiden_state::raiden_text_w)).share("videoram");
 	map(0x0d000, 0x0d00d).rw(m_seibu_sound, FUNC(seibu_sound_device::main_r), FUNC(seibu_sound_device::main_w)).umask16(0x00ff);
 	map(0xa0000, 0xfffff).rom();
 }
@@ -136,8 +136,8 @@ void raiden_state::raidenu_main_map(address_map &map)
 void raiden_state::raidenu_sub_map(address_map &map)
 {
 	map(0x00000, 0x05fff).ram();
-	map(0x06000, 0x067ff).ram().w(this, FUNC(raiden_state::raiden_background_w)).share("back_data");
-	map(0x06800, 0x06fff).ram().w(this, FUNC(raiden_state::raiden_foreground_w)).share("fore_data");
+	map(0x06000, 0x067ff).ram().w(FUNC(raiden_state::raiden_background_w)).share("back_data");
+	map(0x06800, 0x06fff).ram().w(FUNC(raiden_state::raiden_foreground_w)).share("fore_data");
 	map(0x07000, 0x07fff).ram().w(m_palette, FUNC(palette_device::write16)).share("palette");
 	map(0x08000, 0x08fff).ram().share("shared_ram");
 	map(0x0a000, 0x0a001).nopw(); // ?
@@ -156,8 +156,8 @@ void raiden_state::raidenb_main_map(address_map &map)
 	map(0x0b000, 0x0b001).portr("P1_P2");
 	map(0x0b002, 0x0b003).portr("DSW");
 	map(0x0b004, 0x0b005).nopw(); // watchdog?
-	map(0x0b006, 0x0b006).w(this, FUNC(raiden_state::raidenb_control_w));
-	map(0x0c000, 0x0c7ff).w(this, FUNC(raiden_state::raiden_text_w)).share("videoram");
+	map(0x0b006, 0x0b006).w(FUNC(raiden_state::raidenb_control_w));
+	map(0x0c000, 0x0c7ff).w(FUNC(raiden_state::raiden_text_w)).share("videoram");
 	map(0x0d000, 0x0d00d).rw(m_seibu_sound, FUNC(seibu_sound_device::main_r), FUNC(seibu_sound_device::main_w)).umask16(0x00ff);
 	map(0x0d040, 0x0d08f).rw("crtc", FUNC(seibu_crtc_device::read), FUNC(seibu_crtc_device::write));
 	map(0xa0000, 0xfffff).rom();
@@ -345,21 +345,22 @@ MACHINE_CONFIG_START(raiden_state::raiden)
 
 	MCFG_DEVICE_ADD("audiocpu", Z80, XTAL(14'318'181)/4) /* verified on pcb */
 	MCFG_DEVICE_PROGRAM_MAP(seibu_sound_map)
+	MCFG_DEVICE_IRQ_ACKNOWLEDGE_DEVICE("seibu_sound", seibu_sound_device, im0_vector_cb)
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(12000))
 
 	/* video hardware */
-	MCFG_DEVICE_ADD("spriteram", BUFFERED_SPRITERAM16)
+	BUFFERED_SPRITERAM16(config, m_spriteram);
 
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(59.60) /* verified on pcb */
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500) /* not accurate */)
-	MCFG_SCREEN_SIZE(32*8, 32*8)
-	MCFG_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MCFG_SCREEN_UPDATE_DRIVER(raiden_state, screen_update_raiden)
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE("spriteram", buffered_spriteram16_device, vblank_copy_rising))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE(*this, raiden_state, vblank_irq))
-	MCFG_SCREEN_PALETTE("palette")
+	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen.set_refresh_hz(59.60); // verified on pcb */
+	screen.set_vblank_time(ATTOSECONDS_IN_USEC(2500) /* not accurate */);
+	screen.set_size(32*8, 32*8);
+	screen.set_visarea(0*8, 32*8-1, 2*8, 30*8-1);
+	screen.set_screen_update(FUNC(raiden_state::screen_update_raiden));
+	screen.screen_vblank().set(m_spriteram, FUNC(buffered_spriteram16_device::vblank_copy_rising));
+	screen.screen_vblank().append(FUNC(raiden_state::vblank_irq));
+	screen.set_palette(m_palette);
 
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_raiden)
 	MCFG_PALETTE_ADD("palette", 2048)

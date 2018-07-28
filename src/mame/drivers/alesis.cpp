@@ -127,11 +127,11 @@ void alesis_state::hr16_mem(address_map &map)
 void alesis_state::hr16_io(address_map &map)
 {
 	map.unmap_value_high();
-	map(0x0000, 0x0000).r(this, FUNC(alesis_state::kb_r));
+	map(0x0000, 0x0000).r(FUNC(alesis_state::kb_r));
 	map(0x0002, 0x0002).w("dm3ag", FUNC(alesis_dm3ag_device::write));
-	map(0x0004, 0x0004).w(this, FUNC(alesis_state::led_w));
+	map(0x0004, 0x0004).w(FUNC(alesis_state::led_w));
 	map(0x0006, 0x0007).rw(m_lcdc, FUNC(hd44780_device::read), FUNC(hd44780_device::write));
-	map(0x0008, 0x0008).w(this, FUNC(alesis_state::kb_matrix_w));
+	map(0x0008, 0x0008).w(FUNC(alesis_state::kb_matrix_w));
 	map(0x8000, 0xffff).ram().share("nvram");   // 32Kx8 SRAM, (battery-backed)
 }
 
@@ -145,9 +145,9 @@ void alesis_state::sr16_io(address_map &map)
 {
 	//ADDRESS_MAP_UNMAP_HIGH
 	map(0x0000, 0x0000).mirror(0xff).w("dm3ag", FUNC(alesis_dm3ag_device::write));
-	map(0x0200, 0x0200).mirror(0xff).w(this, FUNC(alesis_state::sr16_lcd_w));
-	map(0x0300, 0x0300).mirror(0xff).w(this, FUNC(alesis_state::kb_matrix_w));
-	map(0x0400, 0x0400).mirror(0xff).r(this, FUNC(alesis_state::kb_r));
+	map(0x0200, 0x0200).mirror(0xff).w(FUNC(alesis_state::sr16_lcd_w));
+	map(0x0300, 0x0300).mirror(0xff).w(FUNC(alesis_state::kb_matrix_w));
+	map(0x0400, 0x0400).mirror(0xff).r(FUNC(alesis_state::kb_r));
 	map(0x8000, 0xffff).ram().share("nvram");   // 32Kx8 SRAM, (battery-backed)
 }
 
@@ -155,9 +155,9 @@ void alesis_state::mmt8_io(address_map &map)
 {
 	map.unmap_value_high();
 	map(0x0000, 0xffff).ram().share("nvram");   // 2x32Kx8 SRAM, (battery-backed)
-	map(0xff02, 0xff02).w(this, FUNC(alesis_state::track_led_w));
-	map(0xff04, 0xff04).rw(this, FUNC(alesis_state::mmt8_led_r), FUNC(alesis_state::mmt8_led_w));
-	map(0xff06, 0xff06).w(this, FUNC(alesis_state::kb_matrix_w));
+	map(0xff02, 0xff02).w(FUNC(alesis_state::track_led_w));
+	map(0xff04, 0xff04).rw(FUNC(alesis_state::mmt8_led_r), FUNC(alesis_state::mmt8_led_w));
+	map(0xff06, 0xff06).w(FUNC(alesis_state::kb_matrix_w));
 	map(0xff08, 0xff09).rw(m_lcdc, FUNC(hd44780_device::read), FUNC(hd44780_device::write));
 	map(0xff0e, 0xff0e).nopr();
 }
@@ -416,12 +416,12 @@ HD44780_PIXEL_UPDATE(alesis_state::sr16_pixel_update)
 
 MACHINE_CONFIG_START(alesis_state::hr16)
 	/* basic machine hardware */
-	MCFG_DEVICE_ADD("maincpu",I8031, 12_MHz_XTAL)
-	MCFG_DEVICE_PROGRAM_MAP(hr16_mem)
-	MCFG_DEVICE_IO_MAP(hr16_io)
-	MCFG_MCS51_PORT_P1_IN_CB(IOPORT("SELECT"))
-	MCFG_MCS51_PORT_P3_IN_CB(READ8(*this, alesis_state, p3_r))
-	MCFG_MCS51_PORT_P3_OUT_CB(WRITE8(*this, alesis_state, p3_w))
+	I8031(config, m_maincpu, 12_MHz_XTAL);
+	m_maincpu->set_addrmap(AS_PROGRAM, &alesis_state::hr16_mem);
+	m_maincpu->set_addrmap(AS_IO, &alesis_state::hr16_io);
+	m_maincpu->port_in_cb<1>().set_ioport("SELECT");
+	m_maincpu->port_in_cb<3>().set(FUNC(alesis_state::p3_r));
+	m_maincpu->port_out_cb<3>().set(FUNC(alesis_state::p3_w));
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", LCD)
@@ -429,7 +429,6 @@ MACHINE_CONFIG_START(alesis_state::hr16)
 	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500)) /* not accurate */
 	MCFG_SCREEN_SIZE(6*16, 9*2)
 	MCFG_SCREEN_VISIBLE_AREA(0, 6*16-1, 0, 9*2-1)
-	MCFG_DEFAULT_LAYOUT(layout_lcd)
 	MCFG_SCREEN_UPDATE_DEVICE("hd44780", hd44780_device, screen_update)
 	MCFG_SCREEN_PALETTE("palette")
 
@@ -451,17 +450,17 @@ MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(alesis_state::sr16)
 	hr16(config);
+
 	/* basic machine hardware */
-	MCFG_DEVICE_MODIFY("maincpu")
-	MCFG_DEVICE_PROGRAM_MAP(sr16_mem)
-	MCFG_DEVICE_IO_MAP(sr16_io)
-	MCFG_MCS51_PORT_P1_IN_CB(NOOP)
+	m_maincpu->set_addrmap(AS_PROGRAM, &alesis_state::sr16_mem);
+	m_maincpu->set_addrmap(AS_IO, &alesis_state::sr16_io);
+	m_maincpu->port_in_cb<1>().set_constant(0);
 
 	/* video hardware */
 	MCFG_SCREEN_MODIFY("screen")
 	MCFG_SCREEN_SIZE(6*8, 9*2)
 	MCFG_SCREEN_VISIBLE_AREA(0, 6*8-1, 0, 9*2-1)
-	MCFG_DEFAULT_LAYOUT(layout_sr16)
+	config.set_default_layout(layout_sr16);
 
 	MCFG_DEVICE_MODIFY("hd44780")
 	MCFG_HD44780_LCD_SIZE(2, 8)
@@ -470,12 +469,12 @@ MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(alesis_state::mmt8)
 	hr16(config);
+
 	/* basic machine hardware */
-	MCFG_DEVICE_MODIFY("maincpu")
-	MCFG_DEVICE_IO_MAP(mmt8_io)
-	MCFG_MCS51_PORT_P1_IN_CB(READ8(*this, alesis_state, kb_r))
-	MCFG_MCS51_PORT_P3_IN_CB(READ8(*this, alesis_state, mmt8_p3_r))
-	MCFG_MCS51_PORT_P3_OUT_CB(WRITE8(*this, alesis_state, mmt8_p3_w))
+	m_maincpu->set_addrmap(AS_IO, &alesis_state::mmt8_io);
+	m_maincpu->port_in_cb<1>().set(FUNC(alesis_state::kb_r));
+	m_maincpu->port_in_cb<3>().set(FUNC(alesis_state::mmt8_p3_r));
+	m_maincpu->port_out_cb<3>().set(FUNC(alesis_state::mmt8_p3_w));
 
 	MCFG_DEVICE_REMOVE("dm3ag")
 MACHINE_CONFIG_END

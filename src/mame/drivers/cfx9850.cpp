@@ -27,7 +27,7 @@ Debugging information:
 
 #include "emu.h"
 #include "cpu/hcd62121/hcd62121.h"
-#include "rendlay.h"
+#include "emupal.h"
 #include "screen.h"
 
 class cfx9850_state : public driver_device
@@ -298,8 +298,6 @@ MACHINE_CONFIG_START(cfx9850_state::cfx9850)
 	MCFG_SCREEN_VISIBLE_AREA(0, 127, 0, 63)
 	MCFG_SCREEN_UPDATE_DRIVER(cfx9850_state, screen_update_cfx9850)
 	MCFG_SCREEN_PALETTE("palette")
-
-	MCFG_DEFAULT_LAYOUT(layout_lcd)
 
 	// TODO: Verify amount of colors and palette. Colors can be changed by changing the contrast.
 	MCFG_PALETTE_ADD("palette", 4)

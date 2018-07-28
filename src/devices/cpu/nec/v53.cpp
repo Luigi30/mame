@@ -416,8 +416,8 @@ WRITE_LINE_MEMBER(v53_base_device::hack_w)
 
 void v53_base_device::v53_internal_port_map(address_map &map)
 {
-	map(0xffe0, 0xffe0).w(this, FUNC(v53_base_device::BSEL_w)); // 0xffe0 // uPD71037 DMA mode bank selection register
-	map(0xffe1, 0xffe1).w(this, FUNC(v53_base_device::BADR_w)); // 0xffe1 // uPD71037 DMA mode bank register peripheral mapping (also uses OPHA)
+	map(0xffe0, 0xffe0).w(FUNC(v53_base_device::BSEL_w)); // 0xffe0 // uPD71037 DMA mode bank selection register
+	map(0xffe1, 0xffe1).w(FUNC(v53_base_device::BADR_w)); // 0xffe1 // uPD71037 DMA mode bank register peripheral mapping (also uses OPHA)
 //  AM_RANGE(0xffe2, 0xffe3) // (reserved     ,  0x00ff) // 0xffe2
 //  AM_RANGE(0xffe2, 0xffe3) // (reserved     ,  0xff00) // 0xffe3
 //  AM_RANGE(0xffe4, 0xffe5) // (reserved     ,  0x00ff) // 0xffe4
@@ -425,28 +425,28 @@ void v53_base_device::v53_internal_port_map(address_map &map)
 //  AM_RANGE(0xffe6, 0xffe7) // (reserved     ,  0x00ff) // 0xffe6
 //  AM_RANGE(0xffe6, 0xffe7) // (reserved     ,  0xff00) // 0xffe7
 //  AM_RANGE(0xffe8, 0xffe9) // (reserved     ,  0x00ff) // 0xffe8
-	map(0xffe9, 0xffe9).w(this, FUNC(v53_base_device::BRC_w)); // 0xffe9 // baud rate counter (used for serial peripheral)
-	map(0xffea, 0xffea).w(this, FUNC(v53_base_device::WMB0_w)); // 0xffea // waitstate control
-	map(0xffeb, 0xffeb).w(this, FUNC(v53_base_device::WCY1_w)); // 0xffeb // waitstate control
-	map(0xffec, 0xffec).w(this, FUNC(v53_base_device::WCY0_w)); // 0xffec // waitstate control
-	map(0xffed, 0xffed).w(this, FUNC(v53_base_device::WAC_w)); // 0xffed // waitstate control
+	map(0xffe9, 0xffe9).w(FUNC(v53_base_device::BRC_w)); // 0xffe9 // baud rate counter (used for serial peripheral)
+	map(0xffea, 0xffea).w(FUNC(v53_base_device::WMB0_w)); // 0xffea // waitstate control
+	map(0xffeb, 0xffeb).w(FUNC(v53_base_device::WCY1_w)); // 0xffeb // waitstate control
+	map(0xffec, 0xffec).w(FUNC(v53_base_device::WCY0_w)); // 0xffec // waitstate control
+	map(0xffed, 0xffed).w(FUNC(v53_base_device::WAC_w)); // 0xffed // waitstate control
 //  AM_RANGE(0xffee, 0xffef) // (reserved     ,  0x00ff) // 0xffee
 //  AM_RANGE(0xffee, 0xffef) // (reserved     ,  0xff00) // 0xffef
-	map(0xfff0, 0xfff0).w(this, FUNC(v53_base_device::TCKS_w)); // 0xfff0 // timer clocks
-	map(0xfff1, 0xfff1).w(this, FUNC(v53_base_device::SBCR_w)); // 0xfff1 // internal clock divider, halt behavior etc.
-	map(0xfff2, 0xfff2).w(this, FUNC(v53_base_device::REFC_w)); // 0xfff2 // ram refresh control
-	map(0xfff3, 0xfff3).w(this, FUNC(v53_base_device::WMB1_w)); // 0xfff3 // waitstate control
-	map(0xfff4, 0xfff4).w(this, FUNC(v53_base_device::WCY2_w)); // 0xfff4 // waitstate control
-	map(0xfff5, 0xfff5).w(this, FUNC(v53_base_device::WCY3_w)); // 0xfff5 // waitstate control
-	map(0xfff6, 0xfff6).w(this, FUNC(v53_base_device::WCY4_w)); // 0xfff6 // waitstate control
+	map(0xfff0, 0xfff0).w(FUNC(v53_base_device::TCKS_w)); // 0xfff0 // timer clocks
+	map(0xfff1, 0xfff1).w(FUNC(v53_base_device::SBCR_w)); // 0xfff1 // internal clock divider, halt behavior etc.
+	map(0xfff2, 0xfff2).w(FUNC(v53_base_device::REFC_w)); // 0xfff2 // ram refresh control
+	map(0xfff3, 0xfff3).w(FUNC(v53_base_device::WMB1_w)); // 0xfff3 // waitstate control
+	map(0xfff4, 0xfff4).w(FUNC(v53_base_device::WCY2_w)); // 0xfff4 // waitstate control
+	map(0xfff5, 0xfff5).w(FUNC(v53_base_device::WCY3_w)); // 0xfff5 // waitstate control
+	map(0xfff6, 0xfff6).w(FUNC(v53_base_device::WCY4_w)); // 0xfff6 // waitstate control
 //  AM_RANGE(0xfff6, 0xfff7) // (reserved     ,  0xff00) // 0xfff7
-	map(0xfff8, 0xfff8).w(this, FUNC(v53_base_device::SULA_w)); // 0xfff8 // peripheral mapping
-	map(0xfff9, 0xfff9).w(this, FUNC(v53_base_device::TULA_w)); // 0xfff9 // peripheral mapping
-	map(0xfffa, 0xfffa).w(this, FUNC(v53_base_device::IULA_w)); // 0xfffa // peripheral mapping
-	map(0xfffb, 0xfffb).w(this, FUNC(v53_base_device::DULA_w)); // 0xfffb // peripheral mapping
-	map(0xfffc, 0xfffc).w(this, FUNC(v53_base_device::OPHA_w)); // 0xfffc // peripheral mapping (upper bits, common)
-	map(0xfffd, 0xfffd).w(this, FUNC(v53_base_device::OPSEL_w)); // 0xfffd // peripheral enabling
-	map(0xfffe, 0xfffe).w(this, FUNC(v53_base_device::SCTL_w)); // 0xfffe // peripheral configuration (& byte / word mapping)
+	map(0xfff8, 0xfff8).w(FUNC(v53_base_device::SULA_w)); // 0xfff8 // peripheral mapping
+	map(0xfff9, 0xfff9).w(FUNC(v53_base_device::TULA_w)); // 0xfff9 // peripheral mapping
+	map(0xfffa, 0xfffa).w(FUNC(v53_base_device::IULA_w)); // 0xfffa // peripheral mapping
+	map(0xfffb, 0xfffb).w(FUNC(v53_base_device::DULA_w)); // 0xfffb // peripheral mapping
+	map(0xfffc, 0xfffc).w(FUNC(v53_base_device::OPHA_w)); // 0xfffc // peripheral mapping (upper bits, common)
+	map(0xfffd, 0xfffd).w(FUNC(v53_base_device::OPSEL_w)); // 0xfffd // peripheral enabling
+	map(0xfffe, 0xfffe).w(FUNC(v53_base_device::SCTL_w)); // 0xfffe // peripheral configuration (& byte / word mapping)
 //  AM_RANGE(0xfffe, 0xffff) // (reserved     ,  0xff00) // 0xffff
 }
 
@@ -488,40 +488,36 @@ WRITE_LINE_MEMBER(v53_base_device::internal_irq_w)
 
 MACHINE_CONFIG_START(v53_base_device::device_add_mconfig)
 
-	MCFG_DEVICE_ADD("pit", PIT8254, 0) // functionality identical to uPD71054
-	MCFG_PIT8253_CLK0(16000000) // manual implicitly claims that these runs at same speed as the CPU
-	MCFG_PIT8253_CLK1(16000000)
-	MCFG_PIT8253_CLK2(16000000)
-	MCFG_PIT8253_OUT0_HANDLER(WRITELINE( *this, v53_base_device, tcu_out0_trampoline_cb ))
-	MCFG_PIT8253_OUT1_HANDLER(WRITELINE( *this, v53_base_device, tcu_out1_trampoline_cb ))
-	MCFG_PIT8253_OUT2_HANDLER(WRITELINE( *this, v53_base_device, tcu_out2_trampoline_cb ))
+	PIT8254(config, m_v53tcu, 0); // functionality identical to uPD71054
+	m_v53tcu->set_clk<0>(16000000); // manual implicitly claims that these runs at same speed as the CPU
+	m_v53tcu->set_clk<1>(16000000);
+	m_v53tcu->set_clk<2>(16000000);
+	m_v53tcu->out_handler<0>().set([this] (int state) { m_out0_handler(state); });
+	m_v53tcu->out_handler<1>().set([this] (int state) { m_out1_handler(state); });
+	m_v53tcu->out_handler<2>().set([this] (int state) { m_out2_handler(state); });
 
+	V53_DMAU(config, m_v53dmau, 4000000);
+	m_v53dmau->out_hreq_callback().set([this] (int state) { m_out_hreq_cb(state); });
+	m_v53dmau->out_eop_callback().set([this] (int state) { m_out_eop_cb(state); });
+	m_v53dmau->in_memr_callback().set([this] (address_space &space, offs_t offset) { return m_in_memr_cb(space, offset); });
+	m_v53dmau->out_memw_callback().set([this] (address_space &space, offs_t offset, uint8_t data) { m_out_memw_cb(space, offset, data); });
+	m_v53dmau->in_ior_callback<0>().set([this] (address_space &space, offs_t offset) { return m_in_ior_0_cb(space, offset); });
+	m_v53dmau->in_ior_callback<1>().set([this] (address_space &space, offs_t offset) { return m_in_ior_1_cb(space, offset); });
+	m_v53dmau->in_ior_callback<2>().set([this] (address_space &space, offs_t offset) { return m_in_ior_2_cb(space, offset); });
+	m_v53dmau->in_ior_callback<3>().set([this] (address_space &space, offs_t offset) { return m_in_ior_3_cb(space, offset); });
+	m_v53dmau->out_iow_callback<0>().set([this] (address_space &space, offs_t offset, uint8_t data) { m_out_iow_0_cb(space, offset, data); });
+	m_v53dmau->out_iow_callback<1>().set([this] (address_space &space, offs_t offset, uint8_t data) { m_out_iow_1_cb(space, offset, data); });
+	m_v53dmau->out_iow_callback<2>().set([this] (address_space &space, offs_t offset, uint8_t data) { m_out_iow_2_cb(space, offset, data); });
+	m_v53dmau->out_iow_callback<3>().set([this] (address_space &space, offs_t offset, uint8_t data) { m_out_iow_3_cb(space, offset, data); });
+	m_v53dmau->out_dack_callback<0>().set([this] (int state) { m_out_dack_0_cb(state); });
+	m_v53dmau->out_dack_callback<1>().set([this] (int state) { m_out_dack_1_cb(state); });
+	m_v53dmau->out_dack_callback<2>().set([this] (int state) { m_out_dack_2_cb(state); });
+	m_v53dmau->out_dack_callback<3>().set([this] (int state) { m_out_dack_3_cb(state); });
 
-	MCFG_DEVICE_ADD("upd71071dma", V53_DMAU, 4000000)
-	MCFG_AM9517A_OUT_HREQ_CB(WRITELINE(*this, v53_base_device, hreq_trampoline_cb))
-	MCFG_AM9517A_OUT_EOP_CB(WRITELINE(*this, v53_base_device, eop_trampoline_cb))
-	MCFG_AM9517A_IN_MEMR_CB(READ8(*this, v53_base_device, dma_memr_trampoline_r))
-	MCFG_AM9517A_OUT_MEMW_CB(WRITE8(*this, v53_base_device, dma_memw_trampoline_w))
-	MCFG_AM9517A_IN_IOR_0_CB(READ8(*this, v53_base_device, dma_io_0_trampoline_r))
-	MCFG_AM9517A_IN_IOR_1_CB(READ8(*this, v53_base_device, dma_io_1_trampoline_r))
-	MCFG_AM9517A_IN_IOR_2_CB(READ8(*this, v53_base_device, dma_io_2_trampoline_r))
-	MCFG_AM9517A_IN_IOR_3_CB(READ8(*this, v53_base_device, dma_io_3_trampoline_r))
-	MCFG_AM9517A_OUT_IOW_0_CB(WRITE8(*this, v53_base_device, dma_io_0_trampoline_w))
-	MCFG_AM9517A_OUT_IOW_1_CB(WRITE8(*this, v53_base_device, dma_io_1_trampoline_w))
-	MCFG_AM9517A_OUT_IOW_2_CB(WRITE8(*this, v53_base_device, dma_io_2_trampoline_w))
-	MCFG_AM9517A_OUT_IOW_3_CB(WRITE8(*this, v53_base_device, dma_io_3_trampoline_w))
-	MCFG_AM9517A_OUT_DACK_0_CB(WRITELINE(*this, v53_base_device, dma_dack0_trampoline_w))
-	MCFG_AM9517A_OUT_DACK_1_CB(WRITELINE(*this, v53_base_device, dma_dack1_trampoline_w))
-	MCFG_AM9517A_OUT_DACK_2_CB(WRITELINE(*this, v53_base_device, dma_dack2_trampoline_w))
-	MCFG_AM9517A_OUT_DACK_3_CB(WRITELINE(*this, v53_base_device, dma_dack3_trampoline_w))
-
-
-	MCFG_DEVICE_ADD("upd71059pic", PIC8259, 0)
-	MCFG_PIC8259_OUT_INT_CB(WRITELINE(*this, v53_base_device, internal_irq_w))
-	MCFG_PIC8259_IN_SP_CB(VCC)
-	MCFG_PIC8259_CASCADE_ACK_CB(READ8(*this, v53_base_device, get_pic_ack))
-
-
+	PIC8259(config, m_v53icu, 0);
+	m_v53icu->out_int_callback().set(FUNC(v53_base_device::internal_irq_w));
+	m_v53icu->in_sp_callback().set_constant(1);
+	m_v53icu->read_slave_ack_callback().set(FUNC(v53_base_device::get_pic_ack));
 
 	MCFG_DEVICE_ADD("v53scu", V53_SCU, 0)
 	MCFG_I8251_TXD_HANDLER(WRITELINE(*this, v53_base_device, scu_txd_trampoline_cb))
@@ -535,8 +531,8 @@ MACHINE_CONFIG_START(v53_base_device::device_add_mconfig)
 MACHINE_CONFIG_END
 
 
-v53_base_device::v53_base_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, uint8_t prefetch_size, uint8_t prefetch_cycles, uint32_t chip_type)
-	: nec_common_device(mconfig, type, tag, owner, clock, true, prefetch_size, prefetch_cycles, chip_type),
+v53_base_device::v53_base_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, uint8_t prefetch_size, uint8_t prefetch_cycles, uint32_t chip_type) :
+	nec_common_device(mconfig, type, tag, owner, clock, true, prefetch_size, prefetch_cycles, chip_type),
 	m_io_space_config( "io", ENDIANNESS_LITTLE, 16, 16, 0, address_map_constructor(FUNC(v53_base_device::v53_internal_port_map), this) ),
 	m_v53tcu(*this, "pit"),
 	m_v53dmau(*this, "upd71071dma"),

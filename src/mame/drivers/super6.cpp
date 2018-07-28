@@ -2,12 +2,20 @@
 // copyright-holders:Curt Coder
 /*
 
-    TODO:
 
-    - floppy (cannot be implemented currently since this is another case of halting the cpu mid-instruction)
-    - interrupts
-    - DMA
-    - peripheral interfaces
+ToDo:
+- peripheral interfaces
+
+- Fix floppy. It needs to WAIT the cpu whenever port 0x14 is read, wait
+  for either DRQ ir INTRQ to assert, then release the cpu and then do the
+  actual port read. Our Z80 cannot do that.
+  The schematic isn't clear, but it seems the 2 halves of U16 (as shown) have
+  a common element, so that activity on one side can affect what happens on
+  the other side.
+  If you uncomment the line in fdc_intrq_w, and change the BOGUSWAIT to WAIT
+  in fdc_r, then load up the cpm disk (from software list), it will read the
+  CP/M boot track into memory and attempt to run it. However, it has an issue
+  and returns to the monitor. The other disks are useless.
 
 */
 
@@ -193,11 +201,9 @@ READ8_MEMBER( super6_state::fdc_r )
 
 	*/
 
-	// don't crash please... but it's true, WAIT does nothing in our Z80
-	//fatalerror("Z80 WAIT not supported by MAME core\n");
 	m_maincpu->set_input_line(Z80_INPUT_LINE_BOGUSWAIT, ASSERT_LINE);
 
-	return !m_fdc->intrq_r() << 7;
+	return m_fdc->intrq_r() ? 0x7f : 0xff;
 }
 
 
@@ -224,47 +230,24 @@ WRITE8_MEMBER( super6_state::fdc_w )
 	*/
 
 	// disk drive select
-	floppy_image_device *m_floppy = nullptr;
+	floppy_image_device *floppy = nullptr;
 
 	if ((data & 3) == 0)
-		m_floppy = m_floppy0->get_device();
+		floppy = m_floppy0->get_device();
 	if ((data & 3) == 1)
-		m_floppy = m_floppy1->get_device();
+		floppy = m_floppy1->get_device();
 
-	m_fdc->set_floppy(m_floppy);
-	if (m_floppy) m_floppy->mon_w(0);
+	m_fdc->set_floppy(floppy);
+	if (floppy) floppy->mon_w(0);
 
 	// head select
-	if (m_floppy) m_floppy->ss_w(BIT(data, 2));
+	if (floppy) floppy->ss_w(BIT(data, 2));
 
 	// disk density
 	m_fdc->dden_w(!BIT(data, 3));
-}
 
-
-//-------------------------------------------------
-//  baud_w - baud rate
-//-------------------------------------------------
-
-WRITE8_MEMBER( super6_state::baud_w )
-{
-	/*
-
-	    bit     description
-
-	    0       SIO channel A baud bit A
-	    1       SIO channel A baud bit B
-	    2       SIO channel A baud bit C
-	    3       SIO channel A baud bit D
-	    4       SIO channel B baud bit A
-	    5       SIO channel B baud bit B
-	    6       SIO channel B baud bit C
-	    7       SIO channel B baud bit D
-
-	*/
-
-	m_brg->str_w(data & 0x0f);
-	m_brg->stt_w(data >> 4);
+	// disk size
+	m_fdc->set_unscaled_clock (BIT(data, 4) ? 1'000'000 : 2'000'000);  // division occurs inside fdc depending on ENMF
 }
 
 
@@ -289,16 +272,17 @@ void super6_state::super6_mem(address_map &map)
 void super6_state::super6_io(address_map &map)
 {
 	map.global_mask(0xff);
+	map.unmap_value_high();
 	map(0x00, 0x03).rw(m_dart, FUNC(z80dart_device::ba_cd_r), FUNC(z80dart_device::ba_cd_w));
 	map(0x04, 0x07).rw(m_pio, FUNC(z80pio_device::read), FUNC(z80pio_device::write));
 	map(0x08, 0x0b).rw(m_ctc, FUNC(z80ctc_device::read), FUNC(z80ctc_device::write));
 	map(0x0c, 0x0f).rw(m_fdc, FUNC(wd2793_device::read), FUNC(wd2793_device::write));
-	map(0x10, 0x10).mirror(0x03).rw(m_dma, FUNC(z80dma_device::read), FUNC(z80dma_device::write));
-	map(0x14, 0x14).rw(this, FUNC(super6_state::fdc_r), FUNC(super6_state::fdc_w));
-	map(0x15, 0x15).portr("J7").w(this, FUNC(super6_state::s100_w));
-	map(0x16, 0x16).w(this, FUNC(super6_state::bank0_w));
-	map(0x17, 0x17).w(this, FUNC(super6_state::bank1_w));
-	map(0x18, 0x18).mirror(0x03).w(this, FUNC(super6_state::baud_w));
+	map(0x10, 0x10).mirror(0x03).rw(m_dma, FUNC(z80dma_device::bus_r), FUNC(z80dma_device::bus_w));
+	map(0x14, 0x14).rw(FUNC(super6_state::fdc_r), FUNC(super6_state::fdc_w));
+	map(0x15, 0x15).portr("J7").w(FUNC(super6_state::s100_w));
+	map(0x16, 0x16).w(FUNC(super6_state::bank0_w));
+	map(0x17, 0x17).w(FUNC(super6_state::bank1_w));
+	map(0x18, 0x18).mirror(0x03).w(BR1945_TAG, FUNC(com8116_device::stt_str_w));
 //  AM_RANGE(0x40, 0x40) ?
 //  AM_RANGE(0xe0, 0xe7) HDC?
 }
@@ -315,7 +299,7 @@ void super6_state::super6_io(address_map &map)
 
 static INPUT_PORTS_START( super6 )
 	PORT_START("J7")
-	PORT_DIPNAME( 0x0f, 0x0f, "SIO Channel A Baud Rate" ) PORT_DIPLOCATION("J7:1,2,3,4")
+	PORT_DIPNAME( 0x0f, 0x0e, "SIO Channel A Baud Rate" ) PORT_DIPLOCATION("J7:1,2,3,4")
 	PORT_DIPSETTING(    0x00, "50" )
 	PORT_DIPSETTING(    0x01, "75" )
 	PORT_DIPSETTING(    0x02, "110" )
@@ -356,11 +340,6 @@ INPUT_PORTS_END
 //  Z80CTC
 //-------------------------------------------------
 
-TIMER_DEVICE_CALLBACK_MEMBER( super6_state::ctc_tick )
-{
-	m_ctc->trg0(1);
-	m_ctc->trg0(0);
-}
 
 //-------------------------------------------------
 //  Z80DMA
@@ -402,14 +381,15 @@ static void super6_floppies(device_slot_interface &device)
 
 WRITE_LINE_MEMBER( super6_state::fdc_intrq_w )
 {
-	if (state) m_maincpu->set_input_line(Z80_INPUT_LINE_BOGUSWAIT, CLEAR_LINE);
+	if (state) m_maincpu->set_input_line(Z80_INPUT_LINE_WAIT, CLEAR_LINE);
 
-	m_ctc->trg3(!state);
+	m_ctc->trg3(state);   // J6 pin 7-8
+	// m_maincpu->set_state_int(Z80_AF, 0x7f00);   // hack, see notes
 }
 
 WRITE_LINE_MEMBER( super6_state::fdc_drq_w )
 {
-	if (state) m_maincpu->set_input_line(Z80_INPUT_LINE_BOGUSWAIT, CLEAR_LINE);
+	if (state) m_maincpu->set_input_line(Z80_INPUT_LINE_WAIT, CLEAR_LINE);
 
 	m_dma->rdy_w(state);
 }
@@ -419,24 +399,14 @@ WRITE_LINE_MEMBER( super6_state::fdc_drq_w )
 //  z80_daisy_config super6_daisy_chain
 //-------------------------------------------------
 
-static const z80_daisy_config super6_daisy_chain[] =
-{
-	{ Z80CTC_TAG },
-	{ Z80DART_TAG },
-	{ Z80PIO_TAG },
-	{ nullptr }
-};
-
-
-static DEVICE_INPUT_DEFAULTS_START( terminal )
-	DEVICE_INPUT_DEFAULTS( "RS232_TXBAUD", 0xff, RS232_BAUD_19200 )
-	DEVICE_INPUT_DEFAULTS( "RS232_RXBAUD", 0xff, RS232_BAUD_19200 )
-	DEVICE_INPUT_DEFAULTS( "RS232_STARTBITS", 0xff, RS232_STARTBITS_1 )
-	DEVICE_INPUT_DEFAULTS( "RS232_DATABITS", 0xff, RS232_DATABITS_8 )
-	DEVICE_INPUT_DEFAULTS( "RS232_PARITY", 0xff, RS232_PARITY_NONE )
-	DEVICE_INPUT_DEFAULTS( "RS232_STOPBITS", 0xff, RS232_STOPBITS_1 )
-DEVICE_INPUT_DEFAULTS_END
-
+// no evidence of daisy chain in use - removed for now
+//static const z80_daisy_config super6_daisy_chain[] =
+//{
+//	{ Z80CTC_TAG },
+//	{ Z80DART_TAG },
+//	{ Z80PIO_TAG },
+//	{ nullptr }
+//};
 
 
 //**************************************************************************
@@ -461,11 +431,6 @@ void super6_state::machine_reset()
 	m_bank0 = m_bank1 = 0;
 
 	bankswitch();
-
-	uint8_t baud = m_j7->read();
-
-	m_brg->str_w(baud & 0x0f);
-	m_brg->stt_w((baud >> 4) & 0x07);
 }
 
 
@@ -480,36 +445,41 @@ void super6_state::machine_reset()
 
 MACHINE_CONFIG_START(super6_state::super6)
 	// basic machine hardware
-	MCFG_DEVICE_ADD(Z80_TAG, Z80, 24_MHz_XTAL / 4)
+	MCFG_DEVICE_ADD(m_maincpu, Z80, 24_MHz_XTAL / 4)
 	MCFG_DEVICE_PROGRAM_MAP(super6_mem)
 	MCFG_DEVICE_IO_MAP(super6_io)
-	MCFG_Z80_DAISY_CHAIN(super6_daisy_chain)
+	//MCFG_Z80_DAISY_CHAIN(super6_daisy_chain)
 
 	// devices
-	MCFG_DEVICE_ADD(Z80CTC_TAG, Z80CTC, 24_MHz_XTAL / 4)
+	MCFG_DEVICE_ADD(m_ctc, Z80CTC, 24_MHz_XTAL / 4)
+	MCFG_Z80CTC_ZC0_CB(WRITELINE(m_ctc, z80ctc_device, trg1))     // J6 pin 2-3
 	MCFG_Z80CTC_INTR_CB(INPUTLINE(Z80_TAG, INPUT_LINE_IRQ0))
 
-	MCFG_TIMER_DRIVER_ADD_PERIODIC("ctc", super6_state, ctc_tick, attotime::from_hz(24_MHz_XTAL / 16))
+	clock_device &ctc_tick(CLOCK(config, "ctc_tick", 24_MHz_XTAL / 16));
+	ctc_tick.signal_handler().set(m_ctc, FUNC(z80ctc_device::trg0));   // J6 pin 1-14 (1.5MHz)
 
-	MCFG_DEVICE_ADD(Z80DMA_TAG, Z80DMA, 24_MHz_XTAL / 6)
-	MCFG_Z80DMA_OUT_BUSREQ_CB(INPUTLINE(Z80_TAG, INPUT_LINE_HALT))
-	MCFG_Z80DMA_OUT_INT_CB(WRITELINE(Z80CTC_TAG, z80ctc_device, trg2))
+	MCFG_DEVICE_ADD(m_dma, Z80DMA, 24_MHz_XTAL / 6)
+	MCFG_Z80DMA_OUT_BUSREQ_CB(WRITELINE(m_dma, z80dma_device, bai_w))
+	MCFG_Z80DMA_OUT_INT_CB(WRITELINE(m_ctc, z80ctc_device, trg2))
 	MCFG_Z80DMA_IN_MREQ_CB(READ8(*this, super6_state, memory_read_byte))
 	MCFG_Z80DMA_OUT_MREQ_CB(WRITE8(*this, super6_state, memory_write_byte))
 	MCFG_Z80DMA_IN_IORQ_CB(READ8(*this, super6_state, io_read_byte))
 	MCFG_Z80DMA_OUT_IORQ_CB(WRITE8(*this, super6_state, io_write_byte))
 
-	MCFG_DEVICE_ADD(Z80PIO_TAG, Z80PIO, 24_MHz_XTAL / 4)
+	MCFG_DEVICE_ADD(m_pio, Z80PIO, 24_MHz_XTAL / 4)
 	MCFG_Z80PIO_OUT_INT_CB(INPUTLINE(Z80_TAG, INPUT_LINE_IRQ0))
 
-	MCFG_DEVICE_ADD(WD2793_TAG, WD2793, 1000000)
+	MCFG_DEVICE_ADD(m_fdc, WD2793, 24_MHz_XTAL / 12)
+	MCFG_WD_FDC_FORCE_READY
 	MCFG_WD_FDC_INTRQ_CALLBACK(WRITELINE(*this, super6_state, fdc_intrq_w))
 	MCFG_WD_FDC_DRQ_CALLBACK(WRITELINE(*this, super6_state, fdc_drq_w))
 
-	MCFG_FLOPPY_DRIVE_ADD(WD2793_TAG":0", super6_floppies, "525dd", floppy_image_device::default_floppy_formats)
-	MCFG_FLOPPY_DRIVE_ADD(WD2793_TAG":1", super6_floppies, nullptr, floppy_image_device::default_floppy_formats)
+	MCFG_FLOPPY_DRIVE_ADD(m_floppy0, super6_floppies, "525dd", floppy_image_device::default_floppy_formats)
+	MCFG_FLOPPY_DRIVE_SOUND(true)
+	MCFG_FLOPPY_DRIVE_ADD(m_floppy1, super6_floppies, nullptr, floppy_image_device::default_floppy_formats)
+	MCFG_FLOPPY_DRIVE_SOUND(true)
 
-	MCFG_DEVICE_ADD(Z80DART_TAG, Z80DART, 24_MHz_XTAL / 4)
+	MCFG_DEVICE_ADD(m_dart, Z80DART, 24_MHz_XTAL / 4)
 	MCFG_Z80DART_OUT_TXDA_CB(WRITELINE(RS232_A_TAG, rs232_port_device, write_txd))
 	MCFG_Z80DART_OUT_DTRA_CB(WRITELINE(RS232_A_TAG, rs232_port_device, write_dtr))
 	MCFG_Z80DART_OUT_RTSA_CB(WRITELINE(RS232_A_TAG, rs232_port_device, write_rts))
@@ -519,17 +489,16 @@ MACHINE_CONFIG_START(super6_state::super6)
 	MCFG_Z80DART_OUT_INT_CB(INPUTLINE(Z80_TAG, INPUT_LINE_IRQ0))
 
 	MCFG_DEVICE_ADD(RS232_A_TAG, RS232_PORT, default_rs232_devices, "terminal")
-	MCFG_RS232_RXD_HANDLER(WRITELINE(Z80DART_TAG, z80dart_device, rxa_w))
-	MCFG_SLOT_OPTION_DEVICE_INPUT_DEFAULTS("terminal", terminal)
+	MCFG_RS232_RXD_HANDLER(WRITELINE(m_dart, z80dart_device, rxa_w))
 
 	MCFG_DEVICE_ADD(RS232_B_TAG, RS232_PORT, default_rs232_devices, nullptr)
-	MCFG_RS232_RXD_HANDLER(WRITELINE(Z80DART_TAG, z80dart_device, rxb_w))
+	MCFG_RS232_RXD_HANDLER(WRITELINE(m_dart, z80dart_device, rxb_w))
 
-	MCFG_DEVICE_ADD(BR1945_TAG, COM8116, 5.0688_MHz_XTAL)
-	MCFG_COM8116_FR_HANDLER(WRITELINE(Z80DART_TAG, z80dart_device, txca_w))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE(Z80DART_TAG, z80dart_device, rxca_w))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE(Z80CTC_TAG, z80ctc_device, trg1))
-	MCFG_COM8116_FT_HANDLER(WRITELINE(Z80DART_TAG, z80dart_device, rxtxcb_w))
+	COM8116(config, m_brg, 5.0688_MHz_XTAL);
+	m_brg->fr_handler().set(m_dart, FUNC(z80dart_device::txca_w));
+	m_brg->fr_handler().append(m_dart, FUNC(z80dart_device::rxca_w));
+	m_brg->fr_handler().append(m_ctc, FUNC(z80ctc_device::trg1));
+	m_brg->ft_handler().set(m_dart, FUNC(z80dart_device::rxtxcb_w));
 
 	// internal ram
 	MCFG_RAM_ADD(RAM_TAG)

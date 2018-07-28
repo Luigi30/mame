@@ -35,6 +35,7 @@ References:
 #include "machine/nl_hazelvid.h"
 #include "netlist/devices/net_lib.h"
 
+#include "emupal.h"
 #include "screen.h"
 
 
@@ -135,6 +136,9 @@ public:
 	{
 	}
 
+	void hazl1500(machine_config &config);
+
+private:
 	virtual void machine_start() override;
 	virtual void machine_reset() override;
 	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
@@ -165,10 +169,9 @@ public:
 	NETDEV_ANALOG_CALLBACK_MEMBER(vblank_cb);
 	NETDEV_ANALOG_CALLBACK_MEMBER(tvinterq_cb);
 
-	void hazl1500(machine_config &config);
 	void hazl1500_io(address_map &map);
 	void hazl1500_mem(address_map &map);
-private:
+
 	required_device<cpu_device> m_maincpu;
 	required_device<netlist_mame_device> m_video_board;
 	required_device<netlist_mame_ram_pointer_device> m_u9;
@@ -478,18 +481,18 @@ void hazl1500_state::hazl1500_mem(address_map &map)
 {
 	map.unmap_value_high();
 	map(0x0000, 0x07ff).rom();
-	map(0x3000, 0x377f).rw(this, FUNC(hazl1500_state::ram_r), FUNC(hazl1500_state::ram_w));
+	map(0x3000, 0x377f).rw(FUNC(hazl1500_state::ram_r), FUNC(hazl1500_state::ram_w));
 	map(0x3780, 0x37ff).ram();
 }
 
 void hazl1500_state::hazl1500_io(address_map &map)
 {
 	map.global_mask(0xff);
-	map(0x7f, 0x7f).rw(this, FUNC(hazl1500_state::status_reg_2_r), FUNC(hazl1500_state::status_reg_3_w));
-	map(0xbf, 0xbf).rw(this, FUNC(hazl1500_state::uart_r), FUNC(hazl1500_state::uart_w));
-	map(0xdf, 0xdf).r(this, FUNC(hazl1500_state::kbd_encoder_r));
-	map(0xef, 0xef).rw(this, FUNC(hazl1500_state::system_test_r), FUNC(hazl1500_state::refresh_address_w));
-	map(0xf7, 0xf7).r(this, FUNC(hazl1500_state::kbd_status_latch_r));
+	map(0x7f, 0x7f).rw(FUNC(hazl1500_state::status_reg_2_r), FUNC(hazl1500_state::status_reg_3_w));
+	map(0xbf, 0xbf).rw(FUNC(hazl1500_state::uart_r), FUNC(hazl1500_state::uart_w));
+	map(0xdf, 0xdf).r(FUNC(hazl1500_state::kbd_encoder_r));
+	map(0xef, 0xef).rw(FUNC(hazl1500_state::system_test_r), FUNC(hazl1500_state::refresh_address_w));
+	map(0xf7, 0xf7).r(FUNC(hazl1500_state::kbd_status_latch_r));
 }
 
 	/*
@@ -713,9 +716,9 @@ MACHINE_CONFIG_START(hazl1500_state::hazl1500)
 	MCFG_PALETTE_ADD_MONOCHROME("palette")
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_hazl1500)
 
-	MCFG_DEVICE_ADD(BAUDGEN_TAG, COM8116, XTAL(5'068'800))
-	MCFG_COM8116_FR_HANDLER(WRITELINE("uart", ay51013_device, write_tcp))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("uart", ay51013_device, write_rcp))
+	com8116_device &baudgen(COM8116(config, BAUDGEN_TAG, XTAL(5'068'800)));
+	baudgen.fr_handler().set(m_uart, FUNC(ay51013_device::write_tcp));
+	baudgen.fr_handler().append(m_uart, FUNC(ay51013_device::write_rcp));
 
 	MCFG_DEVICE_ADD(UART_TAG, AY51013, 0)
 	MCFG_AY51013_WRITE_DAV_CB(WRITELINE("mainint", input_merger_device, in_w<0>))

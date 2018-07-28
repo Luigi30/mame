@@ -53,17 +53,17 @@ void shisen_state::shisen_map(address_map &map)
 {
 	map(0x0000, 0x7fff).rom();
 	map(0x8000, 0xbfff).bankr("bank1");
-	map(0xc800, 0xcaff).ram().w(this, FUNC(shisen_state::paletteram_w)).share("paletteram");
-	map(0xd000, 0xdfff).ram().w(this, FUNC(shisen_state::videoram_w)).share("videoram");
+	map(0xc800, 0xcaff).ram().w(FUNC(shisen_state::paletteram_w)).share("paletteram");
+	map(0xd000, 0xdfff).ram().w(FUNC(shisen_state::videoram_w)).share("videoram");
 	map(0xe000, 0xffff).ram();
 }
 
 void shisen_state::shisen_io_map(address_map &map)
 {
 	map.global_mask(0xff);
-	map(0x00, 0x00).rw(this, FUNC(shisen_state::dsw1_r), FUNC(shisen_state::coin_w));
+	map(0x00, 0x00).rw(FUNC(shisen_state::dsw1_r), FUNC(shisen_state::coin_w));
 	map(0x01, 0x01).portr("DSW2").w("soundlatch", FUNC(generic_latch_8_device::write));
-	map(0x02, 0x02).portr("P1").w(this, FUNC(shisen_state::bankswitch_w));
+	map(0x02, 0x02).portr("P1").w(FUNC(shisen_state::bankswitch_w));
 	map(0x03, 0x03).portr("P2");
 	map(0x04, 0x04).portr("COIN");
 }
@@ -240,7 +240,6 @@ MACHINE_CONFIG_START(shisen_state::shisen)
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_shisen)
 	MCFG_PALETTE_ADD("palette", 256)
 
-
 	/* sound hardware */
 	SPEAKER(config, "lspeaker").front_left();
 	SPEAKER(config, "rspeaker").front_right();
@@ -249,8 +248,7 @@ MACHINE_CONFIG_START(shisen_state::shisen)
 	MCFG_GENERIC_LATCH_DATA_PENDING_CB(WRITELINE("soundirq", rst_neg_buffer_device, rst18_w))
 	MCFG_GENERIC_LATCH_SEPARATE_ACKNOWLEDGE(true)
 
-	MCFG_DEVICE_ADD("soundirq", RST_NEG_BUFFER, 0)
-	MCFG_RST_BUFFER_INT_CALLBACK(INPUTLINE("soundcpu", 0))
+	RST_NEG_BUFFER(config, "soundirq", 0).int_callback().set_inputline("soundcpu", 0);
 
 	MCFG_DEVICE_ADD("m72", IREM_M72_AUDIO)
 

@@ -56,6 +56,7 @@
 #include "sound/sn76496.h"
 #include "video/ef9369.h"
 #include "video/tms34061.h"
+#include "emupal.h"
 #include "screen.h"
 #include "softlist.h"
 #include "speaker.h"
@@ -70,8 +71,8 @@
 class guab_state : public driver_device
 {
 public:
-	guab_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
+	guab_state(const machine_config &mconfig, device_type type, const char *tag) :
+		driver_device(mconfig, type, tag),
 		m_maincpu(*this, "maincpu"),
 		m_tms34061(*this, "tms34061"),
 		m_sn(*this, "snsnd"),
@@ -81,6 +82,11 @@ public:
 		m_sound_buffer(0), m_sound_latch(false)
 	{ }
 
+	void guab(machine_config &config);
+
+	DECLARE_INPUT_CHANGED_MEMBER(coin_inserted);
+
+private:
 	EF9369_COLOR_UPDATE(ef9369_color_update);
 	DECLARE_WRITE16_MEMBER(tms34061_w);
 	DECLARE_READ16_MEMBER(tms34061_r);
@@ -98,16 +104,14 @@ public:
 	DECLARE_READ8_MEMBER(watchdog_r);
 	DECLARE_WRITE8_MEMBER(watchdog_w);
 
-	DECLARE_INPUT_CHANGED_MEMBER(coin_inserted);
 
 	DECLARE_FLOPPY_FORMATS(floppy_formats);
 
-	void guab(machine_config &config);
 	void guab_map(address_map &map);
-protected:
+
 	virtual void machine_start() override;
 
-private:
+
 	required_device<cpu_device> m_maincpu;
 	required_device<tms34061_device> m_tms34061;
 	required_device<sn76489_device> m_sn;
@@ -139,7 +143,7 @@ void guab_state::guab_map(address_map &map)
 	map(0x080000, 0x080fff).ram();
 	map(0x100001, 0x100001).rw("ef9369", FUNC(ef9369_device::data_r), FUNC(ef9369_device::data_w));
 	map(0x100003, 0x100003).w("ef9369", FUNC(ef9369_device::address_w));
-	map(0x800000, 0xb0ffff).rw(this, FUNC(guab_state::tms34061_r), FUNC(guab_state::tms34061_w));
+	map(0x800000, 0xb0ffff).rw(FUNC(guab_state::tms34061_r), FUNC(guab_state::tms34061_w));
 	map(0xb10000, 0xb1ffff).ram();
 	map(0xb80000, 0xb8ffff).ram();
 	map(0xb90000, 0xb9ffff).ram();
@@ -535,9 +539,9 @@ MACHINE_CONFIG_START(guab_state::guab)
 	MCFG_RS232_CTS_HANDLER(WRITELINE("acia6850_1", acia6850_device, write_cts))
 	MCFG_SLOT_OPTION_DEVICE_INPUT_DEFAULTS("keyboard", acia_1_rs232_defaults)
 
-	MCFG_DEVICE_ADD("acia_clock", CLOCK, 153600) // source? the ptm doesn't seem to output any common baud values
-	MCFG_CLOCK_SIGNAL_HANDLER(WRITELINE("acia6850_1", acia6850_device, write_txc))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("acia6850_1", acia6850_device, write_rxc))
+	clock_device &acia_clock(CLOCK(config, "acia_clock", 153600)); // source? the ptm doesn't seem to output any common baud values
+	acia_clock.signal_handler().set("acia6850_1", FUNC(acia6850_device::write_txc));
+	acia_clock.signal_handler().append("acia6850_1", FUNC(acia6850_device::write_rxc));
 
 	MCFG_DEVICE_ADD("acia6850_2", ACIA6850, 0)
 
@@ -550,7 +554,7 @@ MACHINE_CONFIG_START(guab_state::guab)
 
 	MCFG_SOFTWARE_LIST_ADD("floppy_list", "guab")
 
-	MCFG_DEFAULT_LAYOUT(layout_guab)
+	config.set_default_layout(layout_guab);
 MACHINE_CONFIG_END
 
 

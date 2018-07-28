@@ -22,8 +22,8 @@
  * Another reference: http://www.eecs.berkeley.edu/Pubs/TechRpts/1986/CSD-86-289.pdf
  *
  * TODO
+ *   - rework cammu addressing (to allow unaligned tlb access)
  *   - fault register values
- *   - c3 protection faults
  *   - hard-wired and dynamic tlb
  *   - cache
  *   - bus errors
@@ -44,72 +44,72 @@
 // each variant of the cammu has different registers and a different addressing map
 void cammu_c4t_device::map(address_map &map)
 {
-	map(0x008, 0x00b).rw(this, FUNC(cammu_c4t_device::ram_line_r), FUNC(cammu_c4t_device::ram_line_w));
-	map(0x010, 0x013).rw(this, FUNC(cammu_c4t_device::s_pdo_r), FUNC(cammu_c4t_device::s_pdo_w));
-	map(0x018, 0x01b).rw(this, FUNC(cammu_c4t_device::u_pdo_r), FUNC(cammu_c4t_device::u_pdo_w));
-	map(0x020, 0x023).rw(this, FUNC(cammu_c4t_device::htlb_offset_r), FUNC(cammu_c4t_device::htlb_offset_w));
-	map(0x028, 0x02b).rw(this, FUNC(cammu_c4t_device::i_fault_r), FUNC(cammu_c4t_device::i_fault_w));
-	map(0x030, 0x033).rw(this, FUNC(cammu_c4t_device::fault_address_1_r), FUNC(cammu_c4t_device::fault_address_1_w));
-	map(0x038, 0x03b).rw(this, FUNC(cammu_c4t_device::fault_address_2_r), FUNC(cammu_c4t_device::fault_address_2_w));
-	map(0x040, 0x043).rw(this, FUNC(cammu_c4t_device::fault_data_1_lo_r), FUNC(cammu_c4t_device::fault_data_1_lo_w));
-	map(0x048, 0x04b).rw(this, FUNC(cammu_c4t_device::fault_data_1_hi_r), FUNC(cammu_c4t_device::fault_data_1_hi_w));
-	map(0x050, 0x053).rw(this, FUNC(cammu_c4t_device::fault_data_2_lo_r), FUNC(cammu_c4t_device::fault_data_2_lo_w));
-	map(0x058, 0x05b).rw(this, FUNC(cammu_c4t_device::fault_data_2_hi_r), FUNC(cammu_c4t_device::fault_data_2_hi_w));
-	map(0x060, 0x063).rw(this, FUNC(cammu_c4t_device::c4_bus_poll_r), FUNC(cammu_c4t_device::c4_bus_poll_w));
-	map(0x068, 0x06b).rw(this, FUNC(cammu_c4t_device::control_r), FUNC(cammu_c4t_device::control_w));
-	map(0x070, 0x073).rw(this, FUNC(cammu_c4t_device::bio_control_r), FUNC(cammu_c4t_device::bio_control_w));
-	map(0x078, 0x07b).rw(this, FUNC(cammu_c4t_device::bio_address_tag_r), FUNC(cammu_c4t_device::bio_address_tag_w));
+	map(0x008, 0x00b).rw(FUNC(cammu_c4t_device::ram_line_r), FUNC(cammu_c4t_device::ram_line_w));
+	map(0x010, 0x013).rw(FUNC(cammu_c4t_device::s_pdo_r), FUNC(cammu_c4t_device::s_pdo_w));
+	map(0x018, 0x01b).rw(FUNC(cammu_c4t_device::u_pdo_r), FUNC(cammu_c4t_device::u_pdo_w));
+	map(0x020, 0x023).rw(FUNC(cammu_c4t_device::htlb_offset_r), FUNC(cammu_c4t_device::htlb_offset_w));
+	map(0x028, 0x02b).rw(FUNC(cammu_c4t_device::i_fault_r), FUNC(cammu_c4t_device::i_fault_w));
+	map(0x030, 0x033).rw(FUNC(cammu_c4t_device::fault_address_1_r), FUNC(cammu_c4t_device::fault_address_1_w));
+	map(0x038, 0x03b).rw(FUNC(cammu_c4t_device::fault_address_2_r), FUNC(cammu_c4t_device::fault_address_2_w));
+	map(0x040, 0x043).rw(FUNC(cammu_c4t_device::fault_data_1_lo_r), FUNC(cammu_c4t_device::fault_data_1_lo_w));
+	map(0x048, 0x04b).rw(FUNC(cammu_c4t_device::fault_data_1_hi_r), FUNC(cammu_c4t_device::fault_data_1_hi_w));
+	map(0x050, 0x053).rw(FUNC(cammu_c4t_device::fault_data_2_lo_r), FUNC(cammu_c4t_device::fault_data_2_lo_w));
+	map(0x058, 0x05b).rw(FUNC(cammu_c4t_device::fault_data_2_hi_r), FUNC(cammu_c4t_device::fault_data_2_hi_w));
+	map(0x060, 0x063).rw(FUNC(cammu_c4t_device::c4_bus_poll_r), FUNC(cammu_c4t_device::c4_bus_poll_w));
+	map(0x068, 0x06b).rw(FUNC(cammu_c4t_device::control_r), FUNC(cammu_c4t_device::control_w));
+	map(0x070, 0x073).rw(FUNC(cammu_c4t_device::bio_control_r), FUNC(cammu_c4t_device::bio_control_w));
+	map(0x078, 0x07b).rw(FUNC(cammu_c4t_device::bio_address_tag_r), FUNC(cammu_c4t_device::bio_address_tag_w));
 
-	map(0x100, 0x103).rw(this, FUNC(cammu_c4t_device::cache_data_lo_r), FUNC(cammu_c4t_device::cache_data_lo_w));
-	map(0x104, 0x107).rw(this, FUNC(cammu_c4t_device::cache_data_hi_r), FUNC(cammu_c4t_device::cache_data_hi_w));
-	map(0x108, 0x10b).rw(this, FUNC(cammu_c4t_device::cache_cpu_tag_r), FUNC(cammu_c4t_device::cache_cpu_tag_w));
-	map(0x10c, 0x10f).rw(this, FUNC(cammu_c4t_device::cache_system_tag_valid_r), FUNC(cammu_c4t_device::cache_system_tag_valid_w));
-	map(0x110, 0x113).rw(this, FUNC(cammu_c4t_device::cache_system_tag_r), FUNC(cammu_c4t_device::cache_system_tag_w));
-	map(0x118, 0x11b).rw(this, FUNC(cammu_c4t_device::tlb_va_line_r), FUNC(cammu_c4t_device::tlb_va_line_w));
-	map(0x11c, 0x11f).rw(this, FUNC(cammu_c4t_device::tlb_ra_line_r), FUNC(cammu_c4t_device::tlb_ra_line_w));
+	map(0x100, 0x103).rw(FUNC(cammu_c4t_device::cache_data_lo_r), FUNC(cammu_c4t_device::cache_data_lo_w));
+	map(0x104, 0x107).rw(FUNC(cammu_c4t_device::cache_data_hi_r), FUNC(cammu_c4t_device::cache_data_hi_w));
+	map(0x108, 0x10b).rw(FUNC(cammu_c4t_device::cache_cpu_tag_r), FUNC(cammu_c4t_device::cache_cpu_tag_w));
+	map(0x10c, 0x10f).rw(FUNC(cammu_c4t_device::cache_system_tag_valid_r), FUNC(cammu_c4t_device::cache_system_tag_valid_w));
+	map(0x110, 0x113).rw(FUNC(cammu_c4t_device::cache_system_tag_r), FUNC(cammu_c4t_device::cache_system_tag_w));
+	map(0x118, 0x11b).rw(FUNC(cammu_c4t_device::tlb_va_line_r), FUNC(cammu_c4t_device::tlb_va_line_w));
+	map(0x11c, 0x11f).rw(FUNC(cammu_c4t_device::tlb_ra_line_r), FUNC(cammu_c4t_device::tlb_ra_line_w));
 }
 
 void cammu_c4i_device::map(address_map &map)
 {
-	map(0x000, 0x003).rw(this, FUNC(cammu_c4i_device::reset_r), FUNC(cammu_c4i_device::reset_w));
-	map(0x010, 0x013).rw(this, FUNC(cammu_c4i_device::s_pdo_r), FUNC(cammu_c4i_device::s_pdo_w));
-	map(0x018, 0x01b).rw(this, FUNC(cammu_c4i_device::u_pdo_r), FUNC(cammu_c4i_device::u_pdo_w));
-	map(0x020, 0x023).rw(this, FUNC(cammu_c4i_device::clr_s_data_tlb_r), FUNC(cammu_c4i_device::clr_s_data_tlb_w));
-	map(0x028, 0x02b).rw(this, FUNC(cammu_c4i_device::clr_u_data_tlb_r), FUNC(cammu_c4i_device::clr_u_data_tlb_w));
-	map(0x030, 0x033).rw(this, FUNC(cammu_c4i_device::clr_s_insn_tlb_r), FUNC(cammu_c4i_device::clr_s_insn_tlb_w));
-	map(0x038, 0x03b).rw(this, FUNC(cammu_c4i_device::clr_u_insn_tlb_r), FUNC(cammu_c4i_device::clr_u_insn_tlb_w));
+	map(0x000, 0x003).rw(FUNC(cammu_c4i_device::reset_r), FUNC(cammu_c4i_device::reset_w));
+	map(0x010, 0x013).rw(FUNC(cammu_c4i_device::s_pdo_r), FUNC(cammu_c4i_device::s_pdo_w));
+	map(0x018, 0x01b).rw(FUNC(cammu_c4i_device::u_pdo_r), FUNC(cammu_c4i_device::u_pdo_w));
+	map(0x020, 0x023).rw(FUNC(cammu_c4i_device::clr_s_data_tlb_r), FUNC(cammu_c4i_device::clr_s_data_tlb_w));
+	map(0x028, 0x02b).rw(FUNC(cammu_c4i_device::clr_u_data_tlb_r), FUNC(cammu_c4i_device::clr_u_data_tlb_w));
+	map(0x030, 0x033).rw(FUNC(cammu_c4i_device::clr_s_insn_tlb_r), FUNC(cammu_c4i_device::clr_s_insn_tlb_w));
+	map(0x038, 0x03b).rw(FUNC(cammu_c4i_device::clr_u_insn_tlb_r), FUNC(cammu_c4i_device::clr_u_insn_tlb_w));
 
-	map(0x068, 0x06b).rw(this, FUNC(cammu_c4i_device::control_r), FUNC(cammu_c4i_device::control_w));
+	map(0x068, 0x06b).rw(FUNC(cammu_c4i_device::control_r), FUNC(cammu_c4i_device::control_w));
 
-	map(0x080, 0x083).rw(this, FUNC(cammu_c4i_device::test_data_r), FUNC(cammu_c4i_device::test_data_w));
-	map(0x088, 0x08b).rw(this, FUNC(cammu_c4i_device::i_fault_r), FUNC(cammu_c4i_device::i_fault_w));
-	map(0x090, 0x093).rw(this, FUNC(cammu_c4i_device::fault_address_1_r), FUNC(cammu_c4i_device::fault_address_1_w));
-	map(0x098, 0x09b).rw(this, FUNC(cammu_c4i_device::fault_address_2_r), FUNC(cammu_c4i_device::fault_address_2_w));
-	map(0x0a0, 0x0a3).rw(this, FUNC(cammu_c4i_device::fault_data_1_lo_r), FUNC(cammu_c4i_device::fault_data_1_lo_w));
-	map(0x0a8, 0x0ab).rw(this, FUNC(cammu_c4i_device::fault_data_1_hi_r), FUNC(cammu_c4i_device::fault_data_1_hi_w));
-	map(0x0b0, 0x0b3).rw(this, FUNC(cammu_c4i_device::fault_data_2_lo_r), FUNC(cammu_c4i_device::fault_data_2_lo_w));
-	map(0x0b8, 0x0bb).rw(this, FUNC(cammu_c4i_device::fault_data_2_hi_r), FUNC(cammu_c4i_device::fault_data_2_hi_w));
-	map(0x0c0, 0x0c3).rw(this, FUNC(cammu_c4i_device::test_address_r), FUNC(cammu_c4i_device::test_address_w));
+	map(0x080, 0x083).rw(FUNC(cammu_c4i_device::test_data_r), FUNC(cammu_c4i_device::test_data_w));
+	map(0x088, 0x08b).rw(FUNC(cammu_c4i_device::i_fault_r), FUNC(cammu_c4i_device::i_fault_w));
+	map(0x090, 0x093).rw(FUNC(cammu_c4i_device::fault_address_1_r), FUNC(cammu_c4i_device::fault_address_1_w));
+	map(0x098, 0x09b).rw(FUNC(cammu_c4i_device::fault_address_2_r), FUNC(cammu_c4i_device::fault_address_2_w));
+	map(0x0a0, 0x0a3).rw(FUNC(cammu_c4i_device::fault_data_1_lo_r), FUNC(cammu_c4i_device::fault_data_1_lo_w));
+	map(0x0a8, 0x0ab).rw(FUNC(cammu_c4i_device::fault_data_1_hi_r), FUNC(cammu_c4i_device::fault_data_1_hi_w));
+	map(0x0b0, 0x0b3).rw(FUNC(cammu_c4i_device::fault_data_2_lo_r), FUNC(cammu_c4i_device::fault_data_2_lo_w));
+	map(0x0b8, 0x0bb).rw(FUNC(cammu_c4i_device::fault_data_2_hi_r), FUNC(cammu_c4i_device::fault_data_2_hi_w));
+	map(0x0c0, 0x0c3).rw(FUNC(cammu_c4i_device::test_address_r), FUNC(cammu_c4i_device::test_address_w));
 }
 
 void cammu_c3_device::map(address_map &map)
 {
 	map(0x000, 0x0ff).noprw(); // tlb
-	map(0x104, 0x107).rw(this, FUNC(cammu_c3_device::s_pdo_r), FUNC(cammu_c3_device::s_pdo_w));
-	map(0x108, 0x10b).rw(this, FUNC(cammu_c3_device::u_pdo_r), FUNC(cammu_c3_device::u_pdo_w));
-	map(0x110, 0x113).rw(this, FUNC(cammu_c3_device::fault_r), FUNC(cammu_c3_device::fault_w));
-	map(0x140, 0x143).rw(this, FUNC(cammu_c3_device::control_r), FUNC(cammu_c3_device::control_w));
-	map(0x180, 0x183).rw(this, FUNC(cammu_c3_device::reset_r), FUNC(cammu_c3_device::reset_w));
+	map(0x104, 0x107).rw(FUNC(cammu_c3_device::s_pdo_r), FUNC(cammu_c3_device::s_pdo_w));
+	map(0x108, 0x10b).rw(FUNC(cammu_c3_device::u_pdo_r), FUNC(cammu_c3_device::u_pdo_w));
+	map(0x110, 0x113).rw(FUNC(cammu_c3_device::fault_r), FUNC(cammu_c3_device::fault_w));
+	map(0x140, 0x143).rw(FUNC(cammu_c3_device::control_r), FUNC(cammu_c3_device::control_w));
+	map(0x180, 0x183).rw(FUNC(cammu_c3_device::reset_r), FUNC(cammu_c3_device::reset_w));
 }
 
 void cammu_c3_device::map_global(address_map &map)
 {
 	map(0x000, 0x0ff).noprw(); // global tlb
-	map(0x104, 0x107).w(this, FUNC(cammu_c3_device::g_s_pdo_w));
-	map(0x108, 0x10b).w(this, FUNC(cammu_c3_device::g_u_pdo_w));
-	map(0x110, 0x113).w(this, FUNC(cammu_c3_device::g_fault_w));
-	map(0x140, 0x143).w(this, FUNC(cammu_c3_device::g_control_w));
-	map(0x180, 0x183).w(this, FUNC(cammu_c3_device::g_reset_w));
+	map(0x104, 0x107).w(FUNC(cammu_c3_device::g_s_pdo_w));
+	map(0x108, 0x10b).w(FUNC(cammu_c3_device::g_u_pdo_w));
+	map(0x110, 0x113).w(FUNC(cammu_c3_device::g_fault_w));
+	map(0x140, 0x143).w(FUNC(cammu_c3_device::g_control_w));
+	map(0x180, 0x183).w(FUNC(cammu_c3_device::g_reset_w));
 }
 
 DEFINE_DEVICE_TYPE(CAMMU_C4T, cammu_c4t_device, "c4t", "C4E/C4T CAMMU")
@@ -250,17 +250,21 @@ bool cammu_device::memory_translate(const u32 ssw, const int spacenum, const int
 cammu_device::translated_t cammu_device::translate_address(const u32 ssw, const u32 virtual_address, const access_size size, const access_type mode)
 {
 	// get effective user/supervisor mode
-	const bool user = mode == EXECUTE ? ssw & SSW_U : ssw & (SSW_U | SSW_UU);
+	const bool user = (mode == EXECUTE) ? (ssw & SSW_U) : (ssw & (SSW_U | SSW_UU));
 
 	// check for alignment faults
 	if (!machine().side_effects_disabled() && get_alignment())
 	{
 		if ((mode == EXECUTE && (virtual_address & 0x1)) || (mode != EXECUTE && virtual_address & (size - 1)))
 		{
-			set_fault_address(virtual_address);
-			m_exception_func(mode == EXECUTE ? EXCEPTION_I_ALIGNMENT_FAULT : EXCEPTION_D_ALIGNMENT_FAULT);
+			// FIXME: tlb access is not aligned; this hack lets us ignore for now
+			if (mode == EXECUTE || user || (virtual_address & 0xfffff900) != 0x00004800)
+			{
+				set_fault_address(virtual_address);
+				m_exception_func(mode == EXECUTE ? EXCEPTION_I_ALIGNMENT_FAULT : EXCEPTION_D_ALIGNMENT_FAULT);
 
-			return { nullptr, 0 };
+				return { nullptr, 0 };
+			}
 		}
 	}
 
@@ -309,23 +313,44 @@ cammu_device::translated_t cammu_device::translate_address(const u32 ssw, const 
 	}
 
 	// check for protection level faults
-	if (!machine().side_effects_disabled() && !get_access(mode, pte.entry, ssw))
+	if (!machine().side_effects_disabled())
 	{
-		LOG("%s protection fault address 0x%08x ssw 0x%08x pte 0x%08x (%s)\n",
-			mode == EXECUTE ? "execute" : mode == READ ? "read" : "write",
-			virtual_address, ssw, pte.entry, machine().describe_context());
+		if ((mode == EXECUTE) && !get_access(mode, pte.entry, ssw))
+		{
+			LOGMASKED(LOG_ACCESS, "execute protection fault address 0x%08x ssw 0x%08x pte 0x%08x (%s)\n",
+				virtual_address, ssw, pte.entry, machine().describe_context());
 
-		set_fault_address(virtual_address);
-		m_exception_func(
-			mode == EXECUTE ? EXCEPTION_I_EXECUTE_PROTECT_FAULT :
-			mode == READ ? EXCEPTION_D_READ_PROTECT_FAULT :
-			EXCEPTION_D_WRITE_PROTECT_FAULT);
+			set_fault_address(virtual_address);
+			m_exception_func(EXCEPTION_I_EXECUTE_PROTECT_FAULT);
 
-		return { nullptr, 0 };
+			return { nullptr, 0 };
+		}
+
+		if ((mode & READ) && !get_access(READ, pte.entry, ssw))
+		{
+			LOGMASKED(LOG_ACCESS, "read protection fault address 0x%08x ssw 0x%08x pte 0x%08x (%s)\n",
+				virtual_address, ssw, pte.entry, machine().describe_context());
+
+			set_fault_address(virtual_address);
+			m_exception_func(EXCEPTION_D_READ_PROTECT_FAULT);
+
+			return { nullptr, 0 };
+		}
+
+		if ((mode & WRITE) && !get_access(WRITE, pte.entry, ssw))
+		{
+			LOGMASKED(LOG_ACCESS, "write protection fault address 0x%08x ssw 0x%08x pte 0x%08x (%s)\n",
+				virtual_address, ssw, pte.entry, machine().describe_context());
+
+			set_fault_address(virtual_address);
+			m_exception_func(EXCEPTION_D_WRITE_PROTECT_FAULT);
+
+			return { nullptr, 0 };
+		}
 	}
 
 	// set pte referenced and dirty flags
-	if (mode & WRITE && !(pte.entry & PTE_D))
+	if ((mode & WRITE) && !(pte.entry & PTE_D))
 		m_space[ST0]->write_dword(pte.address, pte.entry | PTE_D | PTE_R);
 	else if (!(pte.entry & PTE_R))
 		m_space[ST0]->write_dword(pte.address, pte.entry | PTE_R);
@@ -380,37 +405,25 @@ bool cammu_c4_device::get_access(const access_type mode, const u32 pte, const u3
 	{
 	case READ: return pte & 0x20;
 	case WRITE: return pte & 0x10;
-	case RMW: return (pte & 0x30) == 0x30;
 	case EXECUTE: return pte & 0x08;
-	}
 
-	return false;
+	default: return false;
+	}
 }
 
 bool cammu_c3_device::get_access(const access_type mode, const u32 pte, const u32 ssw) const
 {
-	// FIXME: logic is not correct yet
-	return true;
+	const u8 pl = (pte & PTE_PL) >> 3;
 
-	const u8 column = (mode == EXECUTE ? i_cammu_column : d_cammu_column)[(ssw & SSW_PL) >> 9];
-	const u8 access = cammu_matrix[column][(pte & PTE_PL) >> 3];
-
-	switch (mode)
-	{
-	case READ: return access & R;
-	case WRITE: return access & W;
-	case RMW: return (access & (R | W)) == (R | W);
-	case EXECUTE: return access & E;
-	}
-
-	return false;
+	// special case for user data mode
+	if ((mode != EXECUTE) && !(ssw & SSW_U) && (ssw & SSW_UU))
+		return protection_matrix[(ssw & SSW_KU) ? 2 : 3][pl] & mode;
+	else
+		return protection_matrix[((ssw ^ SSW_K) & (SSW_U | SSW_K)) >> 29][pl] & mode;
 }
 
 // C100/C300 CAMMU protection level matrix
-const u8 cammu_c3_device::i_cammu_column[] = { 1, 1, 0, 0, 1, 1, 0, 0, 3, 3, 2, 2, 3, 3, 2, 2 };
-const u8 cammu_c3_device::d_cammu_column[] = { 1, 1, 0, 0, 3, 2, 3, 2, 3, 3, 2, 2, 3, 3, 2, 2 };
-
-const cammu_c3_device::c3_access_t cammu_c3_device::cammu_matrix[][16] =
+const u8 cammu_c3_device::protection_matrix[4][16] =
 {
 	{ RW,  RW,  RW,  RW,  RW,  RW,  RW,  RWE, RE,  R,   R,   R,   N,   N,   N,   N },
 	{ N,   RW,  RW,  RW,  RW,  RW,  R,   RWE, N,   RE,  R,   R,   RE,  N,   N,   N },

@@ -18,7 +18,7 @@ Atari Triple Hunt Driver
 
 void triplhnt_state::init_triplhnt()
 {
-	machine().device<nvram_device>("nvram")->set_base(m_cmos, sizeof(m_cmos));
+	subdevice<nvram_device>("nvram")->set_base(m_cmos, sizeof(m_cmos));
 }
 
 
@@ -27,31 +27,6 @@ void triplhnt_state::set_collision(int code)
 	m_hit_code = code;
 
 	m_maincpu->set_input_line(0, HOLD_LINE);
-}
-
-
-WRITE_LINE_MEMBER(triplhnt_state::ram_2_w)
-{
-	if (state)
-		m_cmos[m_cmos_latch] = m_da_latch;
-}
-
-
-WRITE_LINE_MEMBER(triplhnt_state::sprite_zoom_w)
-{
-	m_sprite_zoom = state;
-}
-
-
-WRITE_LINE_MEMBER(triplhnt_state::sprite_bank_w)
-{
-	m_sprite_bank = state;
-}
-
-
-WRITE_LINE_MEMBER(triplhnt_state::lamp1_w)
-{
-	m_lamp = state ? 1 : 0;
 }
 
 
@@ -133,10 +108,10 @@ void triplhnt_state::triplhnt_map(address_map &map)
 	map(0x0c08, 0x0c08).portr("0C08");
 	map(0x0c09, 0x0c09).portr("0C09");
 	map(0x0c0a, 0x0c0a).portr("0C0A");
-	map(0x0c0b, 0x0c0b).r(this, FUNC(triplhnt_state::input_port_4_r));
-	map(0x0c10, 0x0c1f).r(this, FUNC(triplhnt_state::da_latch_r));
-	map(0x0c20, 0x0c2f).r(this, FUNC(triplhnt_state::cmos_r)).share("nvram");
-	map(0x0c30, 0x0c3f).r(this, FUNC(triplhnt_state::misc_r)).w(m_latch, FUNC(f9334_device::write_a0));
+	map(0x0c0b, 0x0c0b).r(FUNC(triplhnt_state::input_port_4_r));
+	map(0x0c10, 0x0c1f).r(FUNC(triplhnt_state::da_latch_r));
+	map(0x0c20, 0x0c2f).r(FUNC(triplhnt_state::cmos_r)).share("nvram");
+	map(0x0c30, 0x0c3f).r(FUNC(triplhnt_state::misc_r)).w(m_latch, FUNC(f9334_device::write_a0));
 	map(0x0c40, 0x0c40).portr("0C40");
 	map(0x0c48, 0x0c48).portr("0C48");
 	map(0x7000, 0x7fff).rom(); /* program */
@@ -305,17 +280,17 @@ MACHINE_CONFIG_START(triplhnt_state::triplhnt)
 
 	MCFG_NVRAM_ADD_0FILL("nvram") // battery-backed 74C89 at J5
 
-	MCFG_DEVICE_ADD("latch", F9334, 0) // J7
-	MCFG_ADDRESSABLE_LATCH_Q0_OUT_CB(NOOP) // unused
-	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(WRITELINE(*this, triplhnt_state, lamp1_w))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("discrete", discrete_device, write_line<TRIPLHNT_LAMP_EN>)) // Lamp is used to reset noise
-	MCFG_ADDRESSABLE_LATCH_Q2_OUT_CB(WRITELINE("discrete", discrete_device, write_line<TRIPLHNT_SCREECH_EN>)) // screech
-	MCFG_ADDRESSABLE_LATCH_Q3_OUT_CB(WRITELINE(*this, triplhnt_state, coin_lockout_w))
-	MCFG_ADDRESSABLE_LATCH_Q4_OUT_CB(WRITELINE(*this, triplhnt_state, sprite_zoom_w))
-	MCFG_ADDRESSABLE_LATCH_Q5_OUT_CB(WRITELINE(*this, triplhnt_state, ram_2_w)) // CMOS write
-	MCFG_ADDRESSABLE_LATCH_Q6_OUT_CB(WRITELINE(*this, triplhnt_state, tape_control_w))
-	MCFG_ADDRESSABLE_LATCH_Q7_OUT_CB(WRITELINE(*this, triplhnt_state, sprite_bank_w))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("discrete", discrete_device, write_line<TRIPLHNT_BEAR_EN>)) // bear
+	F9334(config, m_latch); // J7
+	m_latch->q_out_cb<0>().set_nop(); // unused
+	m_latch->q_out_cb<1>().set([this] (int state) { m_lamp = state ? 1 : 0; });
+	m_latch->q_out_cb<1>().append(m_discrete, FUNC(discrete_device::write_line<TRIPLHNT_LAMP_EN>)); // Lamp is used to reset noise
+	m_latch->q_out_cb<2>().set(m_discrete, FUNC(discrete_device::write_line<TRIPLHNT_SCREECH_EN>)); // screech
+	m_latch->q_out_cb<3>().set(FUNC(triplhnt_state::coin_lockout_w));
+	m_latch->q_out_cb<4>().set([this] (int state) { m_sprite_zoom = state; });
+	m_latch->q_out_cb<5>().set([this] (int state) { if (state) m_cmos[m_cmos_latch] = m_da_latch; }); // CMOS write
+	m_latch->q_out_cb<6>().set(FUNC(triplhnt_state::tape_control_w));
+	m_latch->q_out_cb<7>().set([this] (int state) { m_sprite_bank = state; });
+	m_latch->q_out_cb<7>().append(m_discrete, FUNC(discrete_device::write_line<TRIPLHNT_BEAR_EN>)); // bear
 
 	MCFG_WATCHDOG_ADD("watchdog")
 

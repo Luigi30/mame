@@ -41,6 +41,7 @@ but requires a special level III player for proper control. Video: CAV. Audio: A
 #include "machine/timer.h"
 #include "machine/watchdog.h"
 #include "machine/x2212.h"
+#include "emupal.h"
 #include "speaker.h"
 
 
@@ -71,7 +72,7 @@ public:
 	DECLARE_CUSTOM_INPUT_MEMBER(soundflag_r);
 	void firefox(machine_config &config);
 
-protected:
+private:
 	DECLARE_READ8_MEMBER(firefox_disc_status_r);
 	DECLARE_READ8_MEMBER(firefox_disc_data_r);
 	DECLARE_WRITE8_MEMBER(firefox_disc_read_w);
@@ -109,7 +110,6 @@ protected:
 	void audio_map(address_map &map);
 	void main_map(address_map &map);
 
-private:
 	required_device<phillips_22vp931_device> m_laserdisc;
 	required_shared_ptr<unsigned char> m_tileram;
 	required_shared_ptr<uint8_t> m_spriteram;
@@ -251,14 +251,14 @@ void firefox_state::video_start()
 {
 	m_bgtiles = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(FUNC(firefox_state::bgtile_get_info),this), TILEMAP_SCAN_ROWS, 8,8, 64,64);
 	m_bgtiles->set_transparent_pen(0);
-	m_bgtiles->set_scrolldy(m_screen->visible_area().min_y, 0);
+	m_bgtiles->set_scrolldy(m_screen->visible_area().top(), 0);
 }
 
 
 uint32_t firefox_state::screen_update_firefox(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect)
 {
 	int sprite;
-	int gfxtop = screen.visible_area().min_y;
+	int gfxtop = screen.visible_area().top();
 
 	bitmap.fill(m_palette->pen_color(256), cliprect);
 
@@ -471,32 +471,32 @@ void firefox_state::machine_start()
 void firefox_state::main_map(address_map &map)
 {
 	map(0x0000, 0x0fff).ram();
-	map(0x1000, 0x1fff).ram().w(this, FUNC(firefox_state::tileram_w)).share("tileram");
+	map(0x1000, 0x1fff).ram().w(FUNC(firefox_state::tileram_w)).share("tileram");
 	map(0x2000, 0x27ff).ram().share("spriteram");
-	map(0x2800, 0x2aff).ram().w(this, FUNC(firefox_state::sprite_palette_w)).share("sprite_palette");
-	map(0x2b00, 0x2b00).mirror(0x04ff).w(this, FUNC(firefox_state::firefox_objram_bank_w));
-	map(0x2c00, 0x2eff).ram().w(this, FUNC(firefox_state::tile_palette_w)).share("tile_palette");
+	map(0x2800, 0x2aff).ram().w(FUNC(firefox_state::sprite_palette_w)).share("sprite_palette");
+	map(0x2b00, 0x2b00).mirror(0x04ff).w(FUNC(firefox_state::firefox_objram_bank_w));
+	map(0x2c00, 0x2eff).ram().w(FUNC(firefox_state::tile_palette_w)).share("tile_palette");
 	map(0x3000, 0x3fff).bankr("mainbank");
-	map(0x4000, 0x40ff).rw(this, FUNC(firefox_state::nvram_r), FUNC(firefox_state::nvram_w));                     /* NOVRAM */
+	map(0x4000, 0x40ff).rw(FUNC(firefox_state::nvram_r), FUNC(firefox_state::nvram_w));                     /* NOVRAM */
 	map(0x4100, 0x4100).mirror(0x00f8).portr("rdin0");            /* RDIN0 */
 	map(0x4101, 0x4101).mirror(0x00f8).portr("rdin1");            /* RDIN1 */
-	map(0x4102, 0x4102).mirror(0x00f8).r(this, FUNC(firefox_state::firefox_disc_status_r));   /* RDIN2 */
+	map(0x4102, 0x4102).mirror(0x00f8).r(FUNC(firefox_state::firefox_disc_status_r));   /* RDIN2 */
 	map(0x4103, 0x4103).mirror(0x00f8).portr("opt0");             /* OPT0 */
 	map(0x4104, 0x4104).mirror(0x00f8).portr("opt1");             /* OPT1 */
-	map(0x4105, 0x4105).mirror(0x00f8).r(this, FUNC(firefox_state::firefox_disc_data_r));     /* DREAD */
+	map(0x4105, 0x4105).mirror(0x00f8).r(FUNC(firefox_state::firefox_disc_data_r));     /* DREAD */
 	map(0x4106, 0x4106).mirror(0x00f8).r(m_soundlatch2, FUNC(generic_latch_8_device::read));         /* RDSOUND */
 	map(0x4107, 0x4107).mirror(0x00f8).r("adc", FUNC(adc0808_device::data_r));               /* ADC */
-	map(0x4200, 0x4200).mirror(0x0047).w(this, FUNC(firefox_state::main_irq_clear_w));       /* RSTIRQ */
-	map(0x4208, 0x4208).mirror(0x0047).w(this, FUNC(firefox_state::main_firq_clear_w));      /* RSTFIRQ */
+	map(0x4200, 0x4200).mirror(0x0047).w(FUNC(firefox_state::main_irq_clear_w));       /* RSTIRQ */
+	map(0x4208, 0x4208).mirror(0x0047).w(FUNC(firefox_state::main_firq_clear_w));      /* RSTFIRQ */
 	map(0x4210, 0x4210).mirror(0x0047).w("watchdog", FUNC(watchdog_timer_device::reset_w));       /* WDCLK */
-	map(0x4218, 0x4218).mirror(0x0047).w(this, FUNC(firefox_state::firefox_disc_read_w));    /* DSKREAD */
+	map(0x4218, 0x4218).mirror(0x0047).w(FUNC(firefox_state::firefox_disc_read_w));    /* DSKREAD */
 	map(0x4220, 0x4223).mirror(0x0044).w("adc", FUNC(adc0808_device::address_offset_start_w));       /* ADCSTART */
-	map(0x4230, 0x4230).mirror(0x0047).w(this, FUNC(firefox_state::self_reset_w));           /* AMUCK */
+	map(0x4230, 0x4230).mirror(0x0047).w(FUNC(firefox_state::self_reset_w));           /* AMUCK */
 	map(0x4280, 0x4287).mirror(0x0040).w("latch0", FUNC(ls259_device::write_d7));
 	map(0x4288, 0x428f).mirror(0x0040).w("latch1", FUNC(ls259_device::write_d7));
-	map(0x4290, 0x4290).mirror(0x0047).w(this, FUNC(firefox_state::rom_bank_w));             /* WRTREG */
+	map(0x4290, 0x4290).mirror(0x0047).w(FUNC(firefox_state::rom_bank_w));             /* WRTREG */
 	map(0x4298, 0x4298).mirror(0x0047).w(m_soundlatch, FUNC(generic_latch_8_device::write));        /* WRSOUND */
-	map(0x42a0, 0x42a0).mirror(0x0047).w(this, FUNC(firefox_state::firefox_disc_data_w));    /* DSKLATCH */
+	map(0x42a0, 0x42a0).mirror(0x0047).w(FUNC(firefox_state::firefox_disc_data_w));    /* DSKLATCH */
 	map(0x4400, 0xffff).rom();
 }
 
@@ -664,25 +664,25 @@ MACHINE_CONFIG_START(firefox_state::firefox)
 	MCFG_ADC0808_IN0_CB(IOPORT("PITCH"))
 	MCFG_ADC0808_IN1_CB(IOPORT("YAW"))
 
-	MCFG_DEVICE_ADD("latch0", LS259, 0) // 7F
-	MCFG_ADDRESSABLE_LATCH_Q0_OUT_CB(WRITELINE("nvram_1c", x2212_device, recall))   // NVRECALL
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("nvram_1d", x2212_device, recall))
-	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(WRITELINE(*this, firefox_state, sound_reset_w))          // RSTSOUND
-	MCFG_ADDRESSABLE_LATCH_Q2_OUT_CB(WRITELINE("nvram_1c", x2212_device, store))    // NVRSTORE
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("nvram_1d", x2212_device, store))
-	MCFG_ADDRESSABLE_LATCH_Q3_OUT_CB(WRITELINE(*this, firefox_state, firefox_disc_lock_w))    // LOCK
-	MCFG_ADDRESSABLE_LATCH_Q4_OUT_CB(WRITELINE(*this, firefox_state, audio_enable_right_w))   // SWDSKR
-	MCFG_ADDRESSABLE_LATCH_Q5_OUT_CB(WRITELINE(*this, firefox_state, audio_enable_left_w))    // SWDSKL
-	MCFG_ADDRESSABLE_LATCH_Q6_OUT_CB(WRITELINE(*this, firefox_state, firefox_disc_reset_w))   // RSTDSK
-	MCFG_ADDRESSABLE_LATCH_Q7_OUT_CB(WRITELINE(*this, firefox_state, firefox_disc_write_w))   // WRDSK
+	ls259_device &latch0(LS259(config, "latch0")); // 7F
+	latch0.q_out_cb<0>().set(m_nvram_1c, FUNC(x2212_device::recall));      // NVRECALL
+	latch0.q_out_cb<0>().append(m_nvram_1d, FUNC(x2212_device::recall));
+	latch0.q_out_cb<1>().set(FUNC(firefox_state::sound_reset_w));          // RSTSOUND
+	latch0.q_out_cb<2>().set(m_nvram_1c, FUNC(x2212_device::store));       // NVRSTORE
+	latch0.q_out_cb<2>().append(m_nvram_1d, FUNC(x2212_device::store));
+	latch0.q_out_cb<3>().set(FUNC(firefox_state::firefox_disc_lock_w));    // LOCK
+	latch0.q_out_cb<4>().set(FUNC(firefox_state::audio_enable_right_w));   // SWDSKR
+	latch0.q_out_cb<5>().set(FUNC(firefox_state::audio_enable_left_w));    // SWDSKL
+	latch0.q_out_cb<6>().set(FUNC(firefox_state::firefox_disc_reset_w));   // RSTDSK
+	latch0.q_out_cb<7>().set(FUNC(firefox_state::firefox_disc_write_w));   // WRDSK
 
-	MCFG_DEVICE_ADD("latch1", LS259, 0) // 1F
-	MCFG_ADDRESSABLE_LATCH_Q0_OUT_CB(WRITELINE(*this, firefox_state, coin_counter_right_w))   // COIN COUNTERR
-	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(WRITELINE(*this, firefox_state, coin_counter_left_w))    // COIN COUNTERL
-	MCFG_ADDRESSABLE_LATCH_Q4_OUT_CB(OUTPUT("led0")) MCFG_DEVCB_INVERT
-	MCFG_ADDRESSABLE_LATCH_Q5_OUT_CB(OUTPUT("led1")) MCFG_DEVCB_INVERT
-	MCFG_ADDRESSABLE_LATCH_Q6_OUT_CB(OUTPUT("led2")) MCFG_DEVCB_INVERT
-	MCFG_ADDRESSABLE_LATCH_Q7_OUT_CB(OUTPUT("led3")) MCFG_DEVCB_INVERT
+	ls259_device &latch1(LS259(config, "latch1")); // 1F
+	latch1.q_out_cb<0>().set(FUNC(firefox_state::coin_counter_right_w));   // COIN COUNTERR
+	latch1.q_out_cb<1>().set(FUNC(firefox_state::coin_counter_left_w));    // COIN COUNTERL
+	latch1.q_out_cb<4>().set_output("led0").invert();
+	latch1.q_out_cb<5>().set_output("led1").invert();
+	latch1.q_out_cb<6>().set_output("led2").invert();
+	latch1.q_out_cb<7>().set_output("led3").invert();
 
 	MCFG_WATCHDOG_ADD("watchdog")
 	MCFG_WATCHDOG_TIME_INIT(attotime::from_hz(MASTER_XTAL/8/16/16/16/16))
@@ -698,8 +698,8 @@ MACHINE_CONFIG_START(firefox_state::firefox)
 
 	MCFG_LASERDISC_SCREEN_ADD_NTSC("screen", "laserdisc")
 
-	MCFG_X2212_ADD_AUTOSAVE("nvram_1c")
-	MCFG_X2212_ADD_AUTOSAVE("nvram_1d")
+	X2212(config, "nvram_1c").set_auto_save(true);
+	X2212(config, "nvram_1d").set_auto_save(true);
 
 	MCFG_DEVICE_ADD("riot", RIOT6532, MASTER_XTAL/8)
 	MCFG_RIOT6532_IN_PA_CB(READ8(*this, firefox_state, riot_porta_r))

@@ -49,9 +49,9 @@ void suprloco_state::main_map(address_map &map)
 	map(0xe000, 0xe000).portr("DSW1");
 	map(0xe001, 0xe001).portr("DSW2");
 	map(0xe800, 0xe803).rw(m_ppi, FUNC(i8255_device::read), FUNC(i8255_device::write));
-	map(0xf000, 0xf6ff).ram().w(this, FUNC(suprloco_state::videoram_w)).share("videoram");
+	map(0xf000, 0xf6ff).ram().w(FUNC(suprloco_state::videoram_w)).share("videoram");
 	map(0xf700, 0xf7df).ram(); /* unused */
-	map(0xf7e0, 0xf7ff).ram().w(this, FUNC(suprloco_state::scrollram_w)).share("scrollram");
+	map(0xf7e0, 0xf7ff).ram().w(FUNC(suprloco_state::scrollram_w)).share("scrollram");
 	map(0xf800, 0xffff).ram();
 }
 
@@ -65,9 +65,9 @@ void suprloco_state::sound_map(address_map &map)
 {
 	map(0x0000, 0x7fff).rom();
 	map(0x8000, 0x87ff).ram();
-	map(0xa000, 0xa003).w("sn1", FUNC(sn76496_device::write));
-	map(0xc000, 0xc003).w("sn2", FUNC(sn76496_device::write));
-	map(0xe000, 0xe000).r(this, FUNC(suprloco_state::soundport_r));
+	map(0xa000, 0xa003).w("sn1", FUNC(sn76496_device::command_w));
+	map(0xc000, 0xc003).w("sn2", FUNC(sn76496_device::command_w));
+	map(0xe000, 0xe000).r(FUNC(suprloco_state::soundport_r));
 }
 
 
@@ -183,11 +183,11 @@ MACHINE_CONFIG_START(suprloco_state::suprloco)
 	MCFG_DEVICE_PROGRAM_MAP(sound_map)
 	MCFG_DEVICE_PERIODIC_INT_DRIVER(suprloco_state, irq0_line_hold, 4*60)          /* NMIs are caused by the main CPU */
 
-	MCFG_DEVICE_ADD("ppi", I8255A, 0)
-	MCFG_I8255_OUT_PORTB_CB(WRITE8(*this, suprloco_state, control_w))
-	MCFG_I8255_TRISTATE_PORTB_CB(CONSTANT(0))
-	MCFG_I8255_OUT_PORTC_CB(OUTPUT("lamp0")) MCFG_DEVCB_BIT(0) MCFG_DEVCB_INVERT // set by 8255 bit mode when no credits inserted
-	MCFG_DEVCB_CHAIN_OUTPUT(INPUTLINE("audiocpu", INPUT_LINE_NMI)) MCFG_DEVCB_BIT(7) MCFG_DEVCB_INVERT
+	I8255A(config, m_ppi, 0);
+	m_ppi->out_pb_callback().set(FUNC(suprloco_state::control_w));
+	m_ppi->tri_pb_callback().set_constant(0);
+	m_ppi->out_pc_callback().set_output("lamp0").bit(0).invert(); // set by 8255 bit mode when no credits inserted
+	m_ppi->out_pc_callback().append_inputline(m_audiocpu, INPUT_LINE_NMI).bit(7).invert();
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)

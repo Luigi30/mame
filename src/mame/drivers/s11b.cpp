@@ -36,7 +36,7 @@ void s11b_state::s11b_main_map(address_map &map)
 {
 	map(0x0000, 0x0fff).ram().share("nvram");
 	map(0x2100, 0x2103).mirror(0x00fc).rw(m_pia21, FUNC(pia6821_device::read), FUNC(pia6821_device::write)); // sound+solenoids
-	map(0x2200, 0x2200).mirror(0x01ff).w(this, FUNC(s11b_state::sol3_w)); // solenoids
+	map(0x2200, 0x2200).mirror(0x01ff).w(FUNC(s11b_state::sol3_w)); // solenoids
 	map(0x2400, 0x2403).mirror(0x03fc).rw(m_pia24, FUNC(pia6821_device::read), FUNC(pia6821_device::write)); // lamps
 	map(0x2800, 0x2803).mirror(0x03fc).rw(m_pia28, FUNC(pia6821_device::read), FUNC(pia6821_device::write)); // display
 	map(0x2c00, 0x2c03).mirror(0x03fc).rw(m_pia2c, FUNC(pia6821_device::read), FUNC(pia6821_device::write)); // alphanumeric display
@@ -48,7 +48,7 @@ void s11b_state::s11b_main_map(address_map &map)
 void s11b_state::s11b_audio_map(address_map &map)
 {
 	map(0x0000, 0x07ff).mirror(0x0800).ram();
-	map(0x1000, 0x1fff).w(this, FUNC(s11b_state::bank_w));
+	map(0x1000, 0x1fff).w(FUNC(s11b_state::bank_w));
 	map(0x2000, 0x2003).mirror(0x0ffc).rw(m_pias, FUNC(pia6821_device::read), FUNC(pia6821_device::write));
 	map(0x8000, 0xbfff).bankr("bank0");
 	map(0xc000, 0xffff).bankr("bank1");
@@ -59,9 +59,9 @@ void s11b_state::s11b_bg_map(address_map &map)
 	map(0x0000, 0x07ff).ram();
 	map(0x2000, 0x2001).mirror(0x1ffe).rw(m_ym, FUNC(ym2151_device::read), FUNC(ym2151_device::write));
 	map(0x4000, 0x4003).mirror(0x1ffc).rw(m_pia40, FUNC(pia6821_device::read), FUNC(pia6821_device::write));
-	map(0x6000, 0x67ff).w(this, FUNC(s11b_state::bg_speech_digit_w));
-	map(0x6800, 0x6fff).w(this, FUNC(s11b_state::bg_speech_clock_w));
-	map(0x7800, 0x7fff).w(this, FUNC(s11b_state::bgbank_w));
+	map(0x6000, 0x67ff).w(FUNC(s11b_state::bg_speech_digit_w));
+	map(0x6800, 0x6fff).w(FUNC(s11b_state::bg_speech_clock_w));
+	map(0x7800, 0x7fff).w(FUNC(s11b_state::bgbank_w));
 	map(0x8000, 0xffff).bankr("bgbank");
 }
 
@@ -255,7 +255,7 @@ MACHINE_CONFIG_START(s11b_state::s11b)
 	MCFG_MACHINE_RESET_OVERRIDE(s11b_state, s11b)
 
 	/* Video */
-	MCFG_DEFAULT_LAYOUT(layout_s11b)
+	config.set_default_layout(layout_s11b);
 
 	/* Sound */
 	genpin_audio(config);
@@ -325,7 +325,7 @@ MACHINE_CONFIG_START(s11b_state::s11b)
 	MCFG_DEVICE_ADD("pias", PIA6821, 0)
 	MCFG_PIA_READPA_HANDLER(READ8(*this, s11_state, sound_r))
 	MCFG_PIA_WRITEPA_HANDLER(WRITE8(*this, s11_state, sound_w))
-	MCFG_PIA_WRITEPB_HANDLER(WRITE8("dac", dac_byte_interface, write))
+	MCFG_PIA_WRITEPB_HANDLER(WRITE8("dac", dac_byte_interface, data_w))
 	MCFG_PIA_CA2_HANDLER(WRITELINE(*this, s11_state, pias_ca2_w))
 	MCFG_PIA_CB2_HANDLER(WRITELINE(*this, s11_state, pias_cb2_w))
 	MCFG_PIA_IRQA_HANDLER(INPUTLINE("audiocpu", M6802_IRQ_LINE))
@@ -347,7 +347,7 @@ MACHINE_CONFIG_START(s11b_state::s11b)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "speech", 0.50)
 
 	MCFG_DEVICE_ADD("pia40", PIA6821, 0)
-	MCFG_PIA_WRITEPA_HANDLER(WRITE8("dac1", dac_byte_interface, write))
+	MCFG_PIA_WRITEPA_HANDLER(WRITE8("dac1", dac_byte_interface, data_w))
 	MCFG_PIA_WRITEPB_HANDLER(WRITE8(*this, s11_state, pia40_pb_w))
 	MCFG_PIA_CA2_HANDLER(WRITELINE("ym2151", ym2151_device, reset_w))
 	MCFG_PIA_CB2_HANDLER(WRITELINE(*this, s11_state, pia40_cb2_w))
@@ -834,6 +834,17 @@ ROM_START(jokrz_l3)
 	ROM_LOAD("jokeru5.l2", 0x10000, 0x10000, CRC(e9dc0095) SHA1(23a99555e50461ccc8e67de01796642c080294c2))
 ROM_END
 
+ROM_START(jokrz_g4)
+	ROM_REGION(0x10000, "maincpu", 0)
+	ROM_LOAD("u26-l3.rom", 0x4000, 0x4000, CRC(3bf963df) SHA1(9f7757d96deca8638dbc1fe3669eee78dc222ebb))
+	ROM_LOAD("jokerz_u27.g4", 0x8000, 0x8000, CRC(3f3fe7ef) SHA1(afd17cea8442948b5aa0bb842dfbc17442b06a1d))
+	ROM_REGION(0x20000, "audiocpu", ROMREGION_ERASEFF)
+	ROM_LOAD("jokeru21.l1", 0x18000, 0x8000, CRC(9e2be4f6) SHA1(6e26b55935d0c8138176b54a11c1a9ab58366628))
+	ROM_LOAD("jokeru22.l1", 0x10000, 0x8000, CRC(2f67160c) SHA1(f1e179fde41f9bf8226069c24b0bd5152a13e518))
+	ROM_REGION(0x30000, "bgcpu", ROMREGION_ERASEFF)
+	ROM_LOAD("jokeru5.l2", 0x10000, 0x10000, CRC(e9dc0095) SHA1(23a99555e50461ccc8e67de01796642c080294c2))
+ROM_END
+
 /*-----------------------
 / Mousin' Around! 12/89
 /-----------------------*/
@@ -1126,6 +1137,7 @@ GAME(1989,  eatpm_4u,       eatpm_l4,   s11b,   s11b, s11b_state, init_s11b_inve
 GAME(1989,  eatpm_p7,       eatpm_l4,   s11b,   s11b, s11b_state, init_s11b_invert, ROT0, "Bally",    "Elvira and the Party Monsters (PA-7)",  MACHINE_IS_SKELETON_MECHANICAL)
 GAME(1989,  jokrz_l6,       0,          s11b,   s11b, s11b_state, init_s11b_invert, ROT0, "Williams", "Jokerz! (L-6)",                         MACHINE_IS_SKELETON_MECHANICAL)
 GAME(1989,  jokrz_l3,       jokrz_l6,   s11b,   s11b, s11b_state, init_s11b_invert, ROT0, "Williams", "Jokerz! (L-3)",                         MACHINE_IS_SKELETON_MECHANICAL)
+GAME(1989,  jokrz_g4,       jokrz_l6,   s11b,   s11b, s11b_state, init_s11b_invert, ROT0, "Williams", "Jokerz! (G-4)",                         MACHINE_IS_SKELETON_MECHANICAL)
 GAME(1989,  mousn_l4,       0,          s11b,   s11b, s11b_state, init_s11b_invert, ROT0, "Bally",    "Mousin' Around! (LA-4)",                MACHINE_IS_SKELETON_MECHANICAL)
 GAME(1989,  mousn_l1,       mousn_l4,   s11b,   s11b, s11b_state, init_s11b_invert, ROT0, "Bally",    "Mousin' Around! (LA-1)",                MACHINE_IS_SKELETON_MECHANICAL)
 GAME(1989,  mousn_lu,       mousn_l4,   s11b,   s11b, s11b_state, init_s11b_invert, ROT0, "Bally",    "Mousin' Around! (LU-1)",                MACHINE_IS_SKELETON_MECHANICAL)

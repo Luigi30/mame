@@ -147,13 +147,13 @@ void punchout_state::punchout_map(address_map &map)
 	map(0x0000, 0xbfff).rom();
 	map(0xc000, 0xc3ff).ram().share("nvram");
 	map(0xd000, 0xd7ff).ram();
-	map(0xd800, 0xdfff).ram().w(this, FUNC(punchout_state::punchout_bg_top_videoram_w)).share("bg_top_videoram");
+	map(0xd800, 0xdfff).ram().w(FUNC(punchout_state::punchout_bg_top_videoram_w)).share("bg_top_videoram");
 	map(0xdff0, 0xdff7).share("spr1_ctrlram");
 	map(0xdff8, 0xdffc).share("spr2_ctrlram");
 	map(0xdffd, 0xdffd).share("palettebank");
-	map(0xe000, 0xe7ff).ram().w(this, FUNC(punchout_state::punchout_spr1_videoram_w)).share("spr1_videoram");
-	map(0xe800, 0xefff).ram().w(this, FUNC(punchout_state::punchout_spr2_videoram_w)).share("spr2_videoram");
-	map(0xf000, 0xffff).ram().w(this, FUNC(punchout_state::punchout_bg_bot_videoram_w)).share("bg_bot_videoram");   // also contains scroll RAM
+	map(0xe000, 0xe7ff).ram().w(FUNC(punchout_state::punchout_spr1_videoram_w)).share("spr1_videoram");
+	map(0xe800, 0xefff).ram().w(FUNC(punchout_state::punchout_spr2_videoram_w)).share("spr2_videoram");
+	map(0xf000, 0xffff).ram().w(FUNC(punchout_state::punchout_bg_bot_videoram_w)).share("bg_bot_videoram");   // also contains scroll RAM
 }
 
 
@@ -162,14 +162,14 @@ void punchout_state::armwrest_map(address_map &map)
 	map(0x0000, 0xbfff).rom();
 	map(0xc000, 0xc3ff).ram().share("nvram");
 	map(0xd000, 0xd7ff).ram();
-	map(0xd800, 0xdfff).ram().w(this, FUNC(punchout_state::armwrest_fg_videoram_w)).share("armwrest_fgram");
+	map(0xd800, 0xdfff).ram().w(FUNC(punchout_state::armwrest_fg_videoram_w)).share("armwrest_fgram");
 	map(0xdff0, 0xdff7).share("spr1_ctrlram");
 	map(0xdff8, 0xdffc).share("spr2_ctrlram");
 	map(0xdffd, 0xdffd).share("palettebank");
-	map(0xe000, 0xe7ff).ram().w(this, FUNC(punchout_state::punchout_spr1_videoram_w)).share("spr1_videoram");
-	map(0xe800, 0xefff).ram().w(this, FUNC(punchout_state::punchout_spr2_videoram_w)).share("spr2_videoram");
-	map(0xf000, 0xf7ff).ram().w(this, FUNC(punchout_state::punchout_bg_bot_videoram_w)).share("bg_bot_videoram");
-	map(0xf800, 0xffff).ram().w(this, FUNC(punchout_state::punchout_bg_top_videoram_w)).share("bg_top_videoram");
+	map(0xe000, 0xe7ff).ram().w(FUNC(punchout_state::punchout_spr1_videoram_w)).share("spr1_videoram");
+	map(0xe800, 0xefff).ram().w(FUNC(punchout_state::punchout_spr2_videoram_w)).share("spr2_videoram");
+	map(0xf000, 0xf7ff).ram().w(FUNC(punchout_state::punchout_bg_bot_videoram_w)).share("bg_bot_videoram");
+	map(0xf800, 0xffff).ram().w(FUNC(punchout_state::punchout_bg_top_videoram_w)).share("bg_top_videoram");
 }
 
 
@@ -244,9 +244,9 @@ WRITE8_MEMBER(punchout_state::spunchout_rp5h01_clock_w)
 void punchout_state::spnchout_io_map(address_map &map)
 {
 	punchout_io_map(map);
-	map(0x05, 0x05).mirror(0xf0).w(this, FUNC(punchout_state::spunchout_rp5h01_reset_w));
-	map(0x06, 0x06).mirror(0xf0).w(this, FUNC(punchout_state::spunchout_rp5h01_clock_w));
-	map(0x07, 0x07).select(0xf0).rw(this, FUNC(punchout_state::spunchout_exp_r), FUNC(punchout_state::spunchout_exp_w)); // protection ports
+	map(0x05, 0x05).mirror(0xf0).w(FUNC(punchout_state::spunchout_rp5h01_reset_w));
+	map(0x06, 0x06).mirror(0xf0).w(FUNC(punchout_state::spunchout_rp5h01_clock_w));
+	map(0x07, 0x07).select(0xf0).rw(FUNC(punchout_state::spunchout_exp_r), FUNC(punchout_state::spunchout_exp_w)); // protection ports
 }
 
 // 2A03 (sound)
@@ -647,17 +647,17 @@ MACHINE_CONFIG_START(punchout_state::punchout)
 	/* video hardware */
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_punchout)
 	MCFG_PALETTE_ADD("palette", 0x200)
-	MCFG_DEFAULT_LAYOUT(layout_dualhovu)
+	config.set_default_layout(layout_dualhovu);
 
-	MCFG_SCREEN_ADD("top", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(0))
-	MCFG_SCREEN_SIZE(32*8, 32*8)
-	MCFG_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MCFG_SCREEN_UPDATE_DRIVER(punchout_state, screen_update_punchout_top)
-	MCFG_SCREEN_PALETTE("palette")
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE(*this, punchout_state, vblank_irq))
-	MCFG_DEVCB_CHAIN_OUTPUT(INPUTLINE("audiocpu", INPUT_LINE_NMI))
+	screen_device &top(SCREEN(config, "top", SCREEN_TYPE_RASTER));
+	top.set_refresh_hz(60);
+	top.set_vblank_time(ATTOSECONDS_IN_USEC(0));
+	top.set_size(32*8, 32*8);
+	top.set_visarea(0*8, 32*8-1, 2*8, 30*8-1);
+	top.set_screen_update(FUNC(punchout_state::screen_update_punchout_top));
+	top.set_palette(m_palette);
+	top.screen_vblank().set(FUNC(punchout_state::vblank_irq));
+	top.screen_vblank().append_inputline(m_audiocpu, INPUT_LINE_NMI);
 
 	MCFG_SCREEN_ADD("bottom", RASTER)
 	MCFG_SCREEN_REFRESH_RATE(60)

@@ -242,8 +242,8 @@ void slapshot_state::slapshot_map(address_map &map)
 	map(0xa00000, 0xa03fff).rw("mk48t08", FUNC(timekeeper_device::read), FUNC(timekeeper_device::write)).umask16(0xff00); /* nvram (only low bytes used) */
 	map(0xb00000, 0xb0001f).w(m_tc0360pri, FUNC(tc0360pri_device::write)).umask16(0xff00);  /* priority chip */
 	map(0xc00000, 0xc0000f).rw(m_tc0640fio, FUNC(tc0640fio_device::halfword_byteswap_r), FUNC(tc0640fio_device::halfword_byteswap_w));
-	map(0xc00020, 0xc0002f).r(this, FUNC(slapshot_state::service_input_r));  /* service mirror */
-	map(0xd00000, 0xd00003).rw(this, FUNC(slapshot_state::msb_sound_r), FUNC(slapshot_state::msb_sound_w));
+	map(0xc00020, 0xc0002f).r(FUNC(slapshot_state::service_input_r));  /* service mirror */
+	map(0xd00000, 0xd00003).rw(FUNC(slapshot_state::msb_sound_r), FUNC(slapshot_state::msb_sound_w));
 }
 
 void slapshot_state::opwolf3_map(address_map &map)
@@ -258,8 +258,8 @@ void slapshot_state::opwolf3_map(address_map &map)
 	map(0xa00000, 0xa03fff).rw("mk48t08", FUNC(timekeeper_device::read), FUNC(timekeeper_device::write)).umask16(0xff00); /* nvram (only low bytes used) */
 	map(0xb00000, 0xb0001f).w(m_tc0360pri, FUNC(tc0360pri_device::write)).umask16(0xff00);  /* priority chip */
 	map(0xc00000, 0xc0000f).rw(m_tc0640fio, FUNC(tc0640fio_device::halfword_byteswap_r), FUNC(tc0640fio_device::halfword_byteswap_w));
-	map(0xc00020, 0xc0002f).r(this, FUNC(slapshot_state::service_input_r));   /* service mirror */
-	map(0xd00000, 0xd00003).rw(this, FUNC(slapshot_state::msb_sound_r), FUNC(slapshot_state::msb_sound_w));
+	map(0xc00020, 0xc0002f).r(FUNC(slapshot_state::service_input_r));   /* service mirror */
+	map(0xd00000, 0xd00003).rw(FUNC(slapshot_state::msb_sound_r), FUNC(slapshot_state::msb_sound_w));
 	map(0xe00000, 0xe0000f).rw("adc", FUNC(adc0808_device::data_r), FUNC(adc0808_device::address_offset_start_w)).umask16(0xff00);
 //  map(0xe80000, 0xe80001) // gun recoil here?
 }
@@ -279,7 +279,7 @@ void slapshot_state::opwolf3_z80_sound_map(address_map &map)
 	map(0xea00, 0xea00).nopr();
 	map(0xee00, 0xee00).nopw(); /* ? */
 	map(0xf000, 0xf000).nopw(); /* ? */
-	map(0xf200, 0xf200).w(this, FUNC(slapshot_state::sound_bankswitch_w));
+	map(0xf200, 0xf200).w(FUNC(slapshot_state::sound_bankswitch_w));
 }
 
 
@@ -453,12 +453,12 @@ MACHINE_CONFIG_START(slapshot_state::slapshot)
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(600))
 
-	MCFG_DEVICE_ADD("tc0640fio", TC0640FIO, 0)
-	MCFG_TC0640FIO_READ_1_CB(IOPORT("COINS"))
-	MCFG_TC0640FIO_READ_2_CB(IOPORT("BUTTONS"))
-	MCFG_TC0640FIO_READ_3_CB(IOPORT("SYSTEM"))
-	MCFG_TC0640FIO_WRITE_4_CB(WRITE8(*this, slapshot_state, coin_control_w))
-	MCFG_TC0640FIO_READ_7_CB(IOPORT("JOY"))
+	TC0640FIO(config, m_tc0640fio, 0);
+	m_tc0640fio->read_1_callback().set_ioport("COINS");
+	m_tc0640fio->read_2_callback().set_ioport("BUTTONS");
+	m_tc0640fio->read_3_callback().set_ioport("SYSTEM");
+	m_tc0640fio->write_4_callback().set(FUNC(slapshot_state::coin_control_w));
+	m_tc0640fio->read_7_callback().set_ioport("JOY");
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
@@ -522,12 +522,12 @@ MACHINE_CONFIG_START(slapshot_state::opwolf3)
 	MCFG_ADC0808_IN2_CB(IOPORT("GUN2X"))
 	MCFG_ADC0808_IN3_CB(IOPORT("GUN2Y"))
 
-	MCFG_DEVICE_ADD("tc0640fio", TC0640FIO, 0)
-	MCFG_TC0640FIO_READ_1_CB(IOPORT("COINS"))
-	MCFG_TC0640FIO_READ_2_CB(IOPORT("BUTTONS"))
-	MCFG_TC0640FIO_READ_3_CB(IOPORT("SYSTEM"))
-	MCFG_TC0640FIO_WRITE_4_CB(WRITE8(*this, slapshot_state, coin_control_w))
-	MCFG_TC0640FIO_READ_7_CB(IOPORT("JOY"))
+	TC0640FIO(config, m_tc0640fio, 0);
+	m_tc0640fio->read_1_callback().set_ioport("COINS");
+	m_tc0640fio->read_2_callback().set_ioport("BUTTONS");
+	m_tc0640fio->read_3_callback().set_ioport("SYSTEM");
+	m_tc0640fio->write_4_callback().set(FUNC(slapshot_state::coin_control_w));
+	m_tc0640fio->read_7_callback().set_ioport("JOY");
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)

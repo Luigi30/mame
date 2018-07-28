@@ -61,17 +61,6 @@ correctly.
 
 ***************************************************************************/
 
-/* 12mhz OSC */
-#define MASTER_CLOCK      (XTAL(12'000'000))
-#define MAIN_CPU_CLOCK      (MASTER_CLOCK/3)
-#define SOUND_CPU_CLOCK     (MASTER_CLOCK/4)
-#define AUDIO_CLOCK     (MASTER_CLOCK/8)
-/* 20mhz OSC - both Z80s are 4 MHz */
-#define MASTER_CLOCK_1942P     (XTAL(20'000'000))
-#define MAIN_CPU_CLOCK_1942P      (MASTER_CLOCK_1942P/5)
-#define SOUND_CPU_CLOCK_1942P     (MASTER_CLOCK_1942P/5)
-#define AUDIO_CLOCK_1942P     (MASTER_CLOCK_1942P/16)
-
 #include "emu.h"
 #include "includes/1942.h"
 
@@ -82,6 +71,21 @@ correctly.
 #include "speaker.h"
 
 #include "netlist/devices/net_lib.h"
+
+namespace {
+
+/* 12mhz OSC */
+constexpr XTAL MASTER_CLOCK(12_MHz_XTAL);
+constexpr XTAL MAIN_CPU_CLOCK(MASTER_CLOCK/3);
+constexpr XTAL SOUND_CPU_CLOCK(MASTER_CLOCK/4);
+constexpr XTAL AUDIO_CLOCK(MASTER_CLOCK/8);
+/* 20mhz OSC - both Z80s are 4 MHz */
+constexpr XTAL MASTER_CLOCK_1942P(20_MHz_XTAL);
+constexpr XTAL MAIN_CPU_CLOCK_1942P(MASTER_CLOCK_1942P/5);
+constexpr XTAL SOUND_CPU_CLOCK_1942P(MASTER_CLOCK_1942P/5);
+constexpr XTAL AUDIO_CLOCK_1942P(MASTER_CLOCK_1942P/16);
+
+} // anonymous namespace
 
 #define NLFILT(RA, R1, C1, R2) \
 	NET_C(RA.1, V5)             \
@@ -190,13 +194,13 @@ void _1942_state::_1942_map(address_map &map)
 	map(0xc003, 0xc003).portr("DSWA");
 	map(0xc004, 0xc004).portr("DSWB");
 	map(0xc800, 0xc800).w(m_soundlatch, FUNC(generic_latch_8_device::write));
-	map(0xc802, 0xc803).w(this, FUNC(_1942_state::_1942_scroll_w));
-	map(0xc804, 0xc804).w(this, FUNC(_1942_state::_1942_c804_w));
-	map(0xc805, 0xc805).w(this, FUNC(_1942_state::_1942_palette_bank_w));
-	map(0xc806, 0xc806).w(this, FUNC(_1942_state::_1942_bankswitch_w));
+	map(0xc802, 0xc803).w(FUNC(_1942_state::_1942_scroll_w));
+	map(0xc804, 0xc804).w(FUNC(_1942_state::_1942_c804_w));
+	map(0xc805, 0xc805).w(FUNC(_1942_state::_1942_palette_bank_w));
+	map(0xc806, 0xc806).w(FUNC(_1942_state::_1942_bankswitch_w));
 	map(0xcc00, 0xcc7f).ram().share("spriteram");
-	map(0xd000, 0xd7ff).ram().w(this, FUNC(_1942_state::_1942_fgvideoram_w)).share("fg_videoram");
-	map(0xd800, 0xdbff).ram().w(this, FUNC(_1942_state::_1942_bgvideoram_w)).share("bg_videoram");
+	map(0xd000, 0xd7ff).ram().w(FUNC(_1942_state::_1942_fgvideoram_w)).share("fg_videoram");
+	map(0xd800, 0xdbff).ram().w(FUNC(_1942_state::_1942_bgvideoram_w)).share("bg_videoram");
 	map(0xe000, 0xefff).ram();
 }
 
@@ -221,22 +225,22 @@ void _1942p_state::_1942p_map(address_map &map)
 	map(0x0000, 0x7fff).rom();
 	map(0x8000, 0xbfff).bankr("bank1");
 
-	map(0xd000, 0xd7ff).ram().w(this, FUNC(_1942_state::_1942_fgvideoram_w)).share("fg_videoram");
-	map(0xd800, 0xdbff).ram().w(this, FUNC(_1942_state::_1942_bgvideoram_w)).share("bg_videoram");
+	map(0xd000, 0xd7ff).ram().w(FUNC(_1942_state::_1942_fgvideoram_w)).share("fg_videoram");
+	map(0xd800, 0xdbff).ram().w(FUNC(_1942_state::_1942_bgvideoram_w)).share("bg_videoram");
 
 	map(0xe000, 0xefff).ram();
 
 	map(0xce00, 0xcfff).ram().share("spriteram");
 
-	map(0xdc02, 0xdc03).w(this, FUNC(_1942_state::_1942_scroll_w));
-	map(0xc804, 0xc804).w(this, FUNC(_1942_state::_1942_c804_w));
-	map(0xc805, 0xc805).w(this, FUNC(_1942_state::_1942_palette_bank_w));
+	map(0xdc02, 0xdc03).w(FUNC(_1942_state::_1942_scroll_w));
+	map(0xc804, 0xc804).w(FUNC(_1942_state::_1942_c804_w));
+	map(0xc805, 0xc805).w(FUNC(_1942_state::_1942_palette_bank_w));
 
-	map(0xf000, 0xf3ff).ram().w(this, FUNC(_1942p_state::_1942p_palette_w)).share("protopal");
+	map(0xf000, 0xf3ff).ram().w(FUNC(_1942p_state::_1942p_palette_w)).share("protopal");
 
-	map(0xf400, 0xf400).w(this, FUNC(_1942_state::_1942_bankswitch_w));
+	map(0xf400, 0xf400).w(FUNC(_1942_state::_1942_bankswitch_w));
 	map(0xf500, 0xf500).w(m_soundlatch, FUNC(generic_latch_8_device::write));
-	map(0xf600, 0xf600).w(this, FUNC(_1942p_state::_1942p_f600_w));
+	map(0xf600, 0xf600).w(FUNC(_1942p_state::_1942p_f600_w));
 
 	map(0xf700, 0xf700).portr("DSWA");
 	map(0xf701, 0xf701).portr("SYSTEM");
@@ -574,22 +578,22 @@ MACHINE_CONFIG_START(_1942_state::_1942)
 	/* video hardware */
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_1942)
 
-	MCFG_PALETTE_ADD("palette", 64*4+4*32*8+16*16)
+	MCFG_PALETTE_ADD(m_palette, 64*4+4*32*8+16*16)
 	MCFG_PALETTE_INDIRECT_ENTRIES(256)
 	MCFG_PALETTE_INIT_OWNER(_1942_state, 1942)
 
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(0))
-	MCFG_SCREEN_SIZE(32*8, 32*8)
-	MCFG_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MCFG_SCREEN_UPDATE_DRIVER(_1942_state, screen_update)
-	MCFG_SCREEN_PALETTE("palette")
+	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen.set_refresh_hz(60);
+	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
+	screen.set_size(32*8, 32*8);
+	screen.set_visarea(0*8, 32*8-1, 2*8, 30*8-1);
+	screen.set_screen_update(FUNC(_1942_state::screen_update));
+	screen.set_palette(m_palette);
 
 	/* sound hardware */
 	SPEAKER(config, "mono").front_center();
 
-	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
+	GENERIC_LATCH_8(config, m_soundlatch);
 
 	MCFG_DEVICE_ADD("ay1", AY8910, AUDIO_CLOCK)  /* 1.5 MHz */
 	MCFG_AY8910_OUTPUT_TYPE(AY8910_RESISTOR_OUTPUT)
@@ -642,29 +646,28 @@ MACHINE_CONFIG_START(_1942p_state::_1942p)
 
 	/* video hardware */
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_1942p)
-	MCFG_PALETTE_ADD("palette", 0x500)
+
+	MCFG_PALETTE_ADD(m_palette, 0x500)
 	MCFG_PALETTE_INDIRECT_ENTRIES(0x400)
 	MCFG_PALETTE_INIT_OWNER(_1942p_state, 1942p)
 
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(0))
-	MCFG_SCREEN_SIZE(32*8, 32*8)
-	MCFG_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MCFG_SCREEN_UPDATE_DRIVER(_1942p_state, screen_update)
-	MCFG_SCREEN_PALETTE("palette")
+	screen_device &screen(SCREEN(config, "screen", SCREEN_TYPE_RASTER));
+	screen.set_refresh_hz(60);
+	screen.set_vblank_time(ATTOSECONDS_IN_USEC(0));
+	screen.set_size(32*8, 32*8);
+	screen.set_visarea(0*8, 32*8-1, 2*8, 30*8-1);
+	screen.set_screen_update(FUNC(_1942p_state::screen_update));
+	screen.set_palette(m_palette);
 
 
 	/* sound hardware */
 	SPEAKER(config, "mono").front_center();
 
-	MCFG_GENERIC_LATCH_8_ADD("soundlatch")
-	MCFG_GENERIC_LATCH_DATA_PENDING_CB(INPUTLINE("audiocpu", INPUT_LINE_NMI))
+	GENERIC_LATCH_8(config, m_soundlatch);
+	m_soundlatch->data_pending_callback().set_inputline(m_audiocpu, INPUT_LINE_NMI);
 
-	MCFG_DEVICE_ADD("ay1", AY8910, AUDIO_CLOCK_1942P) /* 1.25 MHz - verified on PCB */
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	MCFG_DEVICE_ADD("ay2", AY8910, AUDIO_CLOCK_1942P) /* 1.25 MHz - verified on PCB */
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	AY8910(config, "ay1", AUDIO_CLOCK_1942P).add_route(ALL_OUTPUTS, "mono", 0.25); // 1.25 MHz - verified on PCB
+	AY8910(config, "ay2", AUDIO_CLOCK_1942P).add_route(ALL_OUTPUTS, "mono", 0.25); // 1.25 MHz - verified on PCB
 MACHINE_CONFIG_END
 
 

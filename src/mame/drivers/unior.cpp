@@ -44,6 +44,7 @@ ToDo:
 #include "machine/i8257.h"
 #include "video/i8275.h"
 #include "sound/spkrdev.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -63,7 +64,7 @@ public:
 
 	void unior(machine_config &config);
 
-protected:
+private:
 	DECLARE_WRITE8_MEMBER(vram_w);
 	DECLARE_WRITE8_MEMBER(scroll_w);
 	DECLARE_READ8_MEMBER(ppi0_b_r);
@@ -81,7 +82,6 @@ protected:
 	void unior_io(address_map &map);
 	void unior_mem(address_map &map);
 
-private:
 	uint8_t m_4c;
 	uint8_t m_4e;
 	virtual void machine_reset() override;
@@ -97,7 +97,7 @@ void unior_state::unior_mem(address_map &map)
 {
 	map.unmap_value_high();
 	map(0x0000, 0xf7ff).ram();
-	map(0xf800, 0xffff).rom().w(this, FUNC(unior_state::vram_w)); // main video
+	map(0xf800, 0xffff).rom().w(FUNC(unior_state::vram_w)); // main video
 }
 
 void unior_state::unior_io(address_map &map)
@@ -107,7 +107,7 @@ void unior_state::unior_io(address_map &map)
 	map(0x30, 0x38).rw(m_dma, FUNC(i8257_device::read), FUNC(i8257_device::write)); // dma data
 	map(0x3c, 0x3f).rw("ppi0", FUNC(i8255_device::read), FUNC(i8255_device::write)); // cassette player control
 	map(0x4c, 0x4f).rw("ppi1", FUNC(i8255_device::read), FUNC(i8255_device::write));
-	map(0x50, 0x50).w(this, FUNC(unior_state::scroll_w));
+	map(0x50, 0x50).w(FUNC(unior_state::scroll_w));
 	map(0x60, 0x61).rw("crtc", FUNC(i8275_device::read), FUNC(i8275_device::write));
 	map(0xdc, 0xdf).rw(m_pit, FUNC(pit8253_device::read), FUNC(pit8253_device::write));
 	map(0xec, 0xec).rw("uart", FUNC(i8251_device::data_r), FUNC(i8251_device::data_w));
@@ -396,19 +396,18 @@ MACHINE_CONFIG_START(unior_state::unior)
 
 	/* sound hardware */
 	SPEAKER(config, "mono").front_center();
-	MCFG_DEVICE_ADD("speaker", SPEAKER_SOUND)
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	SPEAKER_SOUND(config, "speaker").add_route(ALL_OUTPUTS, "mono", 0.50);
 
 	/* Devices */
-	MCFG_DEVICE_ADD("uart", I8251, 0)
+	I8251(config, "uart", 0);
 
-	MCFG_DEVICE_ADD("pit", PIT8253, 0)
-	MCFG_PIT8253_CLK0(XTAL(20'000'000) / 12)
-	MCFG_PIT8253_CLK1(XTAL(20'000'000) / 9)
-	MCFG_PIT8253_OUT1_HANDLER(WRITELINE("uart", i8251_device, write_txc))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("uart", i8251_device, write_rxc))
-	MCFG_PIT8253_CLK2(XTAL(16'000'000) / 9 / 64) // unknown frequency
-	MCFG_PIT8253_OUT2_HANDLER(WRITELINE("speaker", speaker_sound_device, level_w))
+	PIT8253(config, m_pit, 0);
+	m_pit->set_clk<0>(20_MHz_XTAL / 12);
+	m_pit->set_clk<1>(20_MHz_XTAL / 9);
+	m_pit->out_handler<1>().set("uart", FUNC(i8251_device::write_txc));
+	m_pit->out_handler<1>().append("uart", FUNC(i8251_device::write_rxc));
+	m_pit->set_clk<2>(16_MHz_XTAL / 9 / 64); // unknown frequency
+	m_pit->out_handler<2>().set("speaker", FUNC(speaker_sound_device::level_w));
 
 	MCFG_DEVICE_ADD("ppi0", I8255, 0)
 	// ports a & c connect to an external slot

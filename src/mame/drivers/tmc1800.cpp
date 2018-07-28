@@ -261,8 +261,8 @@ void tmc1800_state::tmc1800_map(address_map &map)
 
 void tmc1800_state::tmc1800_io_map(address_map &map)
 {
-	map(0x01, 0x01).rw(this, FUNC(tmc1800_state::dispon_r), FUNC(tmc1800_state::dispoff_w));
-	map(0x02, 0x02).w(this, FUNC(tmc1800_state::keylatch_w));
+	map(0x01, 0x01).rw(FUNC(tmc1800_state::dispon_r), FUNC(tmc1800_state::dispoff_w));
+	map(0x02, 0x02).w(FUNC(tmc1800_state::keylatch_w));
 }
 
 // OSCOM 1000B
@@ -275,7 +275,7 @@ void osc1000b_state::osc1000b_map(address_map &map)
 
 void osc1000b_state::osc1000b_io_map(address_map &map)
 {
-	map(0x02, 0x02).w(this, FUNC(osc1000b_state::keylatch_w));
+	map(0x02, 0x02).w(FUNC(osc1000b_state::keylatch_w));
 }
 
 // Telmac 2000
@@ -291,8 +291,8 @@ void tmc2000_state::tmc2000_io_map(address_map &map)
 {
 	map.unmap_value_high();
 	map(0x01, 0x01).rw(m_cti, FUNC(cdp1864_device::dispon_r), FUNC(cdp1864_device::step_bgcolor_w));
-	map(0x02, 0x02).w(this, FUNC(tmc2000_state::keylatch_w));
-	map(0x04, 0x04).r(m_cti, FUNC(cdp1864_device::dispoff_r)).w(this, FUNC(tmc2000_state::bankswitch_w));
+	map(0x02, 0x02).w(FUNC(tmc2000_state::keylatch_w));
+	map(0x04, 0x04).r(m_cti, FUNC(cdp1864_device::dispoff_r)).w(FUNC(tmc2000_state::bankswitch_w));
 }
 
 // OSCOM Nano
@@ -306,8 +306,8 @@ void nano_state::nano_map(address_map &map)
 void nano_state::nano_io_map(address_map &map)
 {
 	map(0x01, 0x01).rw(m_cti, FUNC(cdp1864_device::dispon_r), FUNC(cdp1864_device::step_bgcolor_w));
-	map(0x02, 0x02).w(this, FUNC(nano_state::keylatch_w));
-	map(0x04, 0x04).r(m_cti, FUNC(cdp1864_device::dispoff_r)).w(this, FUNC(nano_state::bankswitch_w));
+	map(0x02, 0x02).w(FUNC(nano_state::keylatch_w));
+	map(0x04, 0x04).r(m_cti, FUNC(cdp1864_device::dispoff_r)).w(FUNC(nano_state::bankswitch_w));
 }
 
 /* Input Ports */
@@ -719,7 +719,7 @@ MACHINE_CONFIG_START(tmc1800_state::tmc1800)
 	MCFG_DEVICE_ADD(CDP1802_TAG, CDP1802, XTAL(1'750'000))
 	MCFG_DEVICE_PROGRAM_MAP(tmc1800_map)
 	MCFG_DEVICE_IO_MAP(tmc1800_io_map)
-	MCFG_COSMAC_WAIT_CALLBACK(VCC)
+	MCFG_COSMAC_WAIT_CALLBACK(CONSTANT(1))
 	MCFG_COSMAC_CLEAR_CALLBACK(READLINE(*this, tmc1800_state, clear_r))
 	MCFG_COSMAC_EF2_CALLBACK(READLINE(*this, tmc1800_state, ef2_r))
 	MCFG_COSMAC_EF3_CALLBACK(READLINE(*this, tmc1800_state, ef3_r))
@@ -751,7 +751,7 @@ MACHINE_CONFIG_START(osc1000b_state::osc1000b)
 	MCFG_DEVICE_ADD(CDP1802_TAG, CDP1802, XTAL(1'750'000))
 	MCFG_DEVICE_PROGRAM_MAP(osc1000b_map)
 	MCFG_DEVICE_IO_MAP(osc1000b_io_map)
-	MCFG_COSMAC_WAIT_CALLBACK(VCC)
+	MCFG_COSMAC_WAIT_CALLBACK(CONSTANT(1))
 	MCFG_COSMAC_CLEAR_CALLBACK(READLINE(*this, osc1000b_state, clear_r))
 	MCFG_COSMAC_EF2_CALLBACK(READLINE(*this, osc1000b_state, ef2_r))
 	MCFG_COSMAC_EF3_CALLBACK(READLINE(*this, osc1000b_state, ef3_r))
@@ -782,7 +782,7 @@ MACHINE_CONFIG_START(tmc2000_state::tmc2000)
 	MCFG_DEVICE_ADD(CDP1802_TAG, CDP1802, XTAL(1'750'000))
 	MCFG_DEVICE_PROGRAM_MAP(tmc2000_map)
 	MCFG_DEVICE_IO_MAP(tmc2000_io_map)
-	MCFG_COSMAC_WAIT_CALLBACK(VCC)
+	MCFG_COSMAC_WAIT_CALLBACK(CONSTANT(1))
 	MCFG_COSMAC_CLEAR_CALLBACK(READLINE(*this, tmc2000_state, clear_r))
 	MCFG_COSMAC_EF2_CALLBACK(READLINE(*this, tmc2000_state, ef2_r))
 	MCFG_COSMAC_EF3_CALLBACK(READLINE(*this, tmc2000_state, ef3_r))
@@ -808,7 +808,7 @@ MACHINE_CONFIG_START(nano_state::nano)
 	MCFG_DEVICE_ADD(CDP1802_TAG, CDP1802, XTAL(1'750'000))
 	MCFG_DEVICE_PROGRAM_MAP(nano_map)
 	MCFG_DEVICE_IO_MAP(nano_io_map)
-	MCFG_COSMAC_WAIT_CALLBACK(VCC)
+	MCFG_COSMAC_WAIT_CALLBACK(CONSTANT(1))
 	MCFG_COSMAC_CLEAR_CALLBACK(READLINE(*this, nano_state, clear_r))
 	MCFG_COSMAC_EF2_CALLBACK(READLINE(*this, nano_state, ef2_r))
 	MCFG_COSMAC_EF3_CALLBACK(READLINE(*this, nano_state, ef3_r))

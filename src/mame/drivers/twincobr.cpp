@@ -401,13 +401,13 @@ void twincobr_state::main_program_map(address_map &map)
 	map(0x050000, 0x050dff).ram().w(m_palette, FUNC(palette_device::write16)).share("palette");
 	map(0x060001, 0x060001).w("crtc", FUNC(mc6845_device::address_w));
 	map(0x060003, 0x060003).w("crtc", FUNC(mc6845_device::register_w));
-	map(0x070000, 0x070003).w(this, FUNC(twincobr_state::twincobr_txscroll_w));  /* text layer scroll */
-	map(0x070004, 0x070005).w(this, FUNC(twincobr_state::twincobr_txoffs_w));    /* offset in text video RAM */
-	map(0x072000, 0x072003).w(this, FUNC(twincobr_state::twincobr_bgscroll_w));  /* bg layer scroll */
-	map(0x072004, 0x072005).w(this, FUNC(twincobr_state::twincobr_bgoffs_w));    /* offset in bg video RAM */
-	map(0x074000, 0x074003).w(this, FUNC(twincobr_state::twincobr_fgscroll_w));  /* fg layer scroll */
-	map(0x074004, 0x074005).w(this, FUNC(twincobr_state::twincobr_fgoffs_w));    /* offset in fg video RAM */
-	map(0x076000, 0x076003).w(this, FUNC(twincobr_state::twincobr_exscroll_w));  /* Spare layer scroll */
+	map(0x070000, 0x070003).w(FUNC(twincobr_state::twincobr_txscroll_w));  /* text layer scroll */
+	map(0x070004, 0x070005).w(FUNC(twincobr_state::twincobr_txoffs_w));    /* offset in text video RAM */
+	map(0x072000, 0x072003).w(FUNC(twincobr_state::twincobr_bgscroll_w));  /* bg layer scroll */
+	map(0x072004, 0x072005).w(FUNC(twincobr_state::twincobr_bgoffs_w));    /* offset in bg video RAM */
+	map(0x074000, 0x074003).w(FUNC(twincobr_state::twincobr_fgscroll_w));  /* fg layer scroll */
+	map(0x074004, 0x074005).w(FUNC(twincobr_state::twincobr_fgoffs_w));    /* offset in fg video RAM */
+	map(0x076000, 0x076003).w(FUNC(twincobr_state::twincobr_exscroll_w));  /* Spare layer scroll */
 	map(0x078000, 0x078001).portr("DSWA");
 	map(0x078002, 0x078003).portr("DSWB");
 	map(0x078004, 0x078005).portr("P1");
@@ -415,10 +415,10 @@ void twincobr_state::main_program_map(address_map &map)
 	map(0x078008, 0x078009).portr("VBLANK");         /* V-Blank & FShark Coin/Start */
 	map(0x07800b, 0x07800b).w("coinlatch", FUNC(ls259_device::write_nibble_d0)); /* Flying Shark DSP Comms & coin stuff */
 	map(0x07800d, 0x07800d).w("mainlatch", FUNC(ls259_device::write_nibble_d0)); /* Twin Cobra DSP Comms & system control */
-	map(0x07a000, 0x07afff).rw(this, FUNC(twincobr_state::twincobr_sharedram_r), FUNC(twincobr_state::twincobr_sharedram_w));   /* 16-bit on 68000 side, 8-bit on Z80 side */
-	map(0x07e000, 0x07e001).rw(this, FUNC(twincobr_state::twincobr_txram_r), FUNC(twincobr_state::twincobr_txram_w));   /* data for text video RAM */
-	map(0x07e002, 0x07e003).rw(this, FUNC(twincobr_state::twincobr_bgram_r), FUNC(twincobr_state::twincobr_bgram_w));   /* data for bg video RAM */
-	map(0x07e004, 0x07e005).rw(this, FUNC(twincobr_state::twincobr_fgram_r), FUNC(twincobr_state::twincobr_fgram_w));   /* data for fg video RAM */
+	map(0x07a000, 0x07afff).rw(FUNC(twincobr_state::twincobr_sharedram_r), FUNC(twincobr_state::twincobr_sharedram_w));   /* 16-bit on 68000 side, 8-bit on Z80 side */
+	map(0x07e000, 0x07e001).rw(FUNC(twincobr_state::twincobr_txram_r), FUNC(twincobr_state::twincobr_txram_w));   /* data for text video RAM */
+	map(0x07e002, 0x07e003).rw(FUNC(twincobr_state::twincobr_bgram_r), FUNC(twincobr_state::twincobr_bgram_w));   /* data for bg video RAM */
+	map(0x07e004, 0x07e005).rw(FUNC(twincobr_state::twincobr_fgram_r), FUNC(twincobr_state::twincobr_fgram_w));   /* data for fg video RAM */
 }
 
 
@@ -452,10 +452,10 @@ void twincobr_state::DSP_program_map(address_map &map)
 
 void twincobr_state::DSP_io_map(address_map &map)
 {
-	map(0, 0).w(this, FUNC(twincobr_state::twincobr_dsp_addrsel_w));
-	map(1, 1).rw(this, FUNC(twincobr_state::twincobr_dsp_r), FUNC(twincobr_state::twincobr_dsp_w));
-	map(2, 2).rw(this, FUNC(twincobr_state::fsharkbt_dsp_r), FUNC(twincobr_state::fsharkbt_dsp_w));
-	map(3, 3).w(this, FUNC(twincobr_state::twincobr_dsp_bio_w));
+	map(0, 0).w(FUNC(twincobr_state::twincobr_dsp_addrsel_w));
+	map(1, 1).rw(FUNC(twincobr_state::twincobr_dsp_r), FUNC(twincobr_state::twincobr_dsp_w));
+	map(2, 2).rw(FUNC(twincobr_state::fsharkbt_dsp_r), FUNC(twincobr_state::fsharkbt_dsp_w));
+	map(3, 3).w(FUNC(twincobr_state::twincobr_dsp_bio_w));
 }
 
 
@@ -694,13 +694,13 @@ MACHINE_CONFIG_START(twincobr_state::twincobr)
 
 	MCFG_DEVICE_ADD("spriteram16", BUFFERED_SPRITERAM16)
 
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_VIDEO_ATTRIBUTES(VIDEO_UPDATE_BEFORE_VBLANK)
-	MCFG_SCREEN_RAW_PARAMS(XTAL(28'000'000)/4, 446, 0, 320, 286, 0, 240)
-	MCFG_SCREEN_UPDATE_DRIVER(twincobr_state, screen_update_toaplan0)
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE("spriteram16", buffered_spriteram16_device, vblank_copy_rising))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE(*this, twincobr_state, twincobr_vblank_irq))
-	MCFG_SCREEN_PALETTE("palette")
+	SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+	m_screen->set_video_attributes(VIDEO_UPDATE_BEFORE_VBLANK);
+	m_screen->set_raw(28_MHz_XTAL/4, 446, 0, 320, 286, 0, 240);
+	m_screen->set_screen_update(FUNC(twincobr_state::screen_update_toaplan0));
+	m_screen->screen_vblank().set(m_spriteram16, FUNC(buffered_spriteram16_device::vblank_copy_rising));
+	m_screen->screen_vblank().append(FUNC(twincobr_state::twincobr_vblank_irq));
+	m_screen->set_palette(m_palette);
 
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_twincobr)
 	MCFG_PALETTE_ADD("palette", 1792)
@@ -716,6 +716,11 @@ MACHINE_CONFIG_START(twincobr_state::twincobr)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_CONFIG_END
 
+MACHINE_CONFIG_START(twincobr_state::twincobrw)
+	twincobr(config);
+	MCFG_DEVICE_MODIFY("maincpu")
+	MCFG_DEVICE_CLOCK(XTAL(10'000'000)) /* The export versions have a dedicated OSC for the M68000 on the top right of the board */
+MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(twincobr_state::fshark)
 	twincobr(config);
@@ -1303,14 +1308,14 @@ void twincobr_state::init_twincobr()
 }
 
 
-GAME( 1987, fshark,    0,        fshark,   fshark,    twincobr_state, init_twincobr, ROT270, "Toaplan / Taito Corporation", "Flying Shark (World)", 0 )
-GAME( 1987, skyshark,  fshark,   fshark,   skyshark,  twincobr_state, init_twincobr, ROT270, "Toaplan / Taito America Corporation (Romstar license)", "Sky Shark (US, set 1)", 0 )
-GAME( 1987, skysharka, fshark,   fshark,   skyshark,  twincobr_state, init_twincobr, ROT270, "Toaplan / Taito America Corporation (Romstar license)", "Sky Shark (US, set 2)", 0 )
-GAME( 1987, hishouza,  fshark,   fshark,   hishouza,  twincobr_state, init_twincobr, ROT270, "Toaplan / Taito Corporation", "Hishou Zame (Japan)", 0 )
-GAME( 1987, fsharkbt,  fshark,   fsharkbt, skyshark,  twincobr_state, init_twincobr, ROT270, "bootleg", "Flying Shark (bootleg with 8741)", 0 )
-GAME( 1987, fnshark,   fshark,   fshark,   hishouza,  twincobr_state, init_twincobr, ROT270, "bootleg", "Flyin' Shark (bootleg of Hishou Zame)", 0 )
-GAME( 1987, twincobr,  0,        twincobr, twincobr,  twincobr_state, init_twincobr, ROT270, "Toaplan / Taito Corporation", "Twin Cobra (World)", 0 )
-GAME( 1987, twincobru, twincobr, twincobr, twincobru, twincobr_state, init_twincobr, ROT270, "Toaplan / Taito America Corporation (Romstar license)", "Twin Cobra (US)", 0 )
-GAME( 1987, ktiger,    twincobr, twincobr, ktiger,    twincobr_state, init_twincobr, ROT270, "Toaplan / Taito Corporation", "Kyukyoku Tiger (Japan)", 0 )
-GAME( 1991, gulfwar2,  0,        twincobr, gulfwar2,  twincobr_state, init_twincobr, ROT270, "Comad", "Gulf War II (set 1)", 0 )
-GAME( 1991, gulfwar2a, gulfwar2, twincobr, gulfwar2,  twincobr_state, init_twincobr, ROT270, "Comad", "Gulf War II (set 2)", 0 )
+GAME( 1987, fshark,    0,        fshark,    fshark,    twincobr_state, init_twincobr, ROT270, "Toaplan / Taito Corporation", "Flying Shark (World)", 0 )
+GAME( 1987, skyshark,  fshark,   fshark,    skyshark,  twincobr_state, init_twincobr, ROT270, "Toaplan / Taito America Corporation (Romstar license)", "Sky Shark (US, set 1)", 0 )
+GAME( 1987, skysharka, fshark,   fshark,    skyshark,  twincobr_state, init_twincobr, ROT270, "Toaplan / Taito America Corporation (Romstar license)", "Sky Shark (US, set 2)", 0 )
+GAME( 1987, hishouza,  fshark,   fshark,    hishouza,  twincobr_state, init_twincobr, ROT270, "Toaplan / Taito Corporation", "Hishou Zame (Japan)", 0 )
+GAME( 1987, fsharkbt,  fshark,   fsharkbt,  skyshark,  twincobr_state, init_twincobr, ROT270, "bootleg", "Flying Shark (bootleg with 8741)", 0 )
+GAME( 1987, fnshark,   fshark,   fshark,    hishouza,  twincobr_state, init_twincobr, ROT270, "bootleg", "Flyin' Shark (bootleg of Hishou Zame)", 0 )
+GAME( 1987, twincobr,  0,        twincobrw, twincobr,  twincobr_state, init_twincobr, ROT270, "Toaplan / Taito Corporation", "Twin Cobra (World)", 0 )
+GAME( 1987, twincobru, twincobr, twincobrw, twincobru, twincobr_state, init_twincobr, ROT270, "Toaplan / Taito America Corporation (Romstar license)", "Twin Cobra (US)", 0 )
+GAME( 1987, ktiger,    twincobr, twincobr,  ktiger,    twincobr_state, init_twincobr, ROT270, "Toaplan / Taito Corporation", "Kyukyoku Tiger (Japan)", 0 )
+GAME( 1991, gulfwar2,  0,        twincobr,  gulfwar2,  twincobr_state, init_twincobr, ROT270, "Comad", "Gulf War II (set 1)", 0 )
+GAME( 1991, gulfwar2a, gulfwar2, twincobr,  gulfwar2,  twincobr_state, init_twincobr, ROT270, "Comad", "Gulf War II (set 2)", 0 )

@@ -205,13 +205,13 @@ WRITE_LINE_MEMBER(docastle_state::idsoccer_adpcm_int)
 	}
 	else if (m_adpcm_data != -1)
 	{
-		m_msm->data_w(m_adpcm_data & 0x0f);
+		m_msm->write_data(m_adpcm_data & 0x0f);
 		m_adpcm_data = -1;
 	}
 	else
 	{
 		m_adpcm_data = memregion("adpcm")->base()[m_adpcm_pos++];
-		m_msm->data_w(m_adpcm_data >> 4);
+		m_msm->write_data(m_adpcm_data >> 4);
 	}
 }
 
@@ -243,30 +243,30 @@ void docastle_state::docastle_map(address_map &map)
 	map(0x0000, 0x7fff).rom();
 	map(0x8000, 0x97ff).ram();
 	map(0x9800, 0x99ff).ram().share("spriteram");
-	map(0xa000, 0xa008).rw(this, FUNC(docastle_state::docastle_shared0_r), FUNC(docastle_state::docastle_shared1_w));
+	map(0xa000, 0xa008).rw(FUNC(docastle_state::docastle_shared0_r), FUNC(docastle_state::docastle_shared1_w));
 	map(0xa800, 0xa800).w("watchdog", FUNC(watchdog_timer_device::reset_w));
-	map(0xb000, 0xb3ff).mirror(0x0800).ram().w(this, FUNC(docastle_state::docastle_videoram_w)).share("videoram");
-	map(0xb400, 0xb7ff).mirror(0x0800).ram().w(this, FUNC(docastle_state::docastle_colorram_w)).share("colorram");
-	map(0xe000, 0xe000).w(this, FUNC(docastle_state::docastle_nmitrigger_w));
+	map(0xb000, 0xb3ff).mirror(0x0800).ram().w(FUNC(docastle_state::docastle_videoram_w)).share("videoram");
+	map(0xb400, 0xb7ff).mirror(0x0800).ram().w(FUNC(docastle_state::docastle_colorram_w)).share("colorram");
+	map(0xe000, 0xe000).w(FUNC(docastle_state::docastle_nmitrigger_w));
 }
 
 void docastle_state::docastle_map2(address_map &map)
 {
 	map(0x0000, 0x3fff).rom();
 	map(0x8000, 0x87ff).ram();
-	map(0xa000, 0xa008).rw(this, FUNC(docastle_state::docastle_shared1_r), FUNC(docastle_state::docastle_shared0_w));
-	map(0xc000, 0xc007).select(0x0080).rw(this, FUNC(docastle_state::inputs_flipscreen_r), FUNC(docastle_state::flipscreen_w));
-	map(0xe000, 0xe000).w("sn1", FUNC(sn76489a_device::write));
-	map(0xe400, 0xe400).w("sn2", FUNC(sn76489a_device::write));
-	map(0xe800, 0xe800).w("sn3", FUNC(sn76489a_device::write));
-	map(0xec00, 0xec00).w("sn4", FUNC(sn76489a_device::write));
+	map(0xa000, 0xa008).rw(FUNC(docastle_state::docastle_shared1_r), FUNC(docastle_state::docastle_shared0_w));
+	map(0xc000, 0xc007).select(0x0080).rw(FUNC(docastle_state::inputs_flipscreen_r), FUNC(docastle_state::flipscreen_w));
+	map(0xe000, 0xe000).w("sn1", FUNC(sn76489a_device::command_w));
+	map(0xe400, 0xe400).w("sn2", FUNC(sn76489a_device::command_w));
+	map(0xe800, 0xe800).w("sn3", FUNC(sn76489a_device::command_w));
+	map(0xec00, 0xec00).w("sn4", FUNC(sn76489a_device::command_w));
 }
 
 void docastle_state::docastle_map3(address_map &map)
 {
 	map(0x0000, 0x00ff).rom();
 	map(0x4000, 0x47ff).ram();
-	map(0x8000, 0x8008).r(this, FUNC(docastle_state::docastle_shared1_r));    // ???
+	map(0x8000, 0x8008).r(FUNC(docastle_state::docastle_shared1_r));    // ???
 	map(0xc003, 0xc003).noprw(); // EP according to schematics
 	map(0xc432, 0xc435).noprw(); // ???
 }
@@ -285,23 +285,23 @@ void docastle_state::dorunrun_map(address_map &map)
 	map(0x2000, 0x37ff).ram();
 	map(0x3800, 0x39ff).ram().share("spriteram");
 	map(0x4000, 0x9fff).rom();
-	map(0xa000, 0xa008).rw(this, FUNC(docastle_state::docastle_shared0_r), FUNC(docastle_state::docastle_shared1_w));
+	map(0xa000, 0xa008).rw(FUNC(docastle_state::docastle_shared0_r), FUNC(docastle_state::docastle_shared1_w));
 	map(0xa800, 0xa800).w("watchdog", FUNC(watchdog_timer_device::reset_w));
-	map(0xb000, 0xb3ff).ram().w(this, FUNC(docastle_state::docastle_videoram_w)).share("videoram");
-	map(0xb400, 0xb7ff).ram().w(this, FUNC(docastle_state::docastle_colorram_w)).share("colorram");
-	map(0xb800, 0xb800).w(this, FUNC(docastle_state::docastle_nmitrigger_w));
+	map(0xb000, 0xb3ff).ram().w(FUNC(docastle_state::docastle_videoram_w)).share("videoram");
+	map(0xb400, 0xb7ff).ram().w(FUNC(docastle_state::docastle_colorram_w)).share("colorram");
+	map(0xb800, 0xb800).w(FUNC(docastle_state::docastle_nmitrigger_w));
 }
 
 void docastle_state::dorunrun_map2(address_map &map)
 {
 	map(0x0000, 0x3fff).rom();
 	map(0x8000, 0x87ff).ram();
-	map(0xa000, 0xa000).w("sn1", FUNC(sn76489a_device::write));
-	map(0xa400, 0xa400).w("sn2", FUNC(sn76489a_device::write));
-	map(0xa800, 0xa800).w("sn3", FUNC(sn76489a_device::write));
-	map(0xac00, 0xac00).w("sn4", FUNC(sn76489a_device::write));
-	map(0xc000, 0xc007).select(0x0080).rw(this, FUNC(docastle_state::inputs_flipscreen_r), FUNC(docastle_state::flipscreen_w));
-	map(0xe000, 0xe008).rw(this, FUNC(docastle_state::docastle_shared1_r), FUNC(docastle_state::docastle_shared0_w));
+	map(0xa000, 0xa000).w("sn1", FUNC(sn76489a_device::command_w));
+	map(0xa400, 0xa400).w("sn2", FUNC(sn76489a_device::command_w));
+	map(0xa800, 0xa800).w("sn3", FUNC(sn76489a_device::command_w));
+	map(0xac00, 0xac00).w("sn4", FUNC(sn76489a_device::command_w));
+	map(0xc000, 0xc007).select(0x0080).rw(FUNC(docastle_state::inputs_flipscreen_r), FUNC(docastle_state::flipscreen_w));
+	map(0xe000, 0xe008).rw(FUNC(docastle_state::docastle_shared1_r), FUNC(docastle_state::docastle_shared0_w));
 }
 
 
@@ -311,12 +311,12 @@ void docastle_state::idsoccer_map(address_map &map)
 	map(0x4000, 0x57ff).ram();
 	map(0x5800, 0x59ff).ram().share("spriteram");
 	map(0x6000, 0x9fff).rom();
-	map(0xa000, 0xa008).rw(this, FUNC(docastle_state::docastle_shared0_r), FUNC(docastle_state::docastle_shared1_w));
+	map(0xa000, 0xa008).rw(FUNC(docastle_state::docastle_shared0_r), FUNC(docastle_state::docastle_shared1_w));
 	map(0xa800, 0xa800).w("watchdog", FUNC(watchdog_timer_device::reset_w));
-	map(0xb000, 0xb3ff).mirror(0x0800).ram().w(this, FUNC(docastle_state::docastle_videoram_w)).share("videoram");
-	map(0xb400, 0xb7ff).mirror(0x0800).ram().w(this, FUNC(docastle_state::docastle_colorram_w)).share("colorram");
-	map(0xc000, 0xc000).rw(this, FUNC(docastle_state::idsoccer_adpcm_status_r), FUNC(docastle_state::idsoccer_adpcm_w));
-	map(0xe000, 0xe000).w(this, FUNC(docastle_state::docastle_nmitrigger_w));
+	map(0xb000, 0xb3ff).mirror(0x0800).ram().w(FUNC(docastle_state::docastle_videoram_w)).share("videoram");
+	map(0xb400, 0xb7ff).mirror(0x0800).ram().w(FUNC(docastle_state::docastle_colorram_w)).share("colorram");
+	map(0xc000, 0xc000).rw(FUNC(docastle_state::idsoccer_adpcm_status_r), FUNC(docastle_state::idsoccer_adpcm_w));
+	map(0xe000, 0xe000).w(FUNC(docastle_state::docastle_nmitrigger_w));
 }
 
 /* Input Ports */
@@ -609,19 +609,19 @@ MACHINE_CONFIG_START(docastle_state::docastle)
 	MCFG_DEVICE_ADD("cpu3", Z80, XTAL(4'000'000))
 	MCFG_DEVICE_PROGRAM_MAP(docastle_map3)
 
-	MCFG_DEVICE_ADD("inp1", TMS1025, 0)
-	MCFG_TMS1025_READ_PORT_CB(PORT1, IOPORT("DSW2"))
-	MCFG_TMS1025_READ_PORT_CB(PORT2, IOPORT("DSW1"))
-	MCFG_TMS1025_READ_PORT_CB(PORT3, IOPORT("JOYS"))
-	MCFG_TMS1025_READ_PORT_CB(PORT5, IOPORT("BUTTONS"))
-	MCFG_TMS1025_READ_PORT_CB(PORT7, IOPORT("SYSTEM"))
+	TMS1025(config, m_inp[0]);
+	m_inp[0]->read_port1_callback().set_ioport("DSW2");
+	m_inp[0]->read_port2_callback().set_ioport("DSW1");
+	m_inp[0]->read_port3_callback().set_ioport("JOYS");
+	m_inp[0]->read_port5_callback().set_ioport("BUTTONS");
+	m_inp[0]->read_port7_callback().set_ioport("SYSTEM");
 
-	MCFG_DEVICE_ADD("inp2", TMS1025, 0)
-	MCFG_TMS1025_READ_PORT_CB(PORT1, IOPORT("DSW2")) MCFG_DEVCB_RSHIFT(4)
-	MCFG_TMS1025_READ_PORT_CB(PORT2, IOPORT("DSW1")) MCFG_DEVCB_RSHIFT(4)
-	MCFG_TMS1025_READ_PORT_CB(PORT3, IOPORT("JOYS")) MCFG_DEVCB_RSHIFT(4)
-	MCFG_TMS1025_READ_PORT_CB(PORT5, IOPORT("BUTTONS")) MCFG_DEVCB_RSHIFT(4)
-	MCFG_TMS1025_READ_PORT_CB(PORT7, IOPORT("SYSTEM")) MCFG_DEVCB_RSHIFT(4)
+	TMS1025(config, m_inp[1]);
+	m_inp[1]->read_port1_callback().set_ioport("DSW2").rshift(4);
+	m_inp[1]->read_port2_callback().set_ioport("DSW1").rshift(4);
+	m_inp[1]->read_port3_callback().set_ioport("JOYS").rshift(4);
+	m_inp[1]->read_port5_callback().set_ioport("BUTTONS").rshift(4);
+	m_inp[1]->read_port7_callback().set_ioport("SYSTEM").rshift(4);
 
 	MCFG_WATCHDOG_ADD("watchdog")
 
@@ -686,11 +686,9 @@ MACHINE_CONFIG_START(docastle_state::idsoccer)
 	MCFG_DEVICE_MODIFY("maincpu")
 	MCFG_DEVICE_PROGRAM_MAP(idsoccer_map)
 
-	MCFG_DEVICE_MODIFY("inp1")
-	MCFG_TMS1025_READ_PORT_CB(PORT4, IOPORT("JOYS_RIGHT"))
+	m_inp[0]->read_port4_callback().set_ioport("JOYS_RIGHT");
 
-	MCFG_DEVICE_MODIFY("inp2")
-	MCFG_TMS1025_READ_PORT_CB(PORT4, IOPORT("JOYS_RIGHT")) MCFG_DEVCB_RSHIFT(4)
+	m_inp[1]->read_port4_callback().set_ioport("JOYS_RIGHT").rshift(4);
 
 	/* video hardware */
 	MCFG_VIDEO_START_OVERRIDE(docastle_state,dorunrun)

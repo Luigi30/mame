@@ -444,12 +444,12 @@ void model2_tgp_state::copro_tgp_data_map(address_map &map)
 
 void model2_tgp_state::copro_tgp_bank_map(address_map &map)
 {
-	map(0x00020, 0x00023).rw(this, FUNC(model2_tgp_state::copro_sincos_r), FUNC(model2_tgp_state::copro_sincos_w));
-	map(0x00024, 0x00027).rw(this, FUNC(model2_tgp_state::copro_atan_r), FUNC(model2_tgp_state::copro_atan_w));
-	map(0x00028, 0x00029).rw(this, FUNC(model2_tgp_state::copro_inv_r), FUNC(model2_tgp_state::copro_inv_w));
-	map(0x0002a, 0x0002b).rw(this, FUNC(model2_tgp_state::copro_isqrt_r), FUNC(model2_tgp_state::copro_isqrt_w));
+	map(0x00020, 0x00023).rw(FUNC(model2_tgp_state::copro_sincos_r), FUNC(model2_tgp_state::copro_sincos_w));
+	map(0x00024, 0x00027).rw(FUNC(model2_tgp_state::copro_atan_r), FUNC(model2_tgp_state::copro_atan_w));
+	map(0x00028, 0x00029).rw(FUNC(model2_tgp_state::copro_inv_r), FUNC(model2_tgp_state::copro_inv_w));
+	map(0x0002a, 0x0002b).rw(FUNC(model2_tgp_state::copro_isqrt_r), FUNC(model2_tgp_state::copro_isqrt_w));
 
-	map(0x10000, 0x1ffff).rw(this, FUNC(model2_tgp_state::copro_tgp_memory_r), FUNC(model2_tgp_state::copro_tgp_memory_w));
+	map(0x10000, 0x1ffff).rw(FUNC(model2_tgp_state::copro_tgp_memory_r), FUNC(model2_tgp_state::copro_tgp_memory_w));
 }
 
 void model2_tgp_state::copro_tgp_io_map(address_map &map)
@@ -462,7 +462,7 @@ void model2_tgp_state::copro_tgp_rf_map(address_map &map)
 	map(0x0, 0x0).nopw(); // leds? busy flag?
 	map(0x1, 0x1).r(m_copro_fifo_in, FUNC(generic_fifo_u32_device::read));
 	map(0x2, 0x2).w(m_copro_fifo_out, FUNC(generic_fifo_u32_device::write));
-	map(0x3, 0x3).w(this, FUNC(model2_tgp_state::copro_tgp_bank_w));
+	map(0x3, 0x3).w(FUNC(model2_tgp_state::copro_tgp_bank_w));
 }
 
 READ32_MEMBER(model2_tgp_state::copro_tgp_memory_r)
@@ -635,7 +635,7 @@ void model2b_state::copro_sharc_map(address_map &map)
 {
 	map(0x0400000, 0x0bfffff).r(m_copro_fifo_in, FUNC(generic_fifo_u32_device::read));
 	map(0x0c00000, 0x13fffff).w(m_copro_fifo_out, FUNC(generic_fifo_u32_device::write));
-	map(0x1400000, 0x1bfffff).rw(this, FUNC(model2b_state::copro_sharc_buffer_r), FUNC(model2b_state::copro_sharc_buffer_w));
+	map(0x1400000, 0x1bfffff).rw(FUNC(model2b_state::copro_sharc_buffer_r), FUNC(model2b_state::copro_sharc_buffer_w));
 	map(0x1c00000, 0x1dfffff).rom().region("copro_data", 0);
 }
 
@@ -1121,7 +1121,7 @@ void model2_state::model2_base_mem(address_map &map)
 
 	map(0x00500000, 0x005fffff).ram().share("workram");
 
-	map(0x00800000, 0x00803fff).rw(this, FUNC(model2_state::geo_r), FUNC(model2_state::geo_w));
+	map(0x00800000, 0x00803fff).rw(FUNC(model2_state::geo_r), FUNC(model2_state::geo_w));
 	//AM_RANGE(0x00800010, 0x00800013) AM_WRITENOP
 	//AM_RANGE(0x008000b0, 0x008000b3) AM_WRITENOP
 	//AM_RANGE(0x00804004, 0x0080400f) AM_WRITENOP  // quiet psikyo games
@@ -1130,15 +1130,15 @@ void model2_state::model2_base_mem(address_map &map)
 
 	map(0x00900000, 0x0091ffff).mirror(0x60000).ram().share("bufferram");
 
-	map(0x00980004, 0x00980007).r(this, FUNC(model2_state::fifo_control_2a_r));
-	map(0x0098000c, 0x0098000f).rw(this, FUNC(model2_state::videoctl_r), FUNC(model2_state::videoctl_w));
-	map(0x00980030, 0x0098003f).r(this, FUNC(model2_state::tgpid_r));
+	map(0x00980004, 0x00980007).r(FUNC(model2_state::fifo_control_2a_r));
+	map(0x0098000c, 0x0098000f).rw(FUNC(model2_state::videoctl_r), FUNC(model2_state::videoctl_w));
+	map(0x00980030, 0x0098003f).r(FUNC(model2_state::tgpid_r));
 
 	map(0x00e00000, 0x00e00037).ram(); // CPU control (wait-states)
-	map(0x00e80000, 0x00e80003).rw(this, FUNC(model2_state::irq_request_r), FUNC(model2_state::irq_ack_w));
-	map(0x00e80004, 0x00e80007).rw(this, FUNC(model2_state::irq_enable_r), FUNC(model2_state::irq_enable_w));
+	map(0x00e80000, 0x00e80003).rw(FUNC(model2_state::irq_request_r), FUNC(model2_state::irq_ack_w));
+	map(0x00e80004, 0x00e80007).rw(FUNC(model2_state::irq_enable_r), FUNC(model2_state::irq_enable_w));
 
-	map(0x00f00000, 0x00f0000f).rw(this, FUNC(model2_state::timers_r), FUNC(model2_state::timers_w));
+	map(0x00f00000, 0x00f0000f).rw(FUNC(model2_state::timers_r), FUNC(model2_state::timers_w));
 
 	map(0x01000000, 0x0100ffff).rw("tile", FUNC(segas24_tile_device::tile_r), FUNC(segas24_tile_device::tile_w)).mirror(0x110000);
 	map(0x01020000, 0x01020003).nopw().mirror(0x100000);        // ABSEL, always 0
@@ -1147,9 +1147,9 @@ void model2_state::model2_base_mem(address_map &map)
 	map(0x01070000, 0x01070003).nopw().mirror(0x100000);        // Video synchronization switch
 	map(0x01080000, 0x010fffff).rw("tile", FUNC(segas24_tile_device::char_r), FUNC(segas24_tile_device::char_w)).mirror(0x100000);
 
-	map(0x01800000, 0x01803fff).rw(this, FUNC(model2_state::palette_r), FUNC(model2_state::palette_w));
-	map(0x01810000, 0x0181bfff).rw(this, FUNC(model2_state::colorxlat_r), FUNC(model2_state::colorxlat_w));
-	map(0x0181c000, 0x0181c003).w(this, FUNC(model2_state::model2_3d_zclip_w));
+	map(0x01800000, 0x01803fff).rw(FUNC(model2_state::palette_r), FUNC(model2_state::palette_w));
+	map(0x01810000, 0x0181bfff).rw(FUNC(model2_state::colorxlat_r), FUNC(model2_state::colorxlat_w));
+	map(0x0181c000, 0x0181c003).w(FUNC(model2_state::model2_3d_zclip_w));
 	map(0x01a10000, 0x01a13fff).rw(m_m2comm, FUNC(m2comm_device::share_r), FUNC(m2comm_device::share_w));
 	map(0x01a14000, 0x01a14000).rw(m_m2comm, FUNC(m2comm_device::cn_r), FUNC(m2comm_device::cn_w));
 	map(0x01a14002, 0x01a14002).rw(m_m2comm, FUNC(m2comm_device::fg_r), FUNC(m2comm_device::fg_w));
@@ -1159,19 +1159,19 @@ void model2_state::model2_base_mem(address_map &map)
 	// "extra" data
 	map(0x06000000, 0x06ffffff).rom().region("main_data", 0x1000000);
 
-	map(0x10000000, 0x101fffff).rw(this, FUNC(model2_state::render_mode_r), FUNC(model2_state::render_mode_w));
+	map(0x10000000, 0x101fffff).rw(FUNC(model2_state::render_mode_r), FUNC(model2_state::render_mode_w));
 //  AM_RANGE(0x10200000, 0x103fffff) renderer status register
-	map(0x10400000, 0x105fffff).r(this, FUNC(model2_state::polygon_count_r));
+	map(0x10400000, 0x105fffff).r(FUNC(model2_state::polygon_count_r));
 //  AM_RANGE(0x10600000, 0x107fffff) polygon data ping
 //  AM_RANGE(0x10800000, 0x109fffff) polygon data pong
 //  AM_RANGE(0x10a00000, 0x10bfffff) fill memory ping
 //  AM_RANGE(0x10c00000, 0x10dfffff) fill memory pong
 
 	// format is xGGGGGRRRRRBBBBB (512x400)
-	map(0x11600000, 0x1167ffff).rw(this, FUNC(model2_state::fbvram_bankA_r), FUNC(model2_state::fbvram_bankA_w)); // framebuffer A (last bronx title screen)
-	map(0x11680000, 0x116fffff).rw(this, FUNC(model2_state::fbvram_bankB_r), FUNC(model2_state::fbvram_bankB_w)); // framebuffer B
+	map(0x11600000, 0x1167ffff).rw(FUNC(model2_state::fbvram_bankA_r), FUNC(model2_state::fbvram_bankA_w)); // framebuffer A (last bronx title screen)
+	map(0x11680000, 0x116fffff).rw(FUNC(model2_state::fbvram_bankB_r), FUNC(model2_state::fbvram_bankB_w)); // framebuffer B
 
-	map(0x12800000, 0x1281ffff).rw(this, FUNC(model2_state::lumaram_r), FUNC(model2_state::lumaram_w)).umask32(0x0000ffff); // polygon "luma" RAM
+	map(0x12800000, 0x1281ffff).rw(FUNC(model2_state::lumaram_r), FUNC(model2_state::lumaram_w)).umask32(0x0000ffff); // polygon "luma" RAM
 }
 
 /* common map for 5881 protection */
@@ -1300,16 +1300,16 @@ void model2_tgp_state::model2_tgp_mem(address_map &map)
 {
 	model2_base_mem(map);
 
-	map(0x00804000, 0x00807fff).rw(this, FUNC(model2_tgp_state::geo_prg_r), FUNC(model2_tgp_state::geo_prg_w));
-	map(0x00880000, 0x00883fff).w(this, FUNC(model2_tgp_state::copro_function_port_w));
-	map(0x00884000, 0x00887fff).rw(this, FUNC(model2_tgp_state::copro_fifo_r), FUNC(model2_tgp_state::copro_fifo_w));
+	map(0x00804000, 0x00807fff).rw(FUNC(model2_tgp_state::geo_prg_r), FUNC(model2_tgp_state::geo_prg_w));
+	map(0x00880000, 0x00883fff).w(FUNC(model2_tgp_state::copro_function_port_w));
+	map(0x00884000, 0x00887fff).rw(FUNC(model2_tgp_state::copro_fifo_r), FUNC(model2_tgp_state::copro_fifo_w));
 
-	map(0x00980000, 0x00980003).rw(this, FUNC(model2_tgp_state::copro_ctl1_r), FUNC(model2_tgp_state::copro_ctl1_w));
-	map(0x00980008, 0x0098000b).w(this, FUNC(model2_tgp_state::geo_ctl1_w));
-	map(0x009c0000, 0x009cffff).rw(this, FUNC(model2_tgp_state::model2_serial_r), FUNC(model2_tgp_state::model2_serial_w));
+	map(0x00980000, 0x00980003).rw(FUNC(model2_tgp_state::copro_ctl1_r), FUNC(model2_tgp_state::copro_ctl1_w));
+	map(0x00980008, 0x0098000b).w(FUNC(model2_tgp_state::geo_ctl1_w));
+	map(0x009c0000, 0x009cffff).rw(FUNC(model2_tgp_state::model2_serial_r), FUNC(model2_tgp_state::model2_serial_w));
 
-	map(0x12000000, 0x121fffff).ram().w(this, FUNC(model2o_state::tex0_w)).mirror(0x200000).share("textureram0");   // texture RAM 0
-	map(0x12400000, 0x125fffff).ram().w(this, FUNC(model2o_state::tex1_w)).mirror(0x200000).share("textureram1");   // texture RAM 1
+	map(0x12000000, 0x121fffff).ram().w(FUNC(model2o_state::tex0_w)).mirror(0x200000).share("textureram0");   // texture RAM 0
+	map(0x12400000, 0x125fffff).ram().w(FUNC(model2o_state::tex1_w)).mirror(0x200000).share("textureram1");   // texture RAM 1
 }
 
 /* original Model 2 overrides */
@@ -1319,9 +1319,9 @@ void model2o_state::model2o_mem(address_map &map)
 
 	map(0x00200000, 0x0021ffff).ram();
 	map(0x00220000, 0x0023ffff).rom().region("maincpu", 0x20000);
-	map(0x00980004, 0x00980007).r(this, FUNC(model2o_state::fifo_control_2o_r));
+	map(0x00980004, 0x00980007).r(FUNC(model2o_state::fifo_control_2o_r));
 	map(0x01c00000, 0x01c00fff).rw("dpram", FUNC(mb8421_device::right_r), FUNC(mb8421_device::right_w)).umask32(0x00ff00ff); // 2k*8-bit dual port ram
-	map(0x01c80000, 0x01c80003).rw(this, FUNC(model2o_state::model2_serial_r), FUNC(model2o_state::model2_serial_w));
+	map(0x01c80000, 0x01c80003).rw(FUNC(model2o_state::model2_serial_r), FUNC(model2o_state::model2_serial_w));
 }
 
 /* Daytona "To The MAXX" PIC protection simulation */
@@ -1369,7 +1369,7 @@ READ32_MEMBER(model2o_maxx_state::maxx_r)
 void model2o_maxx_state::model2o_maxx_mem(address_map &map)
 {
 	model2o_mem(map);
-	map(0x00240000, 0x0024ffff).r(this, FUNC(model2o_maxx_state::maxx_r));
+	map(0x00240000, 0x0024ffff).r(FUNC(model2o_maxx_state::maxx_r));
 }
 
 READ8_MEMBER(model2o_gtx_state::gtx_r)
@@ -1389,7 +1389,7 @@ READ8_MEMBER(model2o_gtx_state::gtx_r)
 void model2o_gtx_state::model2o_gtx_mem(address_map &map)
 {
 	model2o_mem(map);
-	map(0x02c00000,0x02cfffff).r(this, FUNC(model2o_gtx_state::gtx_r));
+	map(0x02c00000,0x02cfffff).r(FUNC(model2o_gtx_state::gtx_r));
 }
 
 /* TODO: read by Sonic the Fighters (bit 1), unknown purpose */
@@ -1409,7 +1409,7 @@ void model2a_state::model2a_crx_mem(address_map &map)
 	map(0x00200000, 0x0023ffff).ram();
 	map(0x01c00000, 0x01c0001f).rw("io", FUNC(sega_315_5649_device::read), FUNC(sega_315_5649_device::write)).umask32(0x00ff00ff);
 	map(0x01c00040, 0x01c00043).nopw();
-	map(0x01c80000, 0x01c80003).rw(this, FUNC(model2a_state::model2_serial_r), FUNC(model2a_state::model2_serial_w));
+	map(0x01c80000, 0x01c80003).rw(FUNC(model2a_state::model2_serial_r), FUNC(model2a_state::model2_serial_w));
 }
 
 void model2a_state::model2a_5881_mem(address_map &map)
@@ -1425,31 +1425,31 @@ void model2b_state::model2b_crx_mem(address_map &map)
 
 	map(0x00200000, 0x0023ffff).ram();
 
-	map(0x00804000, 0x00807fff).rw(this, FUNC(model2b_state::geo_prg_r), FUNC(model2b_state::geo_prg_w));
+	map(0x00804000, 0x00807fff).rw(FUNC(model2b_state::geo_prg_r), FUNC(model2b_state::geo_prg_w));
 	//AM_RANGE(0x00804000, 0x00807fff) AM_READWRITE(geo_sharc_fifo_r, geo_sharc_fifo_w)
 	//AM_RANGE(0x00840000, 0x00840fff) AM_WRITE(geo_sharc_iop_w)
 
-	map(0x00880000, 0x00883fff).w(this, FUNC(model2b_state::copro_function_port_w));
-	map(0x00884000, 0x00887fff).rw(this, FUNC(model2b_state::copro_fifo_r), FUNC(model2b_state::copro_fifo_w));
-	map(0x008c0000, 0x008c0fff).w(this, FUNC(model2b_state::copro_sharc_iop_w));
+	map(0x00880000, 0x00883fff).w(FUNC(model2b_state::copro_function_port_w));
+	map(0x00884000, 0x00887fff).rw(FUNC(model2b_state::copro_fifo_r), FUNC(model2b_state::copro_fifo_w));
+	map(0x008c0000, 0x008c0fff).w(FUNC(model2b_state::copro_sharc_iop_w));
 
-	map(0x00980000, 0x00980003).rw(this, FUNC(model2b_state::copro_ctl1_r), FUNC(model2b_state::copro_ctl1_w));
-	map(0x00980008, 0x0098000b).w(this, FUNC(model2b_state::geo_ctl1_w));
-	map(0x00980014, 0x00980017).r(this, FUNC(model2b_state::copro_status_r));
+	map(0x00980000, 0x00980003).rw(FUNC(model2b_state::copro_ctl1_r), FUNC(model2b_state::copro_ctl1_w));
+	map(0x00980008, 0x0098000b).w(FUNC(model2b_state::geo_ctl1_w));
+	map(0x00980014, 0x00980017).r(FUNC(model2b_state::copro_status_r));
 	//AM_RANGE(0x00980008, 0x0098000b) AM_WRITE(geo_sharc_ctl1_w )
 
-	map(0x009c0000, 0x009cffff).rw(this, FUNC(model2b_state::model2_serial_r), FUNC(model2b_state::model2_serial_w));
+	map(0x009c0000, 0x009cffff).rw(FUNC(model2b_state::model2_serial_r), FUNC(model2b_state::model2_serial_w));
 
 	map(0x11000000, 0x110fffff).ram().share("textureram0"); // texture RAM 0 (2b/2c)
 	map(0x11100000, 0x111fffff).ram().share("textureram0"); // texture RAM 0 (2b/2c)
 	map(0x11200000, 0x112fffff).ram().share("textureram1"); // texture RAM 1 (2b/2c)
 	map(0x11300000, 0x113fffff).ram().share("textureram1"); // texture RAM 1 (2b/2c)
-	map(0x11400000, 0x1140ffff).rw(this, FUNC(model2b_state::lumaram_r), FUNC(model2b_state::lumaram_w));    // polygon "luma" RAM (2b/2c)
-	map(0x12800000, 0x1281ffff).rw(this, FUNC(model2b_state::lumaram_r), FUNC(model2b_state::lumaram_w)).umask32(0x0000ffff); // polygon "luma" RAM
+	map(0x11400000, 0x1140ffff).rw(FUNC(model2b_state::lumaram_r), FUNC(model2b_state::lumaram_w));    // polygon "luma" RAM (2b/2c)
+	map(0x12800000, 0x1281ffff).rw(FUNC(model2b_state::lumaram_r), FUNC(model2b_state::lumaram_w)).umask32(0x0000ffff); // polygon "luma" RAM
 
 	map(0x01c00000, 0x01c0001f).rw("io", FUNC(sega_315_5649_device::read), FUNC(sega_315_5649_device::write)).umask32(0x00ff00ff);
 	map(0x01c00040, 0x01c00043).nopw();
-	map(0x01c80000, 0x01c80003).rw(this, FUNC(model2b_state::model2_serial_r), FUNC(model2b_state::model2_serial_w));
+	map(0x01c80000, 0x01c80003).rw(FUNC(model2b_state::model2_serial_r), FUNC(model2b_state::model2_serial_w));
 }
 
 void model2b_state::model2b_5881_mem(address_map &map)
@@ -1465,22 +1465,22 @@ void model2c_state::model2c_crx_mem(address_map &map)
 
 	map(0x00200000, 0x0023ffff).ram();
 
-	map(0x00804000, 0x00807fff).rw(this, FUNC(model2c_state::geo_prg_r), FUNC(model2c_state::geo_prg_w));
-	map(0x00880000, 0x00883fff).w(this, FUNC(model2c_state::copro_function_port_w));
-	map(0x00884000, 0x00887fff).rw(this, FUNC(model2c_state::copro_fifo_r), FUNC(model2c_state::copro_fifo_w));
+	map(0x00804000, 0x00807fff).rw(FUNC(model2c_state::geo_prg_r), FUNC(model2c_state::geo_prg_w));
+	map(0x00880000, 0x00883fff).w(FUNC(model2c_state::copro_function_port_w));
+	map(0x00884000, 0x00887fff).rw(FUNC(model2c_state::copro_fifo_r), FUNC(model2c_state::copro_fifo_w));
 
-	map(0x00980000, 0x00980003).rw(this, FUNC(model2c_state::copro_ctl1_r), FUNC(model2c_state::copro_ctl1_w));
-	map(0x00980008, 0x0098000b).w(this, FUNC(model2c_state::geo_ctl1_w));
-	map(0x00980014, 0x00980017).r(this, FUNC(model2c_state::copro_status_r));
-	map(0x009c0000, 0x009cffff).rw(this, FUNC(model2c_state::model2_serial_r), FUNC(model2c_state::model2_serial_w));
+	map(0x00980000, 0x00980003).rw(FUNC(model2c_state::copro_ctl1_r), FUNC(model2c_state::copro_ctl1_w));
+	map(0x00980008, 0x0098000b).w(FUNC(model2c_state::geo_ctl1_w));
+	map(0x00980014, 0x00980017).r(FUNC(model2c_state::copro_status_r));
+	map(0x009c0000, 0x009cffff).rw(FUNC(model2c_state::model2_serial_r), FUNC(model2c_state::model2_serial_w));
 
 	map(0x11000000, 0x111fffff).ram().share("textureram0"); // texture RAM 0 (2b/2c)
 	map(0x11200000, 0x113fffff).ram().share("textureram1"); // texture RAM 1 (2b/2c)
-	map(0x11400000, 0x1140ffff).rw(this, FUNC(model2c_state::lumaram_r), FUNC(model2c_state::lumaram_w));    // polygon "luma" RAM (2b/2c)
-	map(0x12800000, 0x1281ffff).rw(this, FUNC(model2c_state::lumaram_r), FUNC(model2c_state::lumaram_w)).umask32(0x0000ffff); // polygon "luma" RAM
+	map(0x11400000, 0x1140ffff).rw(FUNC(model2c_state::lumaram_r), FUNC(model2c_state::lumaram_w));    // polygon "luma" RAM (2b/2c)
+	map(0x12800000, 0x1281ffff).rw(FUNC(model2c_state::lumaram_r), FUNC(model2c_state::lumaram_w)).umask32(0x0000ffff); // polygon "luma" RAM
 
 	map(0x01c00000, 0x01c0001f).rw("io", FUNC(sega_315_5649_device::read), FUNC(sega_315_5649_device::write)).umask32(0x00ff00ff);
-	map(0x01c80000, 0x01c80003).rw(this, FUNC(model2c_state::model2_serial_r), FUNC(model2c_state::model2_serial_w));
+	map(0x01c80000, 0x01c80003).rw(FUNC(model2c_state::model2_serial_r), FUNC(model2c_state::model2_serial_w));
 }
 
 void model2c_state::model2c_5881_mem(address_map &map)
@@ -2390,7 +2390,7 @@ void model2_state::model2_snd(address_map &map)
 {
 	map(0x000000, 0x07ffff).ram().region("audiocpu", 0).share("soundram");
 	map(0x100000, 0x100fff).rw(m_scsp, FUNC(scsp_device::read), FUNC(scsp_device::write));
-	map(0x400000, 0x400001).w(this, FUNC(model2_state::model2snd_ctrl));
+	map(0x400000, 0x400001).w(FUNC(model2_state::model2snd_ctrl));
 	map(0x600000, 0x67ffff).rom().region("audiocpu", 0x80000);
 	map(0x800000, 0x9fffff).rom().region("scsp", 0);
 	map(0xa00000, 0xdfffff).bankr("bank4");
@@ -2419,8 +2419,8 @@ MACHINE_CONFIG_START(model2_state::model2_timers)
 MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(model2_state::model2_screen)
-	MCFG_S24TILE_DEVICE_ADD("tile", 0x3fff)
-	MCFG_S24TILE_DEVICE_PALETTE("palette")
+	MCFG_DEVICE_ADD("tile", S24TILE, 0, 0x3fff)
+	MCFG_GFX_PALETTE("palette")
 	MCFG_S24TILE_XHOUT_CALLBACK(WRITE16(*this, model2_state, horizontal_sync_w))
 	MCFG_S24TILE_XVOUT_CALLBACK(WRITE16(*this, model2_state, vertical_sync_w))
 
@@ -2445,13 +2445,13 @@ MACHINE_CONFIG_START(model2_state::model2_scsp)
 	MCFG_SOUND_ROUTE(0, "lspeaker", 2.0)
 	MCFG_SOUND_ROUTE(0, "rspeaker", 2.0)
 
-	MCFG_DEVICE_ADD("uart", I8251, 8000000) // uPD71051C, clock unknown
-//  MCFG_I8251_RXRDY_HANDLER(WRITELINE(*this, model2_state, sound_ready_w))
-//  MCFG_I8251_TXRDY_HANDLER(WRITELINE(*this, model2_state, sound_ready_w))
+	I8251(config, m_uart, 8000000); // uPD71051C, clock unknown
+//  m_uart->rxrdy_handler().set(FUNC(model2_state::sound_ready_w));
+//  m_uart->txrdy_handler().set(FUNC(model2_state::sound_ready_w));
 
-	MCFG_CLOCK_ADD("uart_clock", 500000) // 16 times 31.25MHz (standard Sega/MIDI sound data rate)
-	MCFG_CLOCK_SIGNAL_HANDLER(WRITELINE("uart", i8251_device, write_txc))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("uart", i8251_device, write_rxc))
+	clock_device &uart_clock(CLOCK(config, "uart_clock", 500000)); // 16 times 31.25MHz (standard Sega/MIDI sound data rate)
+	uart_clock.signal_handler().set(m_uart, FUNC(i8251_device::write_txc));
+	uart_clock.signal_handler().append(m_uart, FUNC(i8251_device::write_rxc));
 MACHINE_CONFIG_END
 
 /* original Model 2 */
@@ -2466,45 +2466,45 @@ MACHINE_CONFIG_START(model2o_state::model2o)
 	MCFG_DEVICE_IO_MAP(copro_tgp_io_map)
 	MCFG_DEVICE_ADDRESS_MAP(mb86233_device::AS_RF, copro_tgp_rf_map)
 
-	MCFG_DEVICE_ADD("copro_tgp_bank", ADDRESS_MAP_BANK, 0)
-	MCFG_DEVICE_PROGRAM_MAP(copro_tgp_bank_map)
-	MCFG_ADDRESS_MAP_BANK_ENDIANNESS(ENDIANNESS_LITTLE)
-	MCFG_ADDRESS_MAP_BANK_DATA_WIDTH(32)
-	MCFG_ADDRESS_MAP_BANK_ADDR_WIDTH(17)
-	MCFG_ADDRESS_MAP_BANK_SHIFT(-2)
-	MCFG_ADDRESS_MAP_BANK_STRIDE(0x10000)
+	ADDRESS_MAP_BANK(config, m_copro_tgp_bank, 0);
+	m_copro_tgp_bank->set_addrmap(0, &model2o_state::copro_tgp_bank_map);
+	m_copro_tgp_bank->set_endianness(ENDIANNESS_LITTLE);
+	m_copro_tgp_bank->set_data_width(32);
+	m_copro_tgp_bank->set_addr_width(17);
+	m_copro_tgp_bank->set_shift(-2);
+	m_copro_tgp_bank->set_stride(0x10000);
 
-	MCFG_DEVICE_ADD("copro_fifo_in", GENERIC_FIFO_U32, 0)
-	MCFG_DEVICE_ADD("copro_fifo_out", GENERIC_FIFO_U32, 0)
+	GENERIC_FIFO_U32(config, m_copro_fifo_in, 0);
+	GENERIC_FIFO_U32(config, m_copro_fifo_out, 0);
 
 	MCFG_MACHINE_START_OVERRIDE(model2_tgp_state,model2_tgp)
 	MCFG_MACHINE_RESET_OVERRIDE(model2o_state,model2o)
 
 	MCFG_NVRAM_ADD_1FILL("backup1")
 
-	MCFG_DEVICE_ADD("ioboard", SEGA_MODEL1IO, 0)
-	MCFG_DEVICE_BIOS("epr14869c");
-	MCFG_MODEL1IO_READ_CB(READ8("dpram", mb8421_device, left_r))
-	MCFG_MODEL1IO_WRITE_CB(WRITE8("dpram", mb8421_device, left_w))
-	MCFG_MODEL1IO_IN0_CB(IOPORT("IN0"))
-	MCFG_MODEL1IO_IN1_CB(IOPORT("IN1"))
+	model1io_device &ioboard(SEGA_MODEL1IO(config, "ioboard", 0));
+	ioboard.set_default_bios_tag("epr14869c");
+	ioboard.read_callback().set("dpram", FUNC(mb8421_device::left_r));
+	ioboard.write_callback().set("dpram", FUNC(mb8421_device::left_w));
+	ioboard.in_callback<0>().set_ioport("IN0");
+	ioboard.in_callback<1>().set_ioport("IN1");
 
-	MCFG_DEVICE_ADD("dpram", MB8421, 0)
+	MB8421(config, "dpram", 0);
 
 	model2_timers(config);
 	model2_screen(config);
 
-	MCFG_SEGAM1AUDIO_ADD(M1AUDIO_TAG)
-	MCFG_SEGAM1AUDIO_RXD_HANDLER(WRITELINE("uart", i8251_device, write_rxd))
+	SEGAM1AUDIO(config, m_m1audio, 0);
+	m_m1audio->rxd_handler().set(m_uart, FUNC(i8251_device::write_rxd));
 
-	MCFG_DEVICE_ADD("uart", I8251, 8000000) // uPD71051C, clock unknown
-	MCFG_I8251_TXD_HANDLER(WRITELINE(M1AUDIO_TAG, segam1audio_device, write_txd))
+	I8251(config, m_uart, 8000000);  // uPD71051C, clock unknown
+	m_uart->txd_handler().set(m_m1audio, FUNC(segam1audio_device::write_txd));
 
-	MCFG_CLOCK_ADD("uart_clock", 500000) // 16 times 31.25MHz (standard Sega/MIDI sound data rate)
-	MCFG_CLOCK_SIGNAL_HANDLER(WRITELINE("uart", i8251_device, write_txc))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("uart", i8251_device, write_rxc))
+	clock_device &uart_clock(CLOCK(config, "uart_clock", 500000)); // 16 times 31.25MHz (standard Sega/MIDI sound data rate)
+	uart_clock.signal_handler().set(m_uart, FUNC(i8251_device::write_txc));
+	uart_clock.signal_handler().append(m_uart, FUNC(i8251_device::write_rxc));
 
-	MCFG_M2COMM_ADD("m2comm")
+	M2COMM(config, "m2comm", 0);
 MACHINE_CONFIG_END
 
 READ8_MEMBER(model2_state::driveio_portg_r)
@@ -2544,27 +2544,28 @@ MACHINE_CONFIG_START(model2_state::sj25_0207_01)
 	MCFG_DEVICE_IO_MAP(drive_io_map)
 	MCFG_DEVICE_VBLANK_INT_DRIVER("screen", model2_state,  irq0_line_hold)
 
-	MCFG_DEVICE_ADD("driveio1", SEGA_315_5296, 0) // unknown clock
-	MCFG_315_5296_OUT_PORTD_CB(WRITE8(*this, model2_state, driveio_port_w))
-	MCFG_315_5296_IN_PORTG_CB(READ8(*this, model2_state, driveio_portg_r))
-	MCFG_315_5296_IN_PORTH_CB(READ8(*this, model2_state, driveio_porth_r))
+	sega_315_5296_device &driveio1(SEGA_315_5296(config, "driveio1", 0)); // unknown clock
+	driveio1.out_pd_callback().set(FUNC(model2_state::driveio_port_w));
+	driveio1.in_pg_callback().set(FUNC(model2_state::driveio_portg_r));
+	driveio1.in_ph_callback().set(FUNC(model2_state::driveio_porth_r));
 
-	MCFG_DEVICE_ADD("driveio2", SEGA_315_5296, 0) // unknown clock
+	SEGA_315_5296(config, "driveio2", 0); // unknown clock
 
-	MCFG_DEVICE_ADD("driveadc", MSM6253, 0)
+	MSM6253(config, "driveadc", 0);
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_START(model2o_state::daytona)
+void model2o_state::daytona(machine_config &config)
+{
 	model2o(config);
 	sj25_0207_01(config);
 
-	MCFG_DEVICE_MODIFY("ioboard")
-	MCFG_MODEL1IO_DRIVE_WRITE_CB(WRITE8(*this, model2o_state, drive_board_w))
-	MCFG_MODEL1IO_AN0_CB(IOPORT("STEER"))
-	MCFG_MODEL1IO_AN1_CB(IOPORT("ACCEL"))
-	MCFG_MODEL1IO_AN2_CB(IOPORT("BRAKE"))
-	MCFG_MODEL1IO_OUTPUT_CB(WRITE8(*this, model2o_state, daytona_output_w))
-MACHINE_CONFIG_END
+	model1io_device &ioboard(*subdevice<model1io_device>("ioboard"));
+	ioboard.drive_write_callback().set(FUNC(model2o_state::drive_board_w));
+	ioboard.an_callback<0>().set_ioport("STEER");
+	ioboard.an_callback<1>().set_ioport("ACCEL");
+	ioboard.an_callback<2>().set_ioport("BRAKE");
+	ioboard.output_callback().set(FUNC(model2o_state::daytona_output_w));
+}
 
 MACHINE_CONFIG_START(model2o_maxx_state::daytona_maxx)
 	daytona(config);
@@ -2580,35 +2581,34 @@ MACHINE_CONFIG_START(model2o_gtx_state::daytona_gtx)
 	MCFG_DEVICE_PROGRAM_MAP(model2o_gtx_mem)
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_START(model2o_state::desert)
+void model2o_state::desert(machine_config &config)
+{
 	model2o(config);
 
-	MCFG_DEVICE_MODIFY("ioboard")
-	MCFG_MODEL1IO_AN0_CB(IOPORT("STEER"))
-	MCFG_MODEL1IO_AN1_CB(IOPORT("ACCEL"))
-	MCFG_MODEL1IO_AN2_CB(IOPORT("BRAKE"))
-	MCFG_MODEL1IO_OUTPUT_CB(WRITE8(*this, model2o_state, desert_output_w))
-MACHINE_CONFIG_END
+	model1io_device &ioboard(*subdevice<model1io_device>("ioboard"));
+	ioboard.an_callback<0>().set_ioport("STEER");
+	ioboard.an_callback<1>().set_ioport("ACCEL");
+	ioboard.an_callback<2>().set_ioport("BRAKE");
+	ioboard.output_callback().set(FUNC(model2o_state::desert_output_w));
+}
 
 MACHINE_CONFIG_START(model2o_state::vcop)
 	model2o(config);
 
-	MCFG_DEVICE_REMOVE("ioboard")
+	model1io2_device &ioboard(SEGA_MODEL1IO2(config.replace(), "ioboard", 0));
+	ioboard.set_default_bios_tag("epr17181");
+	ioboard.read_callback().set("dpram", FUNC(mb8421_device::left_r));
+	ioboard.write_callback().set("dpram", FUNC(mb8421_device::left_w));
+	ioboard.in_callback<0>().set_ioport("IN0");
+	ioboard.in_callback<1>().set_ioport("IN1");
+	ioboard.in_callback<2>().set_ioport("IN2");
+	ioboard.output_callback().set(FUNC(model2o_state::vcop_output_w));
+	ioboard.set_lightgun_p1x_tag("P1_X");
+	ioboard.set_lightgun_p1y_tag("P1_Y");
+	ioboard.set_lightgun_p2x_tag("P2_X");
+	ioboard.set_lightgun_p2y_tag("P2_Y");
 
-	MCFG_DEVICE_ADD("ioboard", SEGA_MODEL1IO2, 0)
-	MCFG_DEVICE_BIOS("epr17181");
-	MCFG_MODEL1IO2_READ_CB(READ8("dpram", mb8421_device, left_r))
-	MCFG_MODEL1IO2_WRITE_CB(WRITE8("dpram", mb8421_device, left_w))
-	MCFG_MODEL1IO2_IN0_CB(IOPORT("IN0"))
-	MCFG_MODEL1IO2_IN1_CB(IOPORT("IN1"))
-	MCFG_MODEL1IO2_IN2_CB(IOPORT("IN2"))
-	MCFG_MODEL1IO2_OUTPUT_CB(WRITE8(*this, model2o_state, vcop_output_w))
-	MCFG_MODEL1IO2_LIGHTGUN_P1X_TAG("P1_X")
-	MCFG_MODEL1IO2_LIGHTGUN_P1Y_TAG("P1_Y")
-	MCFG_MODEL1IO2_LIGHTGUN_P2X_TAG("P2_X")
-	MCFG_MODEL1IO2_LIGHTGUN_P2Y_TAG("P2_Y")
-
-	MCFG_DEFAULT_LAYOUT(layout_model1io2)
+	config.set_default_layout(layout_model1io2);
 MACHINE_CONFIG_END
 
 /* 2A-CRX */
@@ -2623,81 +2623,86 @@ MACHINE_CONFIG_START(model2a_state::model2a)
 	MCFG_DEVICE_IO_MAP(copro_tgp_io_map)
 	MCFG_DEVICE_ADDRESS_MAP(mb86233_device::AS_RF, copro_tgp_rf_map)
 
-	MCFG_DEVICE_ADD("copro_tgp_bank", ADDRESS_MAP_BANK, 0)
-	MCFG_DEVICE_PROGRAM_MAP(copro_tgp_bank_map)
-	MCFG_ADDRESS_MAP_BANK_ENDIANNESS(ENDIANNESS_LITTLE)
-	MCFG_ADDRESS_MAP_BANK_DATA_WIDTH(32)
-	MCFG_ADDRESS_MAP_BANK_ADDR_WIDTH(17)
-	MCFG_ADDRESS_MAP_BANK_SHIFT(-2)
-	MCFG_ADDRESS_MAP_BANK_STRIDE(0x10000)
+	ADDRESS_MAP_BANK(config, m_copro_tgp_bank, 0);
+	m_copro_tgp_bank->set_addrmap(0, &model2a_state::copro_tgp_bank_map);
+	m_copro_tgp_bank->set_endianness(ENDIANNESS_LITTLE);
+	m_copro_tgp_bank->set_data_width(32);
+	m_copro_tgp_bank->set_addr_width(17);
+	m_copro_tgp_bank->set_shift(-2);
+	m_copro_tgp_bank->set_stride(0x10000);
 
-	MCFG_DEVICE_ADD("copro_fifo_in", GENERIC_FIFO_U32, 0)
-	MCFG_DEVICE_ADD("copro_fifo_out", GENERIC_FIFO_U32, 0)
+	GENERIC_FIFO_U32(config, m_copro_fifo_in, 0);
+	GENERIC_FIFO_U32(config, m_copro_fifo_out, 0);
 
 	MCFG_MACHINE_START_OVERRIDE(model2_tgp_state,model2_tgp)
 	MCFG_MACHINE_RESET_OVERRIDE(model2a_state,model2a)
 
-	MCFG_EEPROM_SERIAL_93C46_ADD("eeprom")
+	MCFG_DEVICE_ADD("eeprom", EEPROM_SERIAL_93C46_16BIT)
 	MCFG_NVRAM_ADD_1FILL("backup1")
 
-	MCFG_DEVICE_ADD("io", SEGA_315_5649, 0)
-	MCFG_315_5649_OUT_PA_CB(WRITE8(*this, model2a_state, eeprom_w))
-	MCFG_315_5649_IN_PB_CB(READ8(*this, model2a_state, in0_r))
-	MCFG_315_5649_IN_PC_CB(IOPORT("IN1"))
-	MCFG_315_5649_IN_PD_CB(IOPORT("IN2"))
+	sega_315_5649_device &io(SEGA_315_5649(config, "io", 0));
+	io.out_pa_callback().set(FUNC(model2a_state::eeprom_w));
+	io.in_pb_callback().set(FUNC(model2a_state::in0_r));
+	io.in_pc_callback().set_ioport("IN1");
+	io.in_pd_callback().set_ioport("IN2");
 
 	model2_timers(config);
 	model2_screen(config);
 	model2_scsp(config);
 
-	MCFG_M2COMM_ADD("m2comm")
+	M2COMM(config, "m2comm", 0);
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_START(model2a_state::manxtt)
+void model2a_state::manxtt(machine_config &config)
+{
 	model2a(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_AN0_CB(IOPORT("THROTTLE"))
-	MCFG_315_5649_AN1_CB(IOPORT("BRAKE"))
-	MCFG_315_5649_AN2_CB(IOPORT("BANK"))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.an_port_callback<0>().set_ioport("THROTTLE");
+	io.an_port_callback<1>().set_ioport("BRAKE");
+	io.an_port_callback<2>().set_ioport("BANK");
+}
 
 // Includes a Model 1 Sound board for additional sounds - Deluxe version only
-MACHINE_CONFIG_START(model2a_state::manxttdx)
+void model2a_state::manxttdx(machine_config &config)
+{
 	manxtt(config);
-	MCFG_SEGAM1AUDIO_ADD(M1AUDIO_TAG)
-	MCFG_SEGAM1AUDIO_RXD_HANDLER(WRITELINE("uart", i8251_device, write_rxd))
 
-	MCFG_DEVICE_MODIFY("uart")
-	MCFG_I8251_TXD_HANDLER(WRITELINE(M1AUDIO_TAG, segam1audio_device, write_txd))
-MACHINE_CONFIG_END
+	SEGAM1AUDIO(config, m_m1audio, 0);
+	m_m1audio->rxd_handler().set(m_uart, FUNC(i8251_device::write_rxd));
 
-MACHINE_CONFIG_START( model2a_state::srallyc )
+	m_uart->txd_handler().set(m_m1audio, FUNC(segam1audio_device::write_txd));
+}
+
+void model2a_state::srallyc(machine_config &config)
+{
 	model2a(config);
 	sj25_0207_01(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_OUT_PE_CB(WRITE8(*this, model2a_state, drive_board_w))
-	MCFG_315_5649_AN0_CB(IOPORT("STEER"))
-	MCFG_315_5649_AN1_CB(IOPORT("ACCEL"))
-	MCFG_315_5649_AN2_CB(IOPORT("BRAKE"))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.out_pe_callback().set(FUNC(model2a_state::drive_board_w));
+	io.an_port_callback<0>().set_ioport("STEER");
+	io.an_port_callback<1>().set_ioport("ACCEL");
+	io.an_port_callback<2>().set_ioport("BRAKE");
+}
 
-MACHINE_CONFIG_START( model2a_state::vcop2 )
+void model2a_state::vcop2(machine_config &config)
+{
 	model2a(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_SERIAL_CH2_READ_CB(READ8(*this, model2a_state, lightgun_mux_r))
-	MCFG_315_5649_SERIAL_CH2_WRITE_CB(WRITE8(*this, model2a_state, lightgun_mux_w))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.serial_ch2_rd_callback().set(FUNC(model2a_state::lightgun_mux_r));
+	io.serial_ch2_wr_callback().set(FUNC(model2a_state::lightgun_mux_w));
+}
 
-MACHINE_CONFIG_START( model2a_state::skytargt )
+void model2a_state::skytargt(machine_config &config)
+{
 	model2a(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_AN0_CB(IOPORT("STICKY"))
-	MCFG_315_5649_AN2_CB(IOPORT("STICKX"))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.an_port_callback<0>().set_ioport("STICKY");
+	io.an_port_callback<2>().set_ioport("STICKX");
+}
 
 uint16_t model2_state::crypt_read_callback(uint32_t addr)
 {
@@ -2721,12 +2726,13 @@ MACHINE_CONFIG_START(model2a_state::model2a_0229)
 //  MCFG_SET_5838_READ_CALLBACK(model2_state, crypt_read_callback)
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_START( model2a_state::zeroguna )
+void model2a_state::zeroguna(machine_config &config)
+{
 	model2a_5881(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_IN_PG_CB(IOPORT("DSW"))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.in_pg_callback().set_ioport("DSW");
+}
 
 /* 2B-CRX */
 MACHINE_CONFIG_START(model2b_state::model2b)
@@ -2744,26 +2750,26 @@ MACHINE_CONFIG_START(model2b_state::model2b)
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(18000))
 
-	MCFG_DEVICE_ADD("copro_fifo_in", GENERIC_FIFO_U32, 0)
-	MCFG_DEVICE_ADD("copro_fifo_out", GENERIC_FIFO_U32, 0)
+	GENERIC_FIFO_U32(config, m_copro_fifo_in, 0);
+	GENERIC_FIFO_U32(config, m_copro_fifo_out, 0);
 
 	MCFG_MACHINE_START_OVERRIDE(model2b_state,model2b)
 	MCFG_MACHINE_RESET_OVERRIDE(model2b_state,model2b)
 
-	MCFG_EEPROM_SERIAL_93C46_ADD("eeprom")
+	MCFG_DEVICE_ADD("eeprom", EEPROM_SERIAL_93C46_16BIT)
 	MCFG_NVRAM_ADD_1FILL("backup1")
 
-	MCFG_DEVICE_ADD("io", SEGA_315_5649, 0)
-	MCFG_315_5649_OUT_PA_CB(WRITE8(*this, model2b_state, eeprom_w))
-	MCFG_315_5649_IN_PB_CB(READ8(*this, model2b_state, in0_r))
-	MCFG_315_5649_IN_PC_CB(IOPORT("IN1"))
-	MCFG_315_5649_IN_PD_CB(IOPORT("IN2"))
+	sega_315_5649_device &io(SEGA_315_5649(config, "io", 0));
+	io.out_pa_callback().set(FUNC(model2b_state::eeprom_w));
+	io.in_pb_callback().set(FUNC(model2b_state::in0_r));
+	io.in_pc_callback().set_ioport("IN1");
+	io.in_pd_callback().set_ioport("IN2");
 
 	model2_timers(config);
 	model2_screen(config);
 	model2_scsp(config);
 
-	MCFG_M2COMM_ADD("m2comm")
+	M2COMM(config, "m2comm", 0);
 MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(model2b_state::model2b_5881)
@@ -2782,14 +2788,15 @@ MACHINE_CONFIG_START(model2b_state::model2b_0229)
 //  MCFG_SET_5838_READ_CALLBACK(model2_state, crypt_read_callback)
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_START(model2b_state::indy500)
+void model2b_state::indy500(machine_config &config)
+{
 	model2b(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_AN0_CB(IOPORT("STEER"))
-	MCFG_315_5649_AN1_CB(IOPORT("ACCEL"))
-	MCFG_315_5649_AN2_CB(IOPORT("BRAKE"))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.an_port_callback<0>().set_ioport("STEER");
+	io.an_port_callback<1>().set_ioport("ACCEL");
+	io.an_port_callback<2>().set_ioport("BRAKE");
+}
 
 
 void model2b_state::rchase2_iocpu_map(address_map &map)
@@ -2811,41 +2818,44 @@ MACHINE_CONFIG_START( model2b_state::rchase2 )
 	MCFG_DEVICE_PROGRAM_MAP(rchase2_iocpu_map)
 	MCFG_DEVICE_IO_MAP(rchase2_ioport_map)
 
-	MCFG_DEVICE_ADD("ioexp", CXD1095, 0)
+	CXD1095(config, "ioexp", 0);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_IN_PD_CB(READ8(*this, model2b_state, rchase2_drive_board_r))
-	MCFG_315_5649_OUT_PE_CB(WRITE8(*this, model2b_state, rchase2_drive_board_w))
-	MCFG_315_5649_AN0_CB(IOPORT("P2_X"))
-	MCFG_315_5649_AN1_CB(IOPORT("P1_X"))
-	MCFG_315_5649_AN2_CB(IOPORT("P2_Y"))
-	MCFG_315_5649_AN3_CB(IOPORT("P1_Y"))
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.in_pd_callback().set(FUNC(model2b_state::rchase2_drive_board_r));
+	io.out_pe_callback().set(FUNC(model2b_state::rchase2_drive_board_w));
+	io.an_port_callback<0>().set_ioport("P2_X");
+	io.an_port_callback<1>().set_ioport("P1_X");
+	io.an_port_callback<2>().set_ioport("P2_Y");
+	io.an_port_callback<3>().set_ioport("P1_Y");
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_START( model2b_state::gunblade )
+void model2b_state::gunblade(machine_config &config)
+{
 	model2b(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_AN0_CB(IOPORT("P1_X"))
-	MCFG_315_5649_AN1_CB(IOPORT("P2_X"))
-	MCFG_315_5649_AN2_CB(IOPORT("P1_Y"))
-	MCFG_315_5649_AN3_CB(IOPORT("P2_Y"))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.an_port_callback<0>().set_ioport("P1_X");
+	io.an_port_callback<1>().set_ioport("P2_X");
+	io.an_port_callback<2>().set_ioport("P1_Y");
+	io.an_port_callback<3>().set_ioport("P2_Y");
+}
 
-MACHINE_CONFIG_START( model2b_state::dynabb )
+void model2b_state::dynabb(machine_config &config)
+{
 	model2b(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_AN0_CB(IOPORT("BAT1"))
-	MCFG_315_5649_AN1_CB(IOPORT("BAT2"))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.an_port_callback<0>().set_ioport("BAT1");
+	io.an_port_callback<1>().set_ioport("BAT2");
+}
 
-MACHINE_CONFIG_START( model2b_state::zerogun )
+void model2b_state::zerogun(machine_config &config)
+{
 	model2b_5881(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_IN_PG_CB(IOPORT("DSW"))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.in_pg_callback().set_ioport("DSW");
+}
 
 /* 2C-CRX */
 MACHINE_CONFIG_START(model2c_state::model2c)
@@ -2859,79 +2869,83 @@ MACHINE_CONFIG_START(model2c_state::model2c)
 	MCFG_MB86235_FIFOIN("copro_fifo_in")
 	MCFG_MB86235_FIFOOUT0("copro_fifo_out")
 
-	MCFG_DEVICE_ADD("copro_fifo_in", GENERIC_FIFO_U32, 0)
-	MCFG_DEVICE_ADD("copro_fifo_out", GENERIC_FIFO_U32, 0)
+	GENERIC_FIFO_U32(config, m_copro_fifo_in, 0);
+	GENERIC_FIFO_U32(config, m_copro_fifo_out, 0);
 
 	MCFG_MACHINE_START_OVERRIDE(model2c_state,model2c)
 	MCFG_MACHINE_RESET_OVERRIDE(model2c_state,model2c)
 
-	MCFG_EEPROM_SERIAL_93C46_ADD("eeprom")
+	MCFG_DEVICE_ADD("eeprom", EEPROM_SERIAL_93C46_16BIT)
 	MCFG_NVRAM_ADD_1FILL("backup1")
 
-	MCFG_DEVICE_ADD("io", SEGA_315_5649, 0)
-	MCFG_315_5649_OUT_PA_CB(WRITE8(*this, model2c_state, eeprom_w))
-	MCFG_315_5649_IN_PB_CB(READ8(*this, model2c_state, in0_r))
-	MCFG_315_5649_IN_PC_CB(IOPORT("IN1"))
-	MCFG_315_5649_IN_PD_CB(IOPORT("IN2"))
+	sega_315_5649_device &io(SEGA_315_5649(config, "io", 0));
+	io.out_pa_callback().set(FUNC(model2c_state::eeprom_w));
+	io.in_pb_callback().set(FUNC(model2c_state::in0_r));
+	io.in_pc_callback().set_ioport("IN1");
+	io.in_pd_callback().set_ioport("IN2");
 
 	model2_timers(config);
 	model2_screen(config);
 	model2_scsp(config);
 
-	MCFG_M2COMM_ADD("m2comm")
+	M2COMM(config, "m2comm", 0);
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_START( model2c_state::skisuprg )
+void model2c_state::skisuprg(machine_config &config)
+{
 	model2c(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_AN0_CB(IOPORT("SWING"))
-	MCFG_315_5649_AN1_CB(IOPORT("INCLINING"))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.an_port_callback<0>().set_ioport("SWING");
+	io.an_port_callback<1>().set_ioport("INCLINING");
+}
 
-MACHINE_CONFIG_START( model2c_state::stcc )
+void model2c_state::stcc(machine_config &config)
+{
 	model2c(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_AN0_CB(IOPORT("STEER"))
-	MCFG_315_5649_AN1_CB(IOPORT("ACCEL"))
-	MCFG_315_5649_AN2_CB(IOPORT("BRAKE"))
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.an_port_callback<0>().set_ioport("STEER");
+	io.an_port_callback<1>().set_ioport("ACCEL");
+	io.an_port_callback<2>().set_ioport("BRAKE");
 
-	MCFG_DSBZ80_ADD(DSBZ80_TAG)
-	MCFG_SOUND_ROUTE(0, "lspeaker", 1.0)
-	MCFG_SOUND_ROUTE(1, "rspeaker", 1.0)
+	DSBZ80(config, m_dsbz80, 0);
+	m_dsbz80->add_route(0, "lspeaker", 1.0);
+	m_dsbz80->add_route(1, "rspeaker", 1.0);
 
-	MCFG_DEVICE_MODIFY("uart")
-	MCFG_I8251_TXD_HANDLER(WRITELINE(DSBZ80_TAG, dsbz80_device, write_txd))
-MACHINE_CONFIG_END
+	m_uart->txd_handler().set(m_dsbz80, FUNC(dsbz80_device::write_txd));
+}
 
-MACHINE_CONFIG_START( model2c_state::waverunr )
+void model2c_state::waverunr(machine_config &config)
+{
 	model2c(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_AN0_CB(IOPORT("HANDLE"))
-	MCFG_315_5649_AN1_CB(IOPORT("ROLL"))
-	MCFG_315_5649_AN2_CB(IOPORT("THROTTLE"))
-	MCFG_315_5649_AN3_CB(IOPORT("PITCH"))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.an_port_callback<0>().set_ioport("HANDLE");
+	io.an_port_callback<1>().set_ioport("ROLL");
+	io.an_port_callback<2>().set_ioport("THROTTLE");
+	io.an_port_callback<3>().set_ioport("PITCH");
+}
 
-MACHINE_CONFIG_START( model2c_state::bel )
+void model2c_state::bel(machine_config &config)
+{
 	model2c(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_AN0_CB(IOPORT("P1_X"))
-	MCFG_315_5649_AN1_CB(IOPORT("P2_X"))
-	MCFG_315_5649_AN2_CB(IOPORT("P1_Y"))
-	MCFG_315_5649_AN3_CB(IOPORT("P2_Y"))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.an_port_callback<0>().set_ioport("P1_X");
+	io.an_port_callback<1>().set_ioport("P2_X");
+	io.an_port_callback<2>().set_ioport("P1_Y");
+	io.an_port_callback<3>().set_ioport("P2_Y");
+}
 
-MACHINE_CONFIG_START( model2c_state::hotd )
+void model2c_state::hotd(machine_config &config)
+{
 	model2c(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_SERIAL_CH2_READ_CB(READ8(*this, model2c_state, lightgun_mux_r))
-	MCFG_315_5649_SERIAL_CH2_WRITE_CB(WRITE8(*this, model2c_state, lightgun_mux_w))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.serial_ch2_rd_callback().set(FUNC(model2c_state::lightgun_mux_r));
+	io.serial_ch2_wr_callback().set(FUNC(model2c_state::lightgun_mux_w));
+}
 
 MACHINE_CONFIG_START(model2c_state::model2c_5881)
 	model2c(config);
@@ -2943,29 +2957,32 @@ MACHINE_CONFIG_START(model2c_state::model2c_5881)
 	MCFG_SET_READ_CALLBACK(model2_state, crypt_read_callback)
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_START( model2c_state::overrev2c )
+void model2c_state::overrev2c(machine_config &config)
+{
 	model2c(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_AN0_CB(IOPORT("STEER"))
-	MCFG_315_5649_AN1_CB(IOPORT("ACCEL"))
-	MCFG_315_5649_AN2_CB(IOPORT("BRAKE"))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.an_port_callback<0>().set_ioport("STEER");
+	io.an_port_callback<1>().set_ioport("ACCEL");
+	io.an_port_callback<2>().set_ioport("BRAKE");
+}
 
-MACHINE_CONFIG_START( model2c_state::segawski )
+void model2c_state::segawski(machine_config &config)
+{
 	model2c(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_AN0_CB(IOPORT("SLIDE"))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.an_port_callback<0>().set_ioport("SLIDE");
+}
 
-MACHINE_CONFIG_START( model2c_state::topskatr )
+void model2c_state::topskatr(machine_config &config)
+{
 	model2c(config);
 
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5649_AN0_CB(IOPORT("CURVING"))
-	MCFG_315_5649_AN1_CB(IOPORT("SLIDE"))
-MACHINE_CONFIG_END
+	sega_315_5649_device &io(*subdevice<sega_315_5649_device>("io"));
+	io.an_port_callback<0>().set_ioport("CURVING");
+	io.an_port_callback<1>().set_ioport("SLIDE");
+}
 
 
 /* ROM definitions */
@@ -6477,7 +6494,7 @@ ROM_START( vcopa ) /* Virtua Cop Revision A, Model 2 */
 	MODEL2_CPU_BOARD
 ROM_END
 
-ROM_START( desert ) /* Desert Tank, Model 2 */
+ROM_START( desert ) /* Desert Tank, Model 2, Sega Game ID# 833-11002, ROM board ID# 834-11003 */
 	ROM_REGION( 0x200000, "maincpu", 0 ) // i960 program
 	ROM_LOAD32_WORD("epr-16976.12", 0x000000, 0x020000, CRC(d036dff0) SHA1(f3e5f22ef1f3ff9c9a1ff7352cdad3e2c2977a51) )
 	ROM_LOAD32_WORD("epr-16977.13", 0x000002, 0x020000, CRC(e91194bd) SHA1(cec8eb8d4b52c387d5750ee5a0c6e6ce7c0fe80d) )

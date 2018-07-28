@@ -93,11 +93,11 @@ void tmc2000e_state::tmc2000e_io_map(address_map &map)
 {
 	map(0x01, 0x01).w(m_cti, FUNC(cdp1864_device::tone_latch_w));
 	map(0x02, 0x02).w(m_cti, FUNC(cdp1864_device::step_bgcolor_w));
-	map(0x03, 0x03).rw(this, FUNC(tmc2000e_state::ascii_keyboard_r), FUNC(tmc2000e_state::keyboard_latch_w));
-	map(0x04, 0x04).rw(this, FUNC(tmc2000e_state::io_r), FUNC(tmc2000e_state::io_w));
-	map(0x05, 0x05).rw(this, FUNC(tmc2000e_state::vismac_r), FUNC(tmc2000e_state::vismac_w));
-	map(0x06, 0x06).rw(this, FUNC(tmc2000e_state::floppy_r), FUNC(tmc2000e_state::floppy_w));
-	map(0x07, 0x07).portr("DSW0").w(this, FUNC(tmc2000e_state::io_select_w));
+	map(0x03, 0x03).rw(FUNC(tmc2000e_state::ascii_keyboard_r), FUNC(tmc2000e_state::keyboard_latch_w));
+	map(0x04, 0x04).rw(FUNC(tmc2000e_state::io_r), FUNC(tmc2000e_state::io_w));
+	map(0x05, 0x05).rw(FUNC(tmc2000e_state::vismac_r), FUNC(tmc2000e_state::vismac_w));
+	map(0x06, 0x06).rw(FUNC(tmc2000e_state::floppy_r), FUNC(tmc2000e_state::floppy_w));
+	map(0x07, 0x07).portr("DSW0").w(FUNC(tmc2000e_state::io_select_w));
 }
 
 /* Input Ports */
@@ -285,7 +285,7 @@ MACHINE_CONFIG_START(tmc2000e_state::tmc2000e)
 	MCFG_DEVICE_ADD(CDP1802_TAG, CDP1802, XTAL(1'750'000))
 	MCFG_DEVICE_PROGRAM_MAP(tmc2000e_map)
 	MCFG_DEVICE_IO_MAP(tmc2000e_io_map)
-	MCFG_COSMAC_WAIT_CALLBACK(VCC)
+	MCFG_COSMAC_WAIT_CALLBACK(CONSTANT(1))
 	MCFG_COSMAC_CLEAR_CALLBACK(READLINE(*this, tmc2000e_state, clear_r))
 	MCFG_COSMAC_EF2_CALLBACK(READLINE(*this, tmc2000e_state, ef2_r))
 	MCFG_COSMAC_EF3_CALLBACK(READLINE(*this, tmc2000e_state, ef3_r))
@@ -298,7 +298,7 @@ MACHINE_CONFIG_START(tmc2000e_state::tmc2000e)
 
 	// sound hardware
 	SPEAKER(config, "mono").front_center();
-	MCFG_CDP1864_ADD(CDP1864_TAG, SCREEN_TAG, XTAL(1'750'000), GND, INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_INT), INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_DMAOUT), INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_EF1), NOOP, READLINE(*this, tmc2000e_state, rdata_r), READLINE(*this, tmc2000e_state, bdata_r), READLINE(*this, tmc2000e_state, gdata_r))
+	MCFG_CDP1864_ADD(CDP1864_TAG, SCREEN_TAG, XTAL(1'750'000), CONSTANT(0), INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_INT), INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_DMAOUT), INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_EF1), NOOP, READLINE(*this, tmc2000e_state, rdata_r), READLINE(*this, tmc2000e_state, bdata_r), READLINE(*this, tmc2000e_state, gdata_r))
 	MCFG_CDP1864_CHROMINANCE(RES_K(2.2), RES_K(1), RES_K(5.1), RES_K(4.7)) // unverified
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 

@@ -94,9 +94,9 @@ void isa8_svga_et4k_device::device_start()
 
 	m_vga = subdevice<tseng_vga_device>("vga");
 
-	m_isa->install_rom(this, 0xc0000, 0xc7fff, "et4000", "et4000");
 	map_io();
 	map_ram();
+	map_rom();
 }
 
 READ16_MEMBER(isa16_svga_et4k_device::input_port_0_r ) { return 0xffff; } //return machine().root_device().ioport("IN0")->read(); }
@@ -130,14 +130,19 @@ void isa16_svga_et4k_device::device_reset()
 }
 
 //-------------------------------------------------
-//  remap - remap ram since something
+//  remap - remap ram/io since something
 //  could have unmapped it
 //-------------------------------------------------
 
 void isa8_svga_et4k_device::remap(int space_id, offs_t start, offs_t end)
 {
 	if (space_id == AS_PROGRAM)
+	{
 		map_ram();
+		map_rom();
+	}
+	else if (space_id == AS_IO)
+		map_io();
 }
 
 void isa8_svga_et4k_device::map_io()
@@ -169,4 +174,8 @@ void isa16_svga_et4k_device::map_ram()
 {
 	m_isa->install_memory(0xa0000, 0xbffff, read8_delegate(FUNC(tseng_vga_device::mem_r), m_vga), write8_delegate(FUNC(tseng_vga_device::mem_w), m_vga));
 	m_isa->install_memory(0x100000, 0x1fffff, read8_delegate(FUNC(tseng_vga_device::isa_aperture_r), m_vga), write8_delegate(FUNC(tseng_vga_device::isa_aperture_w), m_vga));
+
+void isa8_svga_et4k_device::map_rom()
+{
+	m_isa->install_rom(this, 0xc0000, 0xc7fff, "et4000", "et4000");
 }

@@ -8,10 +8,10 @@
 #include "machine/nscsi_bus.h"
 
 #define MCFG_NCR5390_IRQ_HANDLER(_devcb) \
-	devcb = &downcast<ncr5390_device &>(*device).set_irq_handler(DEVCB_##_devcb);
+	downcast<ncr5390_device &>(*device).set_irq_handler(DEVCB_##_devcb);
 
 #define MCFG_NCR5390_DRQ_HANDLER(_devcb) \
-	devcb = &downcast<ncr5390_device &>(*device).set_drq_handler(DEVCB_##_devcb);
+	downcast<ncr5390_device &>(*device).set_drq_handler(DEVCB_##_devcb);
 
 class ncr5390_device : public nscsi_device
 {
@@ -79,6 +79,7 @@ protected:
 		BUSRESET_RESET_BOARD,
 
 		// Disconnected state commands
+		DISC_SEL_ARBITRATION_INIT,
 		DISC_SEL_ARBITRATION,
 		DISC_SEL_ATN_WAIT_REQ,
 		DISC_SEL_ATN_SEND_BYTE,

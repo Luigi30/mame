@@ -98,8 +98,6 @@
 
 #include "skydiver.lh"
 
-#define MASTER_CLOCK (XTAL(12'096'000))
-
 
 
 
@@ -175,9 +173,9 @@ INTERRUPT_GEN_MEMBER(skydiver_state::interrupt)
 void skydiver_state::skydiver_map(address_map &map)
 {
 	map.global_mask(0x7fff);
-	map(0x0000, 0x007f).mirror(0x4300).rw(this, FUNC(skydiver_state::wram_r), FUNC(skydiver_state::wram_w));
+	map(0x0000, 0x007f).mirror(0x4300).rw(FUNC(skydiver_state::wram_r), FUNC(skydiver_state::wram_w));
 	map(0x0080, 0x00ff).mirror(0x4000).ram();       /* RAM B1 */
-	map(0x0400, 0x07ff).mirror(0x4000).ram().w(this, FUNC(skydiver_state::videoram_w)).share("videoram");       /* RAMs K1,M1,P1,J1,N1,K/L1,L1,H/J1 */
+	map(0x0400, 0x07ff).mirror(0x4000).ram().w(FUNC(skydiver_state::videoram_w)).share("videoram");       /* RAMs K1,M1,P1,J1,N1,K/L1,L1,H/J1 */
 	map(0x0800, 0x080f).mirror(0x47f0).w("latch1", FUNC(f9334_device::write_a0));
 	map(0x1000, 0x100f).mirror(0x47f0).w("latch2", FUNC(f9334_device::write_a0));
 	map(0x1800, 0x1800).mirror(0x47e0).portr("IN0");
@@ -194,7 +192,7 @@ void skydiver_state::skydiver_map(address_map &map)
 	map(0x180b, 0x180b).mirror(0x47e4).portr("IN11");
 	map(0x1810, 0x1810).mirror(0x47e4).portr("IN12");
 	map(0x1811, 0x1811).mirror(0x47e4).portr("IN13");
-	map(0x2000, 0x201f).mirror(0x47e0).r(m_watchdog, FUNC(watchdog_timer_device::reset_r)).w(this, FUNC(skydiver_state::latch3_watchdog_w));
+	map(0x2000, 0x201f).mirror(0x47e0).r(m_watchdog, FUNC(watchdog_timer_device::reset_r)).w(FUNC(skydiver_state::latch3_watchdog_w));
 	map(0x2800, 0x2fff).mirror(0x4000).rom();
 	map(0x3000, 0x37ff).mirror(0x4000).rom();
 	map(0x3800, 0x3fff).rom();
@@ -350,7 +348,7 @@ GFXDECODE_END
 MACHINE_CONFIG_START(skydiver_state::skydiver)
 
 	/* basic machine hardware */
-	MCFG_DEVICE_ADD("maincpu", M6800,MASTER_CLOCK/16)     /* ???? */
+	MCFG_DEVICE_ADD("maincpu", M6800, 12.096_MHz_XTAL / 16)     /* ???? */
 	MCFG_DEVICE_PROGRAM_MAP(skydiver_map)
 	MCFG_DEVICE_PERIODIC_INT_DRIVER(skydiver_state, interrupt,  5*60)
 
@@ -384,10 +382,7 @@ MACHINE_CONFIG_START(skydiver_state::skydiver)
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500) /* not accurate */)
-	MCFG_SCREEN_SIZE(32*8, 32*8)
-	MCFG_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MCFG_SCREEN_RAW_PARAMS(12.096_MHz_XTAL / 2, 384, 0, 256, 262, 0, 224)
 	MCFG_SCREEN_UPDATE_DRIVER(skydiver_state, screen_update)
 	MCFG_SCREEN_PALETTE("palette")
 

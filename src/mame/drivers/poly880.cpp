@@ -78,7 +78,7 @@ void poly880_state::poly880_io(address_map &map)
 	map(0x80, 0x83).rw(Z80PIO1_TAG, FUNC(z80pio_device::read_alt), FUNC(z80pio_device::write_alt));
 	map(0x84, 0x87).rw(Z80PIO2_TAG, FUNC(z80pio_device::read_alt), FUNC(z80pio_device::write_alt));
 	map(0x88, 0x8b).rw(Z80CTC_TAG, FUNC(z80ctc_device::read), FUNC(z80ctc_device::write));
-	map(0xa0, 0xa0).mirror(0x0f).w(this, FUNC(poly880_state::cldig_w));
+	map(0xa0, 0xa0).mirror(0x0f).w(FUNC(poly880_state::cldig_w));
 }
 
 /* Input Ports */
@@ -252,7 +252,7 @@ MACHINE_CONFIG_START(poly880_state::poly880)
 	MCFG_DEVICE_IO_MAP(poly880_io)
 
 	/* video hardware */
-	MCFG_DEFAULT_LAYOUT( layout_poly880 )
+	config.set_default_layout(layout_poly880);
 
 	/* devices */
 	MCFG_DEVICE_ADD(Z80CTC_TAG, Z80CTC, XTAL(7'372'800)/16)

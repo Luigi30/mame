@@ -61,14 +61,14 @@ void deco32_state::allocate_spriteram(int chip)
 {
 	m_spriteram16[chip] = std::make_unique<uint16_t[]>(0x2000/4);
 	m_spriteram16_buffered[chip] = std::make_unique<uint16_t[]>(0x2000/4);
-	save_pointer(NAME(m_spriteram16[chip].get()), 0x2000/4, chip);
-	save_pointer(NAME(m_spriteram16_buffered[chip].get()), 0x2000/4, chip);
+	save_pointer(NAME(m_spriteram16[chip]), 0x2000/4, chip);
+	save_pointer(NAME(m_spriteram16_buffered[chip]), 0x2000/4, chip);
 }
 
 void deco32_state::allocate_buffered_palette()
 {
 	m_dirty_palette = make_unique_clear<uint8_t[]>(2048);
-	save_pointer(NAME(m_dirty_palette.get()), 2048);
+	save_pointer(NAME(m_dirty_palette), 2048);
 }
 
 void deco32_state::allocate_rowscroll(int size1, int size2, int size3, int size4)
@@ -77,10 +77,10 @@ void deco32_state::allocate_rowscroll(int size1, int size2, int size3, int size4
 	m_pf_rowscroll[1] = make_unique_clear<uint16_t[]>(size2);
 	m_pf_rowscroll[2] = make_unique_clear<uint16_t[]>(size3);
 	m_pf_rowscroll[3] = make_unique_clear<uint16_t[]>(size4);
-	save_pointer(NAME(m_pf_rowscroll[0].get()), size1);
-	save_pointer(NAME(m_pf_rowscroll[1].get()), size2);
-	save_pointer(NAME(m_pf_rowscroll[2].get()), size3);
-	save_pointer(NAME(m_pf_rowscroll[3].get()), size4);
+	save_pointer(NAME(m_pf_rowscroll[0]), size1);
+	save_pointer(NAME(m_pf_rowscroll[1]), size2);
+	save_pointer(NAME(m_pf_rowscroll[2]), size3);
+	save_pointer(NAME(m_pf_rowscroll[3]), size4);
 }
 
 VIDEO_START_MEMBER( captaven_state, captaven )
@@ -184,9 +184,9 @@ uint32_t dragngun_state::screen_update_dragngun(screen_device &screen, bitmap_rg
 	//
 	// really, it needs optimizing ..
 	// so for now we only draw these 2 layers on the last update call
-	if (cliprect.max_y == 247)
+	if (cliprect.bottom() == 247)
 	{
-		rectangle clip(cliprect.min_x, cliprect.max_x, 8, 247);
+		rectangle clip(cliprect.left(), cliprect.right(), 8, 247);
 
 		m_sprgenzoom->dragngun_draw_sprites(bitmap,clip,m_spriteram->buffer(), m_sprite_layout_ram[0], m_sprite_layout_ram[1], m_sprite_lookup_ram[0], m_sprite_lookup_ram[1], m_sprite_ctrl, screen.priority(), m_temp_render_bitmap );
 

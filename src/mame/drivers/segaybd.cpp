@@ -626,7 +626,7 @@ void segaybd_state::suby_map(address_map &map)
 	map(0x0c0000, 0x0cffff).ram().share("shareram");
 	map(0x180000, 0x1807ff).mirror(0x007800).ram().share("rotateram");
 	map(0x188000, 0x188fff).mirror(0x007000).ram().share("bsprites");
-	map(0x190000, 0x193fff).mirror(0x004000).ram().w(this, FUNC(segaybd_state::paletteram_w)).share("paletteram");
+	map(0x190000, 0x193fff).mirror(0x004000).ram().w(FUNC(segaybd_state::paletteram_w)).share("paletteram");
 	map(0x198000, 0x19ffff).r(m_segaic16vid, FUNC(segaic16_video_device::rotate_control_r));
 	map(0x1f0000, 0x1fffff).ram();
 }
@@ -690,8 +690,8 @@ void segaybd_state::main_map_link(address_map &map)
 {
 	main_map(map);
 	map(0x190000, 0x190fff).rw("mb8421", FUNC(mb8421_device::left_r), FUNC(mb8421_device::left_w)).umask16(0x00ff);
-	map(0x191000, 0x191001).r(this, FUNC(segaybd_state::link_r));
-	map(0x192000, 0x192001).rw(this, FUNC(segaybd_state::link2_r), FUNC(segaybd_state::link2_w));
+	map(0x191000, 0x191001).r(FUNC(segaybd_state::link_r));
+	map(0x192000, 0x192001).rw(FUNC(segaybd_state::link2_r), FUNC(segaybd_state::link2_w));
 }
 
 
@@ -1292,15 +1292,15 @@ MACHINE_CONFIG_START(segaybd_state::yboard)
 
 	MCFG_MB3773_ADD("watchdog") // IC95
 
-	MCFG_DEVICE_ADD("io", SEGA_315_5296, MASTER_CLOCK/8)
-	MCFG_315_5296_IN_PORTA_CB(IOPORT("P1"))
-	MCFG_315_5296_IN_PORTB_CB(IOPORT("GENERAL"))
-	MCFG_315_5296_IN_PORTC_CB(IOPORT("LIMITSW"))
-	MCFG_315_5296_OUT_PORTD_CB(WRITE8(*this, segaybd_state, output1_w))
-	MCFG_315_5296_OUT_PORTE_CB(WRITE8(*this, segaybd_state, misc_output_w))
-	MCFG_315_5296_IN_PORTF_CB(IOPORT("DSW"))
-	MCFG_315_5296_IN_PORTG_CB(IOPORT("COINAGE"))
-	MCFG_315_5296_OUT_PORTH_CB(WRITE8(*this, segaybd_state, output2_w))
+	sega_315_5296_device &io(SEGA_315_5296(config, "io", MASTER_CLOCK/8));
+	io.in_pa_callback().set_ioport("P1");
+	io.in_pb_callback().set_ioport("GENERAL");
+	io.in_pc_callback().set_ioport("LIMITSW");
+	io.out_pd_callback().set(FUNC(segaybd_state::output1_w));
+	io.out_pe_callback().set(FUNC(segaybd_state::misc_output_w));
+	io.in_pf_callback().set_ioport("DSW");
+	io.in_pg_callback().set_ioport("COINAGE");
+	io.out_ph_callback().set(FUNC(segaybd_state::output2_w));
 	// FMCS and CKOT connect to CS and OSC IN on MSM6253 below
 
 	MCFG_DEVICE_ADD("adc", MSM6253, 0)
@@ -1326,10 +1326,9 @@ MACHINE_CONFIG_START(segaybd_state::yboard)
 
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfxdecode_device::empty)
 
-	MCFG_SEGA_SYS16B_SPRITES_ADD("bsprites")
-	MCFG_SEGA_YBOARD_SPRITES_ADD("ysprites")
-	MCFG_SEGAIC16VID_ADD("segaic16vid")
-	MCFG_SEGAIC16VID_GFXDECODE("gfxdecode")
+	MCFG_DEVICE_ADD("bsprites", SEGA_SYS16B_SPRITES, 0)
+	MCFG_DEVICE_ADD("ysprites", SEGA_YBOARD_SPRITES, 0)
+	MCFG_DEVICE_ADD("segaic16vid", SEGAIC16VID, 0, "gfxdecode")
 
 	MCFG_PALETTE_ADD("palette", 8192*3)
 

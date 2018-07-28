@@ -51,6 +51,7 @@
 #include "includes/llc.h"
 
 #include "machine/keyboard.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -87,10 +88,10 @@ void llc_state::llc2_io(address_map &map)
 {
 	map.global_mask(0xff);
 	map.unmap_value_high();
-	map(0xE0, 0xE3).w(this, FUNC(llc_state::llc2_rom_disable_w));
+	map(0xE0, 0xE3).w(FUNC(llc_state::llc2_rom_disable_w));
 	map(0xE4, 0xE7).rw("z80pio2", FUNC(z80pio_device::read), FUNC(z80pio_device::write));
 	map(0xE8, 0xEB).rw("z80pio1", FUNC(z80pio_device::read), FUNC(z80pio_device::write));
-	map(0xEC, 0xEC).w(this, FUNC(llc_state::llc2_basic_enable_w));
+	map(0xEC, 0xEC).w(FUNC(llc_state::llc2_basic_enable_w));
 	map(0xF8, 0xFB).rw("z80ctc", FUNC(z80ctc_device::read), FUNC(z80ctc_device::write));
 }
 
@@ -220,7 +221,7 @@ MACHINE_CONFIG_START(llc_state::llc1)
 
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_llc1)
 	MCFG_PALETTE_ADD_MONOCHROME("palette")
-	MCFG_DEFAULT_LAYOUT(layout_llc1)
+	config.set_default_layout(layout_llc1);
 
 	MCFG_DEVICE_ADD("z80pio1", Z80PIO, XTAL(3'000'000))
 	MCFG_Z80PIO_IN_PA_CB(READ8(*this, llc_state, llc1_port1_a_r))

@@ -29,9 +29,9 @@ void pecom_state::pecom64_mem(address_map &map)
 
 void pecom_state::pecom64_io(address_map &map)
 {
-	map(0x01, 0x01).w(this, FUNC(pecom_state::pecom_bank_w));
-	map(0x03, 0x03).r(this, FUNC(pecom_state::pecom_keyboard_r));
-	map(0x03, 0x07).w(this, FUNC(pecom_state::pecom_cdp1869_w));
+	map(0x01, 0x01).w(FUNC(pecom_state::pecom_bank_w));
+	map(0x03, 0x03).r(FUNC(pecom_state::pecom_keyboard_r));
+	map(0x03, 0x07).w(FUNC(pecom_state::pecom_cdp1869_w));
 }
 
 /* Input ports */
@@ -175,7 +175,7 @@ MACHINE_CONFIG_START(pecom_state::pecom64)
 	MCFG_DEVICE_ADD(CDP1802_TAG, CDP1802, cdp1869_device::DOT_CLK_PAL/3)
 	MCFG_DEVICE_PROGRAM_MAP(pecom64_mem)
 	MCFG_DEVICE_IO_MAP(pecom64_io)
-	MCFG_COSMAC_WAIT_CALLBACK(VCC)
+	MCFG_COSMAC_WAIT_CALLBACK(CONSTANT(1))
 	MCFG_COSMAC_CLEAR_CALLBACK(READLINE(*this, pecom_state, clear_r))
 	MCFG_COSMAC_EF2_CALLBACK(READLINE(*this, pecom_state, ef2_r))
 	MCFG_COSMAC_Q_CALLBACK(WRITELINE(*this, pecom_state, q_w))

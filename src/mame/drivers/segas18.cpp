@@ -591,7 +591,7 @@ READ16_MEMBER( segas18_state::wwally_custom_io_r )
 WRITE16_MEMBER( segas18_state::wwally_custom_io_w )
 {
 	if (offset >= 0x3000/2 && offset < 0x3018/2)
-		m_upd4701[(offset & 0x0018/2) >> 2]->reset_xy(space, 0);
+		m_upd4701[(offset & 0x0018/2) >> 2]->reset_xy_r(space, 0);
 }
 
 
@@ -656,7 +656,7 @@ void segas18_state::sound_portmap(address_map &map)
 	map.global_mask(0xff);
 	map(0x80, 0x83).mirror(0x0c).rw("ym1", FUNC(ym3438_device::read), FUNC(ym3438_device::write));
 	map(0x90, 0x93).mirror(0x0c).rw("ym2", FUNC(ym3438_device::read), FUNC(ym3438_device::write));
-	map(0xa0, 0xa0).mirror(0x1f).w(this, FUNC(segas18_state::soundbank_w));
+	map(0xa0, 0xa0).mirror(0x1f).w(FUNC(segas18_state::soundbank_w));
 	map(0xc0, 0xc0).mirror(0x1f).rw(m_mapper, FUNC(sega_315_5195_mapper_device::pread), FUNC(sega_315_5195_mapper_device::pwrite));
 }
 
@@ -1325,19 +1325,19 @@ MACHINE_CONFIG_START(segas18_state::system18)
 	MCFG_SEGA_315_5195_MAPPER_HANDLER(segas18_state, memory_mapper)
 	MCFG_SEGA_315_5195_PBF_CALLBACK(INPUTLINE("soundcpu", INPUT_LINE_NMI))
 
-	MCFG_DEVICE_ADD("io", SEGA_315_5296, 16000000)
-	MCFG_315_5296_IN_PORTA_CB(IOPORT("P1"))
-	MCFG_315_5296_IN_PORTB_CB(IOPORT("P2"))
-	MCFG_315_5296_IN_PORTC_CB(IOPORT("P3"))
-	MCFG_315_5296_OUT_PORTD_CB(WRITE8(*this, segas18_state, misc_outputs_w))
-	MCFG_315_5296_IN_PORTE_CB(IOPORT("SERVICE"))
-	MCFG_315_5296_IN_PORTF_CB(IOPORT("COINAGE"))
-	MCFG_315_5296_IN_PORTG_CB(IOPORT("DSW"))
-	MCFG_315_5296_OUT_PORTH_CB(WRITE8(*this, segas18_state, rom_5874_bank_w))
-	MCFG_315_5296_OUT_CNT1_CB(WRITELINE("segaic16vid", segaic16_video_device, set_display_enable))
-	MCFG_315_5296_OUT_CNT2_CB(WRITELINE(*this, segas18_state, set_vdp_enable))
+	SEGA_315_5296(config, m_io, 16000000);
+	m_io->in_pa_callback().set_ioport("P1");
+	m_io->in_pb_callback().set_ioport("P2");
+	m_io->in_pc_callback().set_ioport("P3");
+	m_io->out_pd_callback().set(FUNC(segas18_state::misc_outputs_w));
+	m_io->in_pe_callback().set_ioport("SERVICE");
+	m_io->in_pf_callback().set_ioport("COINAGE");
+	m_io->in_pg_callback().set_ioport("DSW");
+	m_io->out_ph_callback().set(FUNC(segas18_state::rom_5874_bank_w));
+	m_io->out_cnt1_callback().set(m_segaic16vid, FUNC(segaic16_video_device::set_display_enable));
+	m_io->out_cnt2_callback().set(FUNC(segas18_state::set_vdp_enable));
 
-	MCFG_DEVICE_ADD("gen_vdp", SEGA315_5313, 0)
+	MCFG_DEVICE_ADD("gen_vdp", SEGA315_5313, 15000000, "maincpu") // ??? Frequency is a complete guess
 	MCFG_SEGA315_5313_IS_PAL(false)
 	MCFG_SEGA315_5313_SND_IRQ_CALLBACK(WRITELINE(*this, segas18_state, vdp_sndirqline_callback_s18));
 	MCFG_SEGA315_5313_LV6_IRQ_CALLBACK(WRITELINE(*this, segas18_state, vdp_lv6irqline_callback_s18));
@@ -1345,6 +1345,7 @@ MACHINE_CONFIG_START(segas18_state::system18)
 	MCFG_SEGA315_5313_ALT_TIMING(1);
 	MCFG_SEGA315_5313_PAL_WRITE_BASE(0x2000);
 	MCFG_SEGA315_5313_PALETTE("palette")
+	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.0)
 
 	MCFG_TIMER_DEVICE_ADD_SCANLINE("scantimer", "gen_vdp", sega315_5313_device, megadriv_scanline_timer_callback_alt_timing, "screen", 0, 1)
 
@@ -1359,9 +1360,8 @@ MACHINE_CONFIG_START(segas18_state::system18)
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_segas18)
 	MCFG_PALETTE_ADD("palette", 2048*3+2048 + 64*3)
 
-	MCFG_SEGA_SYS16B_SPRITES_ADD("sprites")
-	MCFG_SEGAIC16VID_ADD("segaic16vid")
-	MCFG_SEGAIC16VID_GFXDECODE("gfxdecode")
+	MCFG_DEVICE_ADD("sprites", SEGA_SYS16B_SPRITES, 0)
+	MCFG_DEVICE_ADD("segaic16vid", SEGAIC16VID, 0, "gfxdecode")
 
 	// sound hardware
 	SPEAKER(config, "mono").front_center();
@@ -1389,21 +1389,21 @@ MACHINE_CONFIG_START(segas18_state::system18_fd1094)
 	MCFG_DEVICE_VBLANK_INT_DRIVER("screen", segas18_state, irq4_line_hold)
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_START(segas18_state::lghost_fd1094)
+void segas18_state::lghost_fd1094(machine_config &config)
+{
 	system18_fd1094(config);
 
 	// basic machine hardware
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5296_OUT_PORTC_CB(WRITE8(*this, segas18_state, lghost_gun_recoil_w))
-MACHINE_CONFIG_END
+	m_io->out_pc_callback().set(FUNC(segas18_state::lghost_gun_recoil_w));
+}
 
-MACHINE_CONFIG_START(segas18_state::lghost)
+void segas18_state::lghost(machine_config &config)
+{
 	system18(config);
 
 	// basic machine hardware
-	MCFG_DEVICE_MODIFY("io")
-	MCFG_315_5296_OUT_PORTC_CB(WRITE8(*this, segas18_state, lghost_gun_recoil_w))
-MACHINE_CONFIG_END
+	m_io->out_pc_callback().set(FUNC(segas18_state::lghost_gun_recoil_w));
+}
 
 MACHINE_CONFIG_START(segas18_state::wwally_fd1094)
 	system18_fd1094(config);

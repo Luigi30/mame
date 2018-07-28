@@ -170,7 +170,8 @@ raiden2cop_device::raiden2cop_device(const machine_config &mconfig, const char *
 	m_LEGACY_r1(0),
 
 	m_videoramout_cb(*this),
-	m_palette(*this, ":palette")
+	m_paletteramout_cb(*this),
+	m_host_cpu(*this, finder_base::DUMMY_TAG)
 {
 	memset(cop_func_trigger, 0, sizeof(uint16_t)*(0x100/8));
 	memset(cop_func_value, 0, sizeof(uint16_t)*(0x100/8));
@@ -279,8 +280,8 @@ void raiden2cop_device::device_start()
 	save_item(NAME(m_LEGACY_r1));
 
 	m_videoramout_cb.resolve_safe();
-	// TODO: tag parameter in device
-	m_host_cpu = machine().device<cpu_device>("maincpu");
+	m_paletteramout_cb.resolve_safe();
+
 	m_host_space = &m_host_cpu->space(AS_PROGRAM);
 	m_host_endian = m_host_space->endianness() == ENDIANNESS_BIG; // m_cpu_is_68k
 
@@ -1309,7 +1310,7 @@ WRITE16_MEMBER( raiden2cop_device::cop_unk_param_b_w)
 	COMBINE_DATA(&m_cop_unk_param_b);
 }
 
-// cupsoc always writes 0xF before commands 0x5105, 0x5905, 0xD104 and 0xF105 and 0xE before 0xD104, then resets this to zero
+// cupsoc always writes 0xF before commands 0x5105, 0x5905, 0xD104 and 0xF105 and 0xE before 0xDDE5, then resets this to zero
 // zeroteam writes 0xE here before 0xEDE5, then resets it to zero
 WRITE16_MEMBER( raiden2cop_device::cop_precmd_w)
 {

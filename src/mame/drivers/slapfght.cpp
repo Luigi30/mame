@@ -278,8 +278,8 @@ void slapfght_state::perfrman_map(address_map &map)
 	map(0x0000, 0x7fff).rom();
 	map(0x8000, 0x87ff).ram();
 	map(0x8800, 0x8fff).ram().share("share1");
-	map(0x9000, 0x97ff).ram().w(this, FUNC(slapfght_state::videoram_w)).share("videoram");
-	map(0x9800, 0x9fff).ram().w(this, FUNC(slapfght_state::colorram_w)).share("colorram");
+	map(0x9000, 0x97ff).ram().w(FUNC(slapfght_state::videoram_w)).share("videoram");
+	map(0x9800, 0x9fff).ram().w(FUNC(slapfght_state::colorram_w)).share("colorram");
 	map(0xa000, 0xa7ff).ram().share("spriteram");
 }
 
@@ -289,14 +289,14 @@ void slapfght_state::tigerh_map(address_map &map)
 	map(0x0000, 0xbfff).rom();
 	map(0xc000, 0xc7ff).ram();
 	map(0xc800, 0xcfff).ram().share("share1");
-	map(0xd000, 0xd7ff).ram().w(this, FUNC(slapfght_state::videoram_w)).share("videoram");
-	map(0xd800, 0xdfff).ram().w(this, FUNC(slapfght_state::colorram_w)).share("colorram");
+	map(0xd000, 0xd7ff).ram().w(FUNC(slapfght_state::videoram_w)).share("videoram");
+	map(0xd800, 0xdfff).ram().w(FUNC(slapfght_state::colorram_w)).share("colorram");
 	map(0xe000, 0xe7ff).ram().share("spriteram");
-	map(0xe800, 0xe800).w(this, FUNC(slapfght_state::scrollx_lo_w));
-	map(0xe801, 0xe801).w(this, FUNC(slapfght_state::scrollx_hi_w));
-	map(0xe802, 0xe802).w(this, FUNC(slapfght_state::scrolly_w));
-	map(0xf000, 0xf7ff).ram().w(this, FUNC(slapfght_state::fixram_w)).share("fixvideoram");
-	map(0xf800, 0xffff).ram().w(this, FUNC(slapfght_state::fixcol_w)).share("fixcolorram");
+	map(0xe800, 0xe800).w(FUNC(slapfght_state::scrollx_lo_w));
+	map(0xe801, 0xe801).w(FUNC(slapfght_state::scrollx_hi_w));
+	map(0xe802, 0xe802).w(FUNC(slapfght_state::scrolly_w));
+	map(0xf000, 0xf7ff).ram().w(FUNC(slapfght_state::fixram_w)).share("fixvideoram");
+	map(0xf800, 0xffff).ram().w(FUNC(slapfght_state::fixcol_w)).share("fixcolorram");
 }
 
 void slapfght_state::tigerh_map_mcu(address_map &map)
@@ -308,7 +308,7 @@ void slapfght_state::tigerh_map_mcu(address_map &map)
 void slapfght_state::tigerhb1_map(address_map &map)
 {
 	tigerh_map(map);
-	map(0xe803, 0xe803).rw(this, FUNC(slapfght_state::tigerhb1_prot_r), FUNC(slapfght_state::tigerhb1_prot_w));
+	map(0xe803, 0xe803).rw(FUNC(slapfght_state::tigerhb1_prot_r), FUNC(slapfght_state::tigerhb1_prot_w));
 }
 
 void slapfght_state::tigerhb2_map(address_map &map)
@@ -324,14 +324,14 @@ void slapfght_state::slapfigh_map(address_map &map)
 	map(0x8000, 0xbfff).bankr("bank1");
 	map(0xc000, 0xc7ff).ram();
 	map(0xc800, 0xcfff).ram().share("share1");
-	map(0xd000, 0xd7ff).ram().w(this, FUNC(slapfght_state::videoram_w)).share("videoram");
-	map(0xd800, 0xdfff).ram().w(this, FUNC(slapfght_state::colorram_w)).share("colorram");
+	map(0xd000, 0xd7ff).ram().w(FUNC(slapfght_state::videoram_w)).share("videoram");
+	map(0xd800, 0xdfff).ram().w(FUNC(slapfght_state::colorram_w)).share("colorram");
 	map(0xe000, 0xe7ff).ram().share("spriteram");
-	map(0xe800, 0xe800).w(this, FUNC(slapfght_state::scrollx_lo_w));
-	map(0xe801, 0xe801).w(this, FUNC(slapfght_state::scrollx_hi_w));
-	map(0xe802, 0xe802).w(this, FUNC(slapfght_state::scrolly_w));
-	map(0xf000, 0xf7ff).ram().w(this, FUNC(slapfght_state::fixram_w)).share("fixvideoram");
-	map(0xf800, 0xffff).ram().w(this, FUNC(slapfght_state::fixcol_w)).share("fixcolorram");
+	map(0xe800, 0xe800).w(FUNC(slapfght_state::scrollx_lo_w));
+	map(0xe801, 0xe801).w(FUNC(slapfght_state::scrollx_hi_w));
+	map(0xe802, 0xe802).w(FUNC(slapfght_state::scrolly_w));
+	map(0xf000, 0xf7ff).ram().w(FUNC(slapfght_state::fixram_w)).share("fixvideoram");
+	map(0xf800, 0xffff).ram().w(FUNC(slapfght_state::fixcol_w)).share("fixcolorram");
 }
 
 void slapfght_state::slapfigh_map_mcu(address_map &map)
@@ -349,7 +349,7 @@ void slapfght_state::slapfighb1_map(address_map &map)
 void slapfght_state::getstar_map(address_map &map)
 {
 	slapfigh_map(map);
-	map(0xe803, 0xe803).rw(this, FUNC(slapfght_state::getstar_mcusim_r), FUNC(slapfght_state::getstar_mcusim_w));
+	map(0xe803, 0xe803).rw(FUNC(slapfght_state::getstar_mcusim_r), FUNC(slapfght_state::getstar_mcusim_w));
 }
 
 void slapfght_state::slapfighb2_map(address_map &map)
@@ -358,15 +358,15 @@ void slapfght_state::slapfighb2_map(address_map &map)
 	map(0x8000, 0xbfff).bankr("bank1");
 	map(0xc000, 0xc7ff).ram();
 	map(0xc800, 0xcfff).ram().share("share1");
-	map(0xd000, 0xd7ff).ram().w(this, FUNC(slapfght_state::videoram_w)).share("videoram");
-	map(0xd800, 0xdfff).ram().w(this, FUNC(slapfght_state::colorram_w)).share("colorram");
+	map(0xd000, 0xd7ff).ram().w(FUNC(slapfght_state::videoram_w)).share("videoram");
+	map(0xd800, 0xdfff).ram().w(FUNC(slapfght_state::colorram_w)).share("colorram");
 	map(0xe000, 0xe7ff).ram().share("spriteram");
-	map(0xe800, 0xe800).w(this, FUNC(slapfght_state::scrollx_hi_w));
-	map(0xe802, 0xe802).w(this, FUNC(slapfght_state::scrolly_w));
-	map(0xe803, 0xe803).w(this, FUNC(slapfght_state::scrollx_lo_w));
+	map(0xe800, 0xe800).w(FUNC(slapfght_state::scrollx_hi_w));
+	map(0xe802, 0xe802).w(FUNC(slapfght_state::scrolly_w));
+	map(0xe803, 0xe803).w(FUNC(slapfght_state::scrollx_lo_w));
 	map(0xec00, 0xefff).rom(); // it reads a copy of the logo from here!
-	map(0xf000, 0xf7ff).ram().w(this, FUNC(slapfght_state::fixram_w)).share("fixvideoram");
-	map(0xf800, 0xffff).ram().w(this, FUNC(slapfght_state::fixcol_w)).share("fixcolorram");
+	map(0xf000, 0xf7ff).ram().w(FUNC(slapfght_state::fixram_w)).share("fixvideoram");
+	map(0xf800, 0xffff).ram().w(FUNC(slapfght_state::fixcol_w)).share("fixcolorram");
 }
 
 
@@ -402,28 +402,28 @@ READ8_MEMBER(slapfght_state::vblank_r)
 void slapfght_state::io_map_nomcu(address_map &map)
 {
 	map.global_mask(0xff);
-	map(0x00, 0x00).r(this, FUNC(slapfght_state::vblank_r));
+	map(0x00, 0x00).r(FUNC(slapfght_state::vblank_r));
 	map(0x00, 0x0f).w("mainlatch", FUNC(ls259_device::write_a0));
 }
 
 void slapfght_state::io_map_mcu(address_map &map)
 {
 	map.global_mask(0xff);
-	map(0x00, 0x00).r(this, FUNC(slapfght_state::tigerh_mcu_status_r));
+	map(0x00, 0x00).r(FUNC(slapfght_state::tigerh_mcu_status_r));
 	map(0x00, 0x0f).w("mainlatch", FUNC(ls259_device::write_a0));
 }
 
 void slapfght_state::getstarb1_io_map(address_map &map)
 {
 	map.global_mask(0xff);
-	map(0x00, 0x00).r(this, FUNC(slapfght_state::getstarb1_prot_r));
+	map(0x00, 0x00).r(FUNC(slapfght_state::getstarb1_prot_r));
 	map(0x00, 0x0f).w("mainlatch", FUNC(ls259_device::write_a0));
 }
 
 void slapfght_state::getstarb2_io_map(address_map &map)
 {
 	map.global_mask(0xff);
-	map(0x00, 0x00).r(this, FUNC(slapfght_state::getstar_mcusim_status_r));
+	map(0x00, 0x00).r(FUNC(slapfght_state::getstar_mcusim_status_r));
 	map(0x00, 0x0f).w("mainlatch", FUNC(ls259_device::write_a0));
 }
 
@@ -456,7 +456,7 @@ void slapfght_state::perfrman_sound_map(address_map &map)
 	map(0xa090, 0xa090).w("ay2", FUNC(ay8910_device::address_w));
 	map(0xa091, 0xa091).r("ay2", FUNC(ay8910_device::data_r));
 	map(0xa092, 0xa092).w("ay2", FUNC(ay8910_device::data_w));
-	map(0xa0e0, 0xa0e0).select(0x0010).w(this, FUNC(slapfght_state::sound_nmi_enable_w));
+	map(0xa0e0, 0xa0e0).select(0x0010).w(FUNC(slapfght_state::sound_nmi_enable_w));
 }
 
 void slapfght_state::tigerh_sound_map(address_map &map)
@@ -468,7 +468,7 @@ void slapfght_state::tigerh_sound_map(address_map &map)
 	map(0xa090, 0xa090).w("ay2", FUNC(ay8910_device::address_w));
 	map(0xa091, 0xa091).r("ay2", FUNC(ay8910_device::data_r));
 	map(0xa092, 0xa092).w("ay2", FUNC(ay8910_device::data_w));
-	map(0xa0e0, 0xa0e0).select(0x0010).w(this, FUNC(slapfght_state::sound_nmi_enable_w));
+	map(0xa0e0, 0xa0e0).select(0x0010).w(FUNC(slapfght_state::sound_nmi_enable_w));
 	map(0xc800, 0xcfff).ram().share("share1");
 	map(0xd000, 0xffff).ram();
 }
@@ -909,17 +909,17 @@ MACHINE_CONFIG_START(slapfght_state::perfrman)
 	MCFG_QUANTUM_PERFECT_CPU("maincpu")
 
 	/* video hardware */
-	MCFG_DEVICE_ADD("spriteram", BUFFERED_SPRITERAM8)
+	BUFFERED_SPRITERAM8(config, m_spriteram);
 
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500) /* not accurate */)
-	MCFG_SCREEN_SIZE(64*8, 32*8)
-	MCFG_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 2*8, 32*8-1)
-	MCFG_SCREEN_UPDATE_DRIVER(slapfght_state, screen_update_perfrman)
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE("spriteram", buffered_spriteram8_device, vblank_copy_rising))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE(*this, slapfght_state, vblank_irq))
-	MCFG_SCREEN_PALETTE("palette")
+	SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+	m_screen->set_refresh_hz(60);
+	m_screen->set_vblank_time(ATTOSECONDS_IN_USEC(2500) /* not accurate */);
+	m_screen->set_size(64*8, 32*8);
+	m_screen->set_visarea(0*8, 32*8-1, 2*8, 32*8-1);
+	m_screen->set_screen_update(FUNC(slapfght_state::screen_update_perfrman));
+	m_screen->screen_vblank().set(m_spriteram, FUNC(buffered_spriteram8_device::vblank_copy_rising));
+	m_screen->screen_vblank().append(FUNC(slapfght_state::vblank_irq));
+	m_screen->set_palette(m_palette);
 
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_perfrman)
 	MCFG_PALETTE_ADD_RRRRGGGGBBBB_PROMS("palette", "proms", 256)
@@ -956,22 +956,22 @@ MACHINE_CONFIG_START(slapfght_state::tigerh)
 	MCFG_DEVICE_PROGRAM_MAP(tigerh_sound_map)
 	MCFG_DEVICE_PERIODIC_INT_DRIVER(slapfght_state, sound_nmi, 360) // music speed, verified with pcb recording
 
-	MCFG_DEVICE_ADD("bmcu", TAITO68705_MCU_TIGER, XTAL(36'000'000)/12) // 3MHz
+	TAITO68705_MCU_TIGER(config, m_bmcu, 36_MHz_XTAL/12); // 3MHz
 
 	MCFG_QUANTUM_PERFECT_CPU("maincpu")
 
 	/* video hardware */
-	MCFG_DEVICE_ADD("spriteram", BUFFERED_SPRITERAM8)
+	BUFFERED_SPRITERAM8(config, m_spriteram);
 
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500) /* not accurate */)
-	MCFG_SCREEN_SIZE(64*8, 32*8)
-	MCFG_SCREEN_VISIBLE_AREA(1*8, 36*8-1, 2*8-1, 32*8-1-1)
-	MCFG_SCREEN_UPDATE_DRIVER(slapfght_state, screen_update_slapfight)
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE("spriteram", buffered_spriteram8_device, vblank_copy_rising))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE(*this, slapfght_state, vblank_irq))
-	MCFG_SCREEN_PALETTE("palette")
+	SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+	m_screen->set_refresh_hz(60);
+	m_screen->set_vblank_time(ATTOSECONDS_IN_USEC(2500) /* not accurate */);
+	m_screen->set_size(64*8, 32*8);
+	m_screen->set_visarea(1*8, 36*8-1, 2*8-1, 32*8-1-1);
+	m_screen->set_screen_update(FUNC(slapfght_state::screen_update_slapfight));
+	m_screen->screen_vblank().set(m_spriteram, FUNC(buffered_spriteram8_device::vblank_copy_rising));
+	m_screen->screen_vblank().append(FUNC(slapfght_state::vblank_irq));
+	m_screen->set_palette(m_palette);
 
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_slapfght)
 	MCFG_PALETTE_ADD_RRRRGGGGBBBB_PROMS("palette", "proms", 256)
@@ -1028,23 +1028,23 @@ MACHINE_CONFIG_START(slapfght_state::slapfigh)
 	MCFG_DEVICE_PROGRAM_MAP(tigerh_sound_map)
 	MCFG_DEVICE_PERIODIC_INT_DRIVER(slapfght_state, sound_nmi, 180)
 
-	MCFG_DEVICE_ADD("bmcu", TAITO68705_MCU, XTAL(36'000'000)/12) // 3MHz
-	MCFG_TAITO_M68705_AUX_STROBE_CB(WRITE8(*this, slapfght_state, scroll_from_mcu_w))
+	TAITO68705_MCU(config, m_bmcu, 36_MHz_XTAL/12); // 3MHz
+	m_bmcu->aux_strobe_cb().set(FUNC(slapfght_state::scroll_from_mcu_w));
 
 	MCFG_QUANTUM_PERFECT_CPU("maincpu")
 
 	/* video hardware */
-	MCFG_DEVICE_ADD("spriteram", BUFFERED_SPRITERAM8)
+	BUFFERED_SPRITERAM8(config, m_spriteram);
 
-	MCFG_SCREEN_ADD("screen", RASTER)
-	MCFG_SCREEN_REFRESH_RATE(60)
-	MCFG_SCREEN_VBLANK_TIME(ATTOSECONDS_IN_USEC(2500) /* not accurate */)
-	MCFG_SCREEN_SIZE(64*8, 32*8)
-	MCFG_SCREEN_VISIBLE_AREA(1*8, 36*8-1, 2*8-1, 32*8-1-1)
-	MCFG_SCREEN_UPDATE_DRIVER(slapfght_state, screen_update_slapfight)
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE("spriteram", buffered_spriteram8_device, vblank_copy_rising))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE(*this, slapfght_state, vblank_irq))
-	MCFG_SCREEN_PALETTE("palette")
+	SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+	m_screen->set_refresh_hz(60);
+	m_screen->set_vblank_time(ATTOSECONDS_IN_USEC(2500) /* not accurate */);
+	m_screen->set_size(64*8, 32*8);
+	m_screen->set_visarea(1*8, 36*8-1, 2*8-1, 32*8-1-1);
+	m_screen->set_screen_update(FUNC(slapfght_state::screen_update_slapfight));
+	m_screen->screen_vblank().set(m_spriteram, FUNC(buffered_spriteram8_device::vblank_copy_rising));
+	m_screen->screen_vblank().append(FUNC(slapfght_state::vblank_irq));
+	m_screen->set_palette(m_palette);
 
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_slapfght)
 	MCFG_PALETTE_ADD_RRRRGGGGBBBB_PROMS("palette", "proms", 256)

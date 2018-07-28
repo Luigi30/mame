@@ -38,6 +38,7 @@
 #include "machine/z80sio.h"
 #include "sound/sn76496.h"
 #include "video/mc6845.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 #include "apricotp.lh"
@@ -49,15 +50,12 @@
 
 #define I8086_TAG       "ic7"
 #define I8284_TAG       "ic30"
-#define I8237_TAG       "ic17"
 #define I8259A_TAG      "ic51"
-#define I8253A5_TAG     "ic20"
 #define TMS4500_TAG     "ic42"
 #define MC6845_TAG      "ic69"
 #define HD63B01V1_TAG   "ic29"
 #define AD7574_TAG      "ic34"
 #define AD1408_TAG      "ic37"
-#define Z80SIO0_TAG     "ic6"
 #define WD2797_TAG      "ic5"
 #define SN76489AN_TAG   "ic13"
 #define CENTRONICS_TAG  "centronics"
@@ -86,24 +84,27 @@ class fp_state : public driver_device
 {
 public:
 	fp_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-			m_maincpu(*this, I8086_TAG),
-			m_soundcpu(*this, HD63B01V1_TAG),
-			m_dmac(*this, I8237_TAG),
-			m_pic(*this, I8259A_TAG),
-			m_pit(*this, I8253A5_TAG),
-			m_sio(*this, Z80SIO0_TAG),
-			m_fdc(*this, WD2797_TAG),
-			m_crtc(*this, MC6845_TAG),
-			m_ram(*this, RAM_TAG),
-			m_floppy0(*this, WD2797_TAG":0"),
-			m_floppy1(*this, WD2797_TAG":1"),
-			m_floppy(nullptr),
-			m_centronics(*this, CENTRONICS_TAG),
-			m_work_ram(*this, "work_ram"),
-			m_video_ram(*this, "video_ram")
+		: driver_device(mconfig, type, tag)
+		, m_maincpu(*this, I8086_TAG)
+		, m_soundcpu(*this, HD63B01V1_TAG)
+		, m_dmac(*this, "ic17")
+		, m_pic(*this, I8259A_TAG)
+		, m_pit(*this, "ic20")
+		, m_sio(*this, "ic6")
+		, m_fdc(*this, WD2797_TAG)
+		, m_crtc(*this, MC6845_TAG)
+		, m_ram(*this, RAM_TAG)
+		, m_floppy0(*this, WD2797_TAG":0")
+		, m_floppy1(*this, WD2797_TAG":1")
+		, m_floppy(nullptr)
+		, m_centronics(*this, CENTRONICS_TAG)
+		, m_work_ram(*this, "work_ram")
+		, m_video_ram(*this, "video_ram")
 	{ }
 
+	void fp(machine_config &config);
+
+private:
 	DECLARE_FLOPPY_FORMATS(floppy_formats);
 
 	required_device<cpu_device> m_maincpu;
@@ -154,7 +155,7 @@ public:
 	DECLARE_WRITE_LINE_MEMBER( write_centronics_select );
 	DECLARE_WRITE_LINE_MEMBER( write_centronics_fault );
 	DECLARE_WRITE_LINE_MEMBER( write_centronics_perror );
-	void fp(machine_config &config);
+
 	void fp_io(address_map &map);
 	void fp_mem(address_map &map);
 	void sound_io(address_map &map);
@@ -428,7 +429,7 @@ WRITE16_MEMBER( fp_state::mem_w )
 void fp_state::fp_mem(address_map &map)
 {
 	map.unmap_value_high();
-	map(0x00000, 0xf7fff).rw(this, FUNC(fp_state::mem_r), FUNC(fp_state::mem_w));
+	map(0x00000, 0xf7fff).rw(FUNC(fp_state::mem_r), FUNC(fp_state::mem_w));
 	map(0xf8000, 0xfffff).rom().region(I8086_TAG, 0);
 }
 
@@ -443,13 +444,13 @@ void fp_state::fp_io(address_map &map)
 	map(0x000, 0x007).rw(m_fdc, FUNC(wd2797_device::read), FUNC(wd2797_device::write)).umask16(0x00ff);
 	map(0x008, 0x00f).rw(m_pit, FUNC(pit8253_device::read), FUNC(pit8253_device::write)).umask16(0x00ff);
 	map(0x018, 0x01f).rw(m_sio, FUNC(z80sio_device::ba_cd_r), FUNC(z80sio_device::ba_cd_w)).umask16(0x00ff);
-	map(0x020, 0x020).w("cent_data_out", FUNC(output_latch_device::write));
-	map(0x022, 0x022).w(this, FUNC(fp_state::pint_clr_w));
-	map(0x024, 0x024).r(this, FUNC(fp_state::prtr_snd_r));
-	map(0x026, 0x026).w(SN76489AN_TAG, FUNC(sn76489a_device::write));
-	map(0x028, 0x028).w(this, FUNC(fp_state::contrast_w));
-	map(0x02a, 0x02a).w(this, FUNC(fp_state::palette_w));
-	map(0x02e, 0x02f).w(this, FUNC(fp_state::video_w));
+	map(0x020, 0x020).w("cent_data_out", FUNC(output_latch_device::bus_w));
+	map(0x022, 0x022).w(FUNC(fp_state::pint_clr_w));
+	map(0x024, 0x024).r(FUNC(fp_state::prtr_snd_r));
+	map(0x026, 0x026).w(SN76489AN_TAG, FUNC(sn76489a_device::command_w));
+	map(0x028, 0x028).w(FUNC(fp_state::contrast_w));
+	map(0x02a, 0x02a).w(FUNC(fp_state::palette_w));
+	map(0x02e, 0x02f).w(FUNC(fp_state::video_w));
 	map(0x040, 0x05f).rw(m_dmac, FUNC(am9517a_device::read), FUNC(am9517a_device::write)).umask16(0x00ff);
 	map(0x068, 0x06b).rw(m_pic, FUNC(pic8259_device::read), FUNC(pic8259_device::write)).umask16(0x00ff);
 	map(0x06c, 0x06c).w(m_crtc, FUNC(mc6845_device::address_w));
@@ -597,7 +598,7 @@ MACHINE_CONFIG_START(fp_state::fp)
 	MCFG_DEVICE_DISABLE()
 
 	/* video hardware */
-	MCFG_DEFAULT_LAYOUT( layout_apricotp )
+	config.set_default_layout(layout_apricotp);
 
 	MCFG_SCREEN_ADD(SCREEN_LCD_TAG, LCD)
 	MCFG_SCREEN_REFRESH_RATE(50)
@@ -630,35 +631,35 @@ MACHINE_CONFIG_START(fp_state::fp)
 	/* Devices */
 	MCFG_DEVICE_ADD(APRICOT_KEYBOARD_TAG, APRICOT_KEYBOARD, 0)
 
-	MCFG_DEVICE_ADD(I8237_TAG, AM9517A, 250000)
-	MCFG_I8237_OUT_EOP_CB(WRITELINE(I8259A_TAG, pic8259_device, ir7_w))
-	MCFG_I8237_IN_IOR_1_CB(READ8(WD2797_TAG, wd_fdc_device_base, data_r))
-	MCFG_I8237_OUT_IOW_1_CB(WRITE8(WD2797_TAG, wd_fdc_device_base, data_w))
+	AM9517A(config, m_dmac, 250000);
+	m_dmac->out_eop_callback().set(m_pic, FUNC(pic8259_device::ir7_w));
+	m_dmac->in_ior_callback<1>().set(m_fdc, FUNC(wd_fdc_device_base::data_r));
+	m_dmac->out_iow_callback<1>().set(m_fdc, FUNC(wd_fdc_device_base::data_w));
 
-	MCFG_DEVICE_ADD(I8259A_TAG, PIC8259, 0)
-	MCFG_PIC8259_OUT_INT_CB(INPUTLINE(I8086_TAG, INPUT_LINE_IRQ0))
+	PIC8259(config, m_pic, 0);
+	m_pic->out_int_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ0);
 
-	MCFG_DEVICE_ADD(I8253A5_TAG, PIT8253, 0)
-	MCFG_PIT8253_CLK0(2000000)
-	MCFG_PIT8253_OUT0_HANDLER(WRITELINE(I8259A_TAG, pic8259_device, ir0_w))
-	MCFG_PIT8253_CLK1(2000000)
-	MCFG_PIT8253_CLK2(2000000)
+	PIT8253(config, m_pit, 0);
+	m_pit->set_clk<0>(2000000);
+	m_pit->out_handler<0>().set(m_pic, FUNC(pic8259_device::ir0_w));
+	m_pit->set_clk<1>(2000000);
+	m_pit->set_clk<2>(2000000);
 
-	MCFG_DEVICE_ADD(Z80SIO0_TAG, Z80SIO, 2500000)
-	MCFG_Z80SIO_OUT_INT_CB(WRITELINE(I8259A_TAG, pic8259_device, ir4_w))
+	Z80SIO(config, m_sio, 2500000);
+	m_sio->out_int_callback().set(m_pic, FUNC(pic8259_device::ir4_w));
 
-	MCFG_DEVICE_ADD(WD2797_TAG, WD2797, 2000000)
-	MCFG_WD_FDC_INTRQ_CALLBACK(WRITELINE(I8259A_TAG, pic8259_device, ir1_w))
-	MCFG_WD_FDC_DRQ_CALLBACK(WRITELINE(I8237_TAG, am9517a_device, dreq1_w))
+	WD2797(config, m_fdc, 2000000);
+	m_fdc->intrq_wr_callback().set(m_pic, FUNC(pic8259_device::ir1_w));
+	m_fdc->drq_wr_callback().set(m_dmac, FUNC(am9517a_device::dreq1_w));
 
-	MCFG_FLOPPY_DRIVE_ADD(WD2797_TAG ":0", fp_floppies, "d32w", fp_state::floppy_formats)
-	MCFG_FLOPPY_DRIVE_ADD(WD2797_TAG ":1", fp_floppies, nullptr,   fp_state::floppy_formats)
+	FLOPPY_CONNECTOR(config, m_floppy0, fp_floppies, "d32w", fp_state::floppy_formats);
+	FLOPPY_CONNECTOR(config, m_floppy1, fp_floppies, nullptr,   fp_state::floppy_formats);
 
-	MCFG_CENTRONICS_ADD("centronics", centronics_devices, "printer")
-	MCFG_CENTRONICS_BUSY_HANDLER(WRITELINE(*this, fp_state, write_centronics_busy))
-	MCFG_CENTRONICS_SELECT_HANDLER(WRITELINE(*this, fp_state, write_centronics_select))
-	MCFG_CENTRONICS_FAULT_HANDLER(WRITELINE(*this, fp_state, write_centronics_fault))
-	MCFG_CENTRONICS_PERROR_HANDLER(WRITELINE(*this, fp_state, write_centronics_perror))
+	CENTRONICS(config, m_centronics, centronics_devices, "printer");
+	m_centronics->busy_handler().set(FUNC(fp_state::write_centronics_busy));
+	m_centronics->select_handler().set(FUNC(fp_state::write_centronics_select));
+	m_centronics->fault_handler().set(FUNC(fp_state::write_centronics_fault));
+	m_centronics->perror_handler().set(FUNC(fp_state::write_centronics_perror));
 
 	MCFG_CENTRONICS_OUTPUT_LATCH_ADD("cent_data_out", CENTRONICS_TAG)
 

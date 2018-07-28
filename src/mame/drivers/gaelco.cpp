@@ -28,6 +28,7 @@ Year   Game                PCB            NOTES
 #include "sound/okim6295.h"
 #include "sound/3812intf.h"
 
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -109,7 +110,7 @@ WRITE16_MEMBER(gaelco_state::thoop_encrypted_w)
 void gaelco_state::bigkarnk_map(address_map &map)
 {
 	map(0x000000, 0x07ffff).rom();                                                         /* ROM */
-	map(0x100000, 0x101fff).ram().w(this, FUNC(gaelco_state::gaelco_vram_w)).share("videoram");               /* Video RAM */
+	map(0x100000, 0x101fff).ram().w(FUNC(gaelco_state::gaelco_vram_w)).share("videoram");               /* Video RAM */
 	map(0x102000, 0x103fff).ram();                                                         /* Screen RAM */
 	map(0x108000, 0x108007).writeonly().share("vregs");                         /* Video Registers */
 //  AM_RANGE(0x10800c, 0x10800d) AM_DEVWRITE(watchdog_reset_w)                                                 /* INT 6 ACK/Watchdog timer */
@@ -141,7 +142,7 @@ void gaelco_state::bigkarnk_snd_map(address_map &map)
 void gaelco_state::maniacsq_map(address_map &map)
 {
 	map(0x000000, 0x0fffff).rom();                                                         /* ROM */
-	map(0x100000, 0x101fff).ram().w(this, FUNC(gaelco_state::gaelco_vram_w)).share("videoram");               /* Video RAM */
+	map(0x100000, 0x101fff).ram().w(FUNC(gaelco_state::gaelco_vram_w)).share("videoram");               /* Video RAM */
 	map(0x102000, 0x103fff).ram();                                                         /* Screen RAM */
 	map(0x108000, 0x108007).writeonly().share("vregs");                         /* Video Registers */
 //  AM_RANGE(0x10800c, 0x10800d) AM_WRITE(watchdog_reset_w)                                                 /* INT 6 ACK/Watchdog timer */
@@ -151,7 +152,7 @@ void gaelco_state::maniacsq_map(address_map &map)
 	map(0x700002, 0x700003).portr("DSW1");
 	map(0x700004, 0x700005).portr("P1");
 	map(0x700006, 0x700007).portr("P2");
-	map(0x70000d, 0x70000d).w(this, FUNC(gaelco_state::OKIM6295_bankswitch_w));
+	map(0x70000d, 0x70000d).w(FUNC(gaelco_state::OKIM6295_bankswitch_w));
 	map(0x70000f, 0x70000f).rw("oki", FUNC(okim6295_device::read), FUNC(okim6295_device::write));                      /* OKI6295 status register */
 	map(0xff0000, 0xffffff).ram();                                                         /* Work RAM */
 }
@@ -159,8 +160,8 @@ void gaelco_state::maniacsq_map(address_map &map)
 void gaelco_state::squash_map(address_map &map)
 {
 	map(0x000000, 0x0fffff).rom();                                                         /* ROM */
-	map(0x100000, 0x101fff).ram().w(this, FUNC(gaelco_state::gaelco_vram_encrypted_w)).share("videoram");         /* Video RAM */
-	map(0x102000, 0x103fff).ram().w(this, FUNC(gaelco_state::gaelco_encrypted_w)).share("screenram");                /* Screen RAM */
+	map(0x100000, 0x101fff).ram().w(FUNC(gaelco_state::gaelco_vram_encrypted_w)).share("videoram");         /* Video RAM */
+	map(0x102000, 0x103fff).ram().w(FUNC(gaelco_state::gaelco_encrypted_w)).share("screenram");                /* Screen RAM */
 	map(0x108000, 0x108007).writeonly().share("vregs");                         /* Video Registers */
 //  AM_RANGE(0x10800c, 0x10800d) AM_WRITE(watchdog_reset_w)                                                 /* INT 6 ACK/Watchdog timer */
 	map(0x200000, 0x2007ff).ram().w(m_palette, FUNC(palette_device::write16)).share("palette");    /* Palette */
@@ -173,7 +174,7 @@ void gaelco_state::squash_map(address_map &map)
 												 [this](address_space &space, offs_t offset, u8 data, u8 mem_mask) {
 													 m_outlatch->write_d0(space, offset >> 3, data, mem_mask);
 												 });
-	map(0x70000d, 0x70000d).w(this, FUNC(gaelco_state::OKIM6295_bankswitch_w));
+	map(0x70000d, 0x70000d).w(FUNC(gaelco_state::OKIM6295_bankswitch_w));
 	map(0x70000f, 0x70000f).rw("oki", FUNC(okim6295_device::read), FUNC(okim6295_device::write));                      /* OKI6295 status register */
 	map(0xff0000, 0xffffff).ram();                                                         /* Work RAM */
 }
@@ -181,8 +182,8 @@ void gaelco_state::squash_map(address_map &map)
 void gaelco_state::thoop_map(address_map &map)
 {
 	map(0x000000, 0x0fffff).rom();                                                         /* ROM */
-	map(0x100000, 0x101fff).ram().w(this, FUNC(gaelco_state::thoop_vram_encrypted_w)).share("videoram");          /* Video RAM */
-	map(0x102000, 0x103fff).ram().w(this, FUNC(gaelco_state::thoop_encrypted_w)).share("screenram");             /* Screen RAM */
+	map(0x100000, 0x101fff).ram().w(FUNC(gaelco_state::thoop_vram_encrypted_w)).share("videoram");          /* Video RAM */
+	map(0x102000, 0x103fff).ram().w(FUNC(gaelco_state::thoop_encrypted_w)).share("screenram");             /* Screen RAM */
 	map(0x108000, 0x108007).writeonly().share("vregs");                         /* Video Registers */
 //  AM_RANGE(0x10800c, 0x10800d) AM_WRITE(watchdog_reset_w)                                                     /* INT 6 ACK/Watchdog timer */
 	map(0x200000, 0x2007ff).ram().w(m_palette, FUNC(palette_device::write16)).share("palette");        /* Palette */
@@ -195,7 +196,7 @@ void gaelco_state::thoop_map(address_map &map)
 												 [this](address_space &space, offs_t offset, u8 data, u8 mem_mask) {
 													 m_outlatch->write_d0(space, offset >> 3, data, mem_mask);
 												 });
-	map(0x70000d, 0x70000d).w(this, FUNC(gaelco_state::OKIM6295_bankswitch_w));
+	map(0x70000d, 0x70000d).w(FUNC(gaelco_state::OKIM6295_bankswitch_w));
 	map(0x70000f, 0x70000f).rw("oki", FUNC(okim6295_device::read), FUNC(okim6295_device::write));                      /* OKI6295 status register */
 	map(0xff0000, 0xffffff).ram();                                                         /* Work RAM */
 }
@@ -636,11 +637,11 @@ MACHINE_CONFIG_START(gaelco_state::bigkarnk)
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(600))
 
-	MCFG_DEVICE_ADD("outlatch", LS259, 0)
-	MCFG_ADDRESSABLE_LATCH_Q0_OUT_CB(WRITELINE(*this, gaelco_state, coin1_lockout_w)) MCFG_DEVCB_INVERT
-	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(WRITELINE(*this, gaelco_state, coin2_lockout_w)) MCFG_DEVCB_INVERT
-	MCFG_ADDRESSABLE_LATCH_Q2_OUT_CB(WRITELINE(*this, gaelco_state, coin1_counter_w))
-	MCFG_ADDRESSABLE_LATCH_Q3_OUT_CB(WRITELINE(*this, gaelco_state, coin2_counter_w))
+	LS259(config, m_outlatch);
+	m_outlatch->q_out_cb<0>().set(FUNC(gaelco_state::coin1_lockout_w)).invert();
+	m_outlatch->q_out_cb<1>().set(FUNC(gaelco_state::coin2_lockout_w)).invert();
+	m_outlatch->q_out_cb<2>().set(FUNC(gaelco_state::coin1_counter_w));
+	m_outlatch->q_out_cb<3>().set(FUNC(gaelco_state::coin2_counter_w));
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
@@ -709,12 +710,12 @@ MACHINE_CONFIG_START(gaelco_state::squash)
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(600))
 
-	MCFG_DEVICE_ADD("outlatch", LS259, 0) // B8
-	MCFG_ADDRESSABLE_LATCH_Q0_OUT_CB(WRITELINE(*this, gaelco_state, coin1_lockout_w)) MCFG_DEVCB_INVERT
-	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(WRITELINE(*this, gaelco_state, coin2_lockout_w)) MCFG_DEVCB_INVERT
-	MCFG_ADDRESSABLE_LATCH_Q2_OUT_CB(WRITELINE(*this, gaelco_state, coin1_counter_w))
-	MCFG_ADDRESSABLE_LATCH_Q3_OUT_CB(WRITELINE(*this, gaelco_state, coin2_counter_w))
-	MCFG_ADDRESSABLE_LATCH_Q4_OUT_CB(NOOP) // used
+	LS259(config, m_outlatch); // B8
+	m_outlatch->q_out_cb<0>().set(FUNC(gaelco_state::coin1_lockout_w)).invert();
+	m_outlatch->q_out_cb<1>().set(FUNC(gaelco_state::coin2_lockout_w)).invert();
+	m_outlatch->q_out_cb<2>().set(FUNC(gaelco_state::coin1_counter_w));
+	m_outlatch->q_out_cb<3>().set(FUNC(gaelco_state::coin2_counter_w));
+	m_outlatch->q_out_cb<4>().set_nop(); // used
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
@@ -748,12 +749,12 @@ MACHINE_CONFIG_START(gaelco_state::thoop)
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(600))
 
-	MCFG_DEVICE_ADD("outlatch", LS259, 0) // B8
-	MCFG_ADDRESSABLE_LATCH_Q0_OUT_CB(WRITELINE(*this, gaelco_state, coin1_lockout_w)) // not inverted
-	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(WRITELINE(*this, gaelco_state, coin2_lockout_w)) // not inverted
-	MCFG_ADDRESSABLE_LATCH_Q2_OUT_CB(WRITELINE(*this, gaelco_state, coin1_counter_w))
-	MCFG_ADDRESSABLE_LATCH_Q3_OUT_CB(WRITELINE(*this, gaelco_state, coin2_counter_w))
-	MCFG_ADDRESSABLE_LATCH_Q4_OUT_CB(NOOP) // used
+	LS259(config, m_outlatch); // B8
+	m_outlatch->q_out_cb<0>().set(FUNC(gaelco_state::coin1_lockout_w)); // not inverted
+	m_outlatch->q_out_cb<1>().set(FUNC(gaelco_state::coin2_lockout_w)); // not inverted
+	m_outlatch->q_out_cb<2>().set(FUNC(gaelco_state::coin1_counter_w));
+	m_outlatch->q_out_cb<3>().set(FUNC(gaelco_state::coin2_counter_w));
+	m_outlatch->q_out_cb<4>().set_nop(); // used
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)

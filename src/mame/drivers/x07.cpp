@@ -1235,7 +1235,7 @@ void x07_state::x07_io(address_map &map)
 {
 	map.unmap_value_high();
 	map.global_mask(0xff);
-	map(0x00, 0xff).rw(this, FUNC(x07_state::x07_io_r), FUNC(x07_state::x07_io_w));
+	map(0x00, 0xff).rw(FUNC(x07_state::x07_io_r), FUNC(x07_state::x07_io_w));
 }
 
 /* Input ports */
@@ -1497,7 +1497,6 @@ MACHINE_CONFIG_START(x07_state::x07)
 
 	MCFG_PALETTE_ADD("palette", 2)
 	MCFG_PALETTE_INIT_OWNER(x07_state, x07)
-	MCFG_DEFAULT_LAYOUT(layout_lcd)
 	MCFG_DEVICE_ADD("gfxdecode", GFXDECODE, "palette", gfx_x07)
 
 	/* sound hardware */

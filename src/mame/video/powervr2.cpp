@@ -17,32 +17,32 @@ DEFINE_DEVICE_TYPE(POWERVR2, powervr2_device, "powervr2", "PowerVR 2")
 
 void powervr2_device::ta_map(address_map &map)
 {
-	map(0x0000, 0x0003).r(this, FUNC(powervr2_device::id_r));
-	map(0x0004, 0x0007).r(this, FUNC(powervr2_device::revision_r));
-	map(0x0008, 0x000b).rw(this, FUNC(powervr2_device::softreset_r), FUNC(powervr2_device::softreset_w));
-	map(0x0014, 0x0017).w(this, FUNC(powervr2_device::startrender_w));
+	map(0x0000, 0x0003).r(FUNC(powervr2_device::id_r));
+	map(0x0004, 0x0007).r(FUNC(powervr2_device::revision_r));
+	map(0x0008, 0x000b).rw(FUNC(powervr2_device::softreset_r), FUNC(powervr2_device::softreset_w));
+	map(0x0014, 0x0017).w(FUNC(powervr2_device::startrender_w));
 // 18 = test select
-	map(0x0020, 0x0023).rw(this, FUNC(powervr2_device::param_base_r), FUNC(powervr2_device::param_base_w));
-	map(0x002c, 0x002f).rw(this, FUNC(powervr2_device::region_base_r), FUNC(powervr2_device::region_base_w));
+	map(0x0020, 0x0023).rw(FUNC(powervr2_device::param_base_r), FUNC(powervr2_device::param_base_w));
+	map(0x002c, 0x002f).rw(FUNC(powervr2_device::region_base_r), FUNC(powervr2_device::region_base_w));
 // 30 = span sort cfg
-	map(0x0040, 0x0043).rw(this, FUNC(powervr2_device::vo_border_col_r), FUNC(powervr2_device::vo_border_col_w));
-	map(0x0044, 0x0047).rw(this, FUNC(powervr2_device::fb_r_ctrl_r), FUNC(powervr2_device::fb_r_ctrl_w));
-	map(0x0048, 0x004b).rw(this, FUNC(powervr2_device::fb_w_ctrl_r), FUNC(powervr2_device::fb_w_ctrl_w));
-	map(0x004c, 0x004f).rw(this, FUNC(powervr2_device::fb_w_linestride_r), FUNC(powervr2_device::fb_w_linestride_w));
-	map(0x0050, 0x0053).rw(this, FUNC(powervr2_device::fb_r_sof1_r), FUNC(powervr2_device::fb_r_sof1_w));
-	map(0x0054, 0x0057).rw(this, FUNC(powervr2_device::fb_r_sof2_r), FUNC(powervr2_device::fb_r_sof2_w));
-	map(0x005c, 0x005f).rw(this, FUNC(powervr2_device::fb_r_size_r), FUNC(powervr2_device::fb_r_size_w));
-	map(0x0060, 0x0063).rw(this, FUNC(powervr2_device::fb_w_sof1_r), FUNC(powervr2_device::fb_w_sof1_w));
-	map(0x0064, 0x0067).rw(this, FUNC(powervr2_device::fb_w_sof2_r), FUNC(powervr2_device::fb_w_sof2_w));
-	map(0x0068, 0x006b).rw(this, FUNC(powervr2_device::fb_x_clip_r), FUNC(powervr2_device::fb_x_clip_w));
-	map(0x006c, 0x006f).rw(this, FUNC(powervr2_device::fb_y_clip_r), FUNC(powervr2_device::fb_y_clip_w));
+	map(0x0040, 0x0043).rw(FUNC(powervr2_device::vo_border_col_r), FUNC(powervr2_device::vo_border_col_w));
+	map(0x0044, 0x0047).rw(FUNC(powervr2_device::fb_r_ctrl_r), FUNC(powervr2_device::fb_r_ctrl_w));
+	map(0x0048, 0x004b).rw(FUNC(powervr2_device::fb_w_ctrl_r), FUNC(powervr2_device::fb_w_ctrl_w));
+	map(0x004c, 0x004f).rw(FUNC(powervr2_device::fb_w_linestride_r), FUNC(powervr2_device::fb_w_linestride_w));
+	map(0x0050, 0x0053).rw(FUNC(powervr2_device::fb_r_sof1_r), FUNC(powervr2_device::fb_r_sof1_w));
+	map(0x0054, 0x0057).rw(FUNC(powervr2_device::fb_r_sof2_r), FUNC(powervr2_device::fb_r_sof2_w));
+	map(0x005c, 0x005f).rw(FUNC(powervr2_device::fb_r_size_r), FUNC(powervr2_device::fb_r_size_w));
+	map(0x0060, 0x0063).rw(FUNC(powervr2_device::fb_w_sof1_r), FUNC(powervr2_device::fb_w_sof1_w));
+	map(0x0064, 0x0067).rw(FUNC(powervr2_device::fb_w_sof2_r), FUNC(powervr2_device::fb_w_sof2_w));
+	map(0x0068, 0x006b).rw(FUNC(powervr2_device::fb_x_clip_r), FUNC(powervr2_device::fb_x_clip_w));
+	map(0x006c, 0x006f).rw(FUNC(powervr2_device::fb_y_clip_r), FUNC(powervr2_device::fb_y_clip_w));
 // 74 = fpu_shad_scale
 // 78 = fpu_cull_val
-	map(0x007c, 0x007f).rw(this, FUNC(powervr2_device::fpu_param_cfg_r), FUNC(powervr2_device::fpu_param_cfg_w));
+	map(0x007c, 0x007f).rw(FUNC(powervr2_device::fpu_param_cfg_r), FUNC(powervr2_device::fpu_param_cfg_w));
 // 80 = half_offset
 // 84 = fpu_perp_val
 // 88 = isp_backgnd_d
-	map(0x008c, 0x008f).rw(this, FUNC(powervr2_device::isp_backgnd_t_r), FUNC(powervr2_device::isp_backgnd_t_w));
+	map(0x008c, 0x008f).rw(FUNC(powervr2_device::isp_backgnd_t_r), FUNC(powervr2_device::isp_backgnd_t_w));
 // 98 = isp_feed_cfg
 // a0 = sdram_refresh
 // a4 = sdram_arb_cfg
@@ -53,53 +53,53 @@ void powervr2_device::ta_map(address_map &map)
 // bc = fog_clamp_max
 // c0 = fog_clamp_min
 // c4 = spg_trigger_pos
-	map(0x00c8, 0x00cb).rw(this, FUNC(powervr2_device::spg_hblank_int_r), FUNC(powervr2_device::spg_hblank_int_w));
-	map(0x00cc, 0x00cf).rw(this, FUNC(powervr2_device::spg_vblank_int_r), FUNC(powervr2_device::spg_vblank_int_w));
-	map(0x00d0, 0x00d3).rw(this, FUNC(powervr2_device::spg_control_r), FUNC(powervr2_device::spg_control_w));
-	map(0x00d4, 0x00d7).rw(this, FUNC(powervr2_device::spg_hblank_r), FUNC(powervr2_device::spg_hblank_w));
-	map(0x00d8, 0x00db).rw(this, FUNC(powervr2_device::spg_load_r), FUNC(powervr2_device::spg_load_w));
-	map(0x00dc, 0x00df).rw(this, FUNC(powervr2_device::spg_vblank_r), FUNC(powervr2_device::spg_vblank_w));
-	map(0x00e0, 0x00e3).rw(this, FUNC(powervr2_device::spg_width_r), FUNC(powervr2_device::spg_width_w));
-	map(0x00e4, 0x00e7).rw(this, FUNC(powervr2_device::text_control_r), FUNC(powervr2_device::text_control_w));
-	map(0x00e8, 0x00eb).rw(this, FUNC(powervr2_device::vo_control_r), FUNC(powervr2_device::vo_control_w));
-	map(0x00ec, 0x00ef).rw(this, FUNC(powervr2_device::vo_startx_r), FUNC(powervr2_device::vo_startx_w));
-	map(0x00f0, 0x00f3).rw(this, FUNC(powervr2_device::vo_starty_r), FUNC(powervr2_device::vo_starty_w));
+	map(0x00c8, 0x00cb).rw(FUNC(powervr2_device::spg_hblank_int_r), FUNC(powervr2_device::spg_hblank_int_w));
+	map(0x00cc, 0x00cf).rw(FUNC(powervr2_device::spg_vblank_int_r), FUNC(powervr2_device::spg_vblank_int_w));
+	map(0x00d0, 0x00d3).rw(FUNC(powervr2_device::spg_control_r), FUNC(powervr2_device::spg_control_w));
+	map(0x00d4, 0x00d7).rw(FUNC(powervr2_device::spg_hblank_r), FUNC(powervr2_device::spg_hblank_w));
+	map(0x00d8, 0x00db).rw(FUNC(powervr2_device::spg_load_r), FUNC(powervr2_device::spg_load_w));
+	map(0x00dc, 0x00df).rw(FUNC(powervr2_device::spg_vblank_r), FUNC(powervr2_device::spg_vblank_w));
+	map(0x00e0, 0x00e3).rw(FUNC(powervr2_device::spg_width_r), FUNC(powervr2_device::spg_width_w));
+	map(0x00e4, 0x00e7).rw(FUNC(powervr2_device::text_control_r), FUNC(powervr2_device::text_control_w));
+	map(0x00e8, 0x00eb).rw(FUNC(powervr2_device::vo_control_r), FUNC(powervr2_device::vo_control_w));
+	map(0x00ec, 0x00ef).rw(FUNC(powervr2_device::vo_startx_r), FUNC(powervr2_device::vo_startx_w));
+	map(0x00f0, 0x00f3).rw(FUNC(powervr2_device::vo_starty_r), FUNC(powervr2_device::vo_starty_w));
 // f4 = scaler_ctl
-	map(0x0108, 0x010b).rw(this, FUNC(powervr2_device::pal_ram_ctrl_r), FUNC(powervr2_device::pal_ram_ctrl_w));
-	map(0x010c, 0x010f).r(this, FUNC(powervr2_device::spg_status_r));
+	map(0x0108, 0x010b).rw(FUNC(powervr2_device::pal_ram_ctrl_r), FUNC(powervr2_device::pal_ram_ctrl_w));
+	map(0x010c, 0x010f).r(FUNC(powervr2_device::spg_status_r));
 // 110 = fb_burstctrl
 // 118 = y_coeff
 // 11c = pt_alpha_ref
 
-	map(0x0124, 0x0127).rw(this, FUNC(powervr2_device::ta_ol_base_r), FUNC(powervr2_device::ta_ol_base_w));
-	map(0x0128, 0x012b).rw(this, FUNC(powervr2_device::ta_isp_base_r), FUNC(powervr2_device::ta_isp_base_w));
-	map(0x012c, 0x012f).rw(this, FUNC(powervr2_device::ta_ol_limit_r), FUNC(powervr2_device::ta_ol_limit_w));
-	map(0x0130, 0x0133).rw(this, FUNC(powervr2_device::ta_isp_limit_r), FUNC(powervr2_device::ta_isp_limit_w));
-	map(0x0134, 0x0137).r(this, FUNC(powervr2_device::ta_next_opb_r));
-	map(0x0138, 0x013b).r(this, FUNC(powervr2_device::ta_itp_current_r));
+	map(0x0124, 0x0127).rw(FUNC(powervr2_device::ta_ol_base_r), FUNC(powervr2_device::ta_ol_base_w));
+	map(0x0128, 0x012b).rw(FUNC(powervr2_device::ta_isp_base_r), FUNC(powervr2_device::ta_isp_base_w));
+	map(0x012c, 0x012f).rw(FUNC(powervr2_device::ta_ol_limit_r), FUNC(powervr2_device::ta_ol_limit_w));
+	map(0x0130, 0x0133).rw(FUNC(powervr2_device::ta_isp_limit_r), FUNC(powervr2_device::ta_isp_limit_w));
+	map(0x0134, 0x0137).r(FUNC(powervr2_device::ta_next_opb_r));
+	map(0x0138, 0x013b).r(FUNC(powervr2_device::ta_itp_current_r));
 // 13c = ta_glob_tile_clip
-	map(0x0140, 0x0143).rw(this, FUNC(powervr2_device::ta_alloc_ctrl_r), FUNC(powervr2_device::ta_alloc_ctrl_w));
-	map(0x0144, 0x0147).rw(this, FUNC(powervr2_device::ta_list_init_r), FUNC(powervr2_device::ta_list_init_w));
-	map(0x0148, 0x014b).rw(this, FUNC(powervr2_device::ta_yuv_tex_base_r), FUNC(powervr2_device::ta_yuv_tex_base_w));
-	map(0x014c, 0x014f).rw(this, FUNC(powervr2_device::ta_yuv_tex_ctrl_r), FUNC(powervr2_device::ta_yuv_tex_ctrl_w));
-	map(0x0150, 0x0153).rw(this, FUNC(powervr2_device::ta_yuv_tex_cnt_r), FUNC(powervr2_device::ta_yuv_tex_cnt_w));
-	map(0x0160, 0x0163).w(this, FUNC(powervr2_device::ta_list_cont_w));
-	map(0x0164, 0x0167).rw(this, FUNC(powervr2_device::ta_next_opb_init_r), FUNC(powervr2_device::ta_next_opb_init_w));
+	map(0x0140, 0x0143).rw(FUNC(powervr2_device::ta_alloc_ctrl_r), FUNC(powervr2_device::ta_alloc_ctrl_w));
+	map(0x0144, 0x0147).rw(FUNC(powervr2_device::ta_list_init_r), FUNC(powervr2_device::ta_list_init_w));
+	map(0x0148, 0x014b).rw(FUNC(powervr2_device::ta_yuv_tex_base_r), FUNC(powervr2_device::ta_yuv_tex_base_w));
+	map(0x014c, 0x014f).rw(FUNC(powervr2_device::ta_yuv_tex_ctrl_r), FUNC(powervr2_device::ta_yuv_tex_ctrl_w));
+	map(0x0150, 0x0153).rw(FUNC(powervr2_device::ta_yuv_tex_cnt_r), FUNC(powervr2_device::ta_yuv_tex_cnt_w));
+	map(0x0160, 0x0163).w(FUNC(powervr2_device::ta_list_cont_w));
+	map(0x0164, 0x0167).rw(FUNC(powervr2_device::ta_next_opb_init_r), FUNC(powervr2_device::ta_next_opb_init_w));
 
-	map(0x0200, 0x03ff).rw(this, FUNC(powervr2_device::fog_table_r), FUNC(powervr2_device::fog_table_w));
-	map(0x1000, 0x1fff).rw(this, FUNC(powervr2_device::palette_r), FUNC(powervr2_device::palette_w));
+	map(0x0200, 0x03ff).rw(FUNC(powervr2_device::fog_table_r), FUNC(powervr2_device::fog_table_w));
+	map(0x1000, 0x1fff).rw(FUNC(powervr2_device::palette_r), FUNC(powervr2_device::palette_w));
 }
 
 void powervr2_device::pd_dma_map(address_map &map)
 {
-	map(0x00, 0x03).rw(this, FUNC(powervr2_device::sb_pdstap_r), FUNC(powervr2_device::sb_pdstap_w));
-	map(0x04, 0x07).rw(this, FUNC(powervr2_device::sb_pdstar_r), FUNC(powervr2_device::sb_pdstar_w));
-	map(0x08, 0x0b).rw(this, FUNC(powervr2_device::sb_pdlen_r), FUNC(powervr2_device::sb_pdlen_w));
-	map(0x0c, 0x0f).rw(this, FUNC(powervr2_device::sb_pddir_r), FUNC(powervr2_device::sb_pddir_w));
-	map(0x10, 0x13).rw(this, FUNC(powervr2_device::sb_pdtsel_r), FUNC(powervr2_device::sb_pdtsel_w));
-	map(0x14, 0x17).rw(this, FUNC(powervr2_device::sb_pden_r), FUNC(powervr2_device::sb_pden_w));
-	map(0x18, 0x1b).rw(this, FUNC(powervr2_device::sb_pdst_r), FUNC(powervr2_device::sb_pdst_w));
-	map(0x80, 0x83).rw(this, FUNC(powervr2_device::sb_pdapro_r), FUNC(powervr2_device::sb_pdapro_w));
+	map(0x00, 0x03).rw(FUNC(powervr2_device::sb_pdstap_r), FUNC(powervr2_device::sb_pdstap_w));
+	map(0x04, 0x07).rw(FUNC(powervr2_device::sb_pdstar_r), FUNC(powervr2_device::sb_pdstar_w));
+	map(0x08, 0x0b).rw(FUNC(powervr2_device::sb_pdlen_r), FUNC(powervr2_device::sb_pdlen_w));
+	map(0x0c, 0x0f).rw(FUNC(powervr2_device::sb_pddir_r), FUNC(powervr2_device::sb_pddir_w));
+	map(0x10, 0x13).rw(FUNC(powervr2_device::sb_pdtsel_r), FUNC(powervr2_device::sb_pdtsel_w));
+	map(0x14, 0x17).rw(FUNC(powervr2_device::sb_pden_r), FUNC(powervr2_device::sb_pden_w));
+	map(0x18, 0x1b).rw(FUNC(powervr2_device::sb_pdst_r), FUNC(powervr2_device::sb_pdst_w));
+	map(0x80, 0x83).rw(FUNC(powervr2_device::sb_pdapro_r), FUNC(powervr2_device::sb_pdapro_w));
 }
 
 const int powervr2_device::pvr_parconfseq[] = {1,2,3,2,3,4,5,6,5,6,7,8,9,10,11,12,13,14,13,14,15,16,17,16,17,0,0,0,0,0,18,19,20,19,20,21,22,23,22,23};
@@ -185,6 +185,54 @@ inline uint32_t powervr2_device::bls(uint32_t c1, uint32_t c2)
 	if(cr2 & 0xff000000)
 		cr2 = (cr2 & 0x00ffffff) | 0x00ff0000;
 	return cr1|(cr2 << 8);
+}
+
+/*
+ * Add two colors with saturation, not including the alpha channel
+ * The only difference between this function and bls is that bls does not
+ * ignore alpha.  The alpha will be cleared to zero by this instruction
+ */
+inline uint32_t powervr2_device::bls24(uint32_t c1, uint32_t c2)
+{
+	uint32_t cr1, cr2;
+	cr1 = (c1 & 0x00ff00ff) + (c2 & 0x00ff00ff);
+	if(cr1 & 0x0000ff00)
+		cr1 = (cr1 & 0xffff00ff) | 0x000000ff;
+	if(cr1 & 0xff000000)
+		cr1 = (cr1 & 0x00ffffff) | 0x00ff0000;
+
+	cr2 = ((c1 >> 8) & 0x000000ff) + ((c2 >> 8) & 0x000000ff);
+	if(cr2 & 0x0000ff00)
+		cr2 = (cr2 & 0xffff00ff) | 0x000000ff;
+	return cr1|(cr2 << 8);
+}
+
+inline uint32_t powervr2_device::float_argb_to_packed_argb(float argb[4]) {
+	int argb_int[4] = {
+		(int)(argb[0] * 256.0f),
+		(int)(argb[1] * 256.0f),
+		(int)(argb[2] * 256.0f),
+		(int)(argb[3] * 256.0f)
+	};
+
+	// clamp to [0, 255]
+	int idx;
+	for (idx = 0; idx < 4; idx++) {
+		if (argb_int[idx] < 0)
+			argb_int[idx] = 0;
+		else if (argb_int[idx] > 255)
+			argb_int[idx] = 255;
+	}
+
+	return (argb_int[0] << 24) | (argb_int[1] << 16) |
+		(argb_int[2] << 8) | argb_int[3];
+}
+
+inline void powervr2_device::packed_argb_to_float_argb(float dst[4], uint32_t in) {
+	dst[0] = (in >> 24) / 256.0f;
+	dst[1] = ((in >> 16) & 0xff) / 256.0f;
+	dst[2] = ((in >> 8) & 0xff) / 256.0f;
+	dst[3] = (in & 0xff) / 256.0f;
 }
 
 // All 64 blending modes, 3 top bits are source mode, 3 bottom bits are destination mode
@@ -456,16 +504,6 @@ uint32_t powervr2_device::tex_r_4444_vq(texinfo *t, float x, float y)
 	return cv_4444(*(uint16_t *)((reinterpret_cast<uint8_t *>(dc_texture_ram)) + WORD_XOR_LE(addrp)));
 }
 
-uint32_t powervr2_device::tex_r_nt_palint(texinfo *t, float x, float y)
-{
-	return t->nontextured_pal_int;
-}
-
-uint32_t powervr2_device::tex_r_nt_palfloat(texinfo *t, float x, float y)
-{
-	return (t->nontextured_fpal_a << 24) | (t->nontextured_fpal_r << 16) | (t->nontextured_fpal_g << 8) | (t->nontextured_fpal_b);
-}
-
 uint32_t powervr2_device::tex_r_p4_1555_tw(texinfo *t, float x, float y)
 {
 	int xt = t->u_func(x, t->sizex);
@@ -686,24 +724,13 @@ void powervr2_device::tex_get_info(texinfo *t)
 	t->vqbase = t->address;
 	t->blend = use_alpha ? blend_functions[t->blend_mode] : bl10;
 
+	t->coltype = coltype;
+	t->tsinstruction = tsinstruction;
+
 //  fprintf(stderr, "tex %d %d %d %d\n", t->pf, t->mode, pal_ram_ctrl, t->mipmapped);
 	if(!t->textured)
 	{
-		t->coltype = coltype;
-		switch(t->coltype) {
-			case 0: // packed color
-				t->nontextured_pal_int = nontextured_pal_int;
-				t->r = &powervr2_device::tex_r_nt_palint;
-				break;
-			case 1: // floating color
-				/* TODO: might be converted even earlier I believe */
-				t->nontextured_fpal_a = (uint8_t)(nontextured_fpal_a * 255.0f);
-				t->nontextured_fpal_r = (uint8_t)(nontextured_fpal_r * 255.0f);
-				t->nontextured_fpal_g = (uint8_t)(nontextured_fpal_g * 255.0f);
-				t->nontextured_fpal_b = (uint8_t)(nontextured_fpal_b * 255.0f);
-				t->r = &powervr2_device::tex_r_nt_palfloat;
-				break;
-		}
+		t->r = NULL;
 	}
 	else
 	{
@@ -1762,7 +1789,7 @@ void powervr2_device::process_ta_fifo()
 		volume=(objcontrol >> 6) & 1;
 		coltype=(objcontrol >> 4) & 3;
 		texture=(objcontrol >> 3) & 1;
-		offfset=(objcontrol >> 2) & 1;
+		offset_color_enable=(objcontrol >> 2) & 1;
 		gouraud=(objcontrol >> 1) & 1;
 		uv16bit=(objcontrol >> 0) & 1;
 	}
@@ -1793,9 +1820,47 @@ void powervr2_device::process_ta_fifo()
 				return;
 			}
 	}
+	bool have_16_byte_header = tafifo_mask != 7;
 	tafifo_mask = 7;
 
 	// now we heve all the needed words
+
+	/*
+	 * load per-polygon colors if color type is 2 or 3 or parameter type is
+	 * 5 (quad).  For color types 0 and 1, color is determined entirely on a
+	 * per-vertex basis.
+	 */
+	if (paratype == 4)
+	{
+		switch (coltype) {
+		case 2:
+			if (offset_color_enable) {
+				memcpy(poly_base_color, tafifo_buff + 8, 4 * sizeof(float));
+				memcpy(poly_offs_color, tafifo_buff + 12, 4 * sizeof(float));
+			} else {
+				memcpy(poly_base_color, tafifo_buff + 4, 4 * sizeof(float));
+				memset(poly_offs_color, 0, sizeof(poly_offs_color));
+			}
+						memcpy(poly_last_mode_2_base_color, poly_base_color, sizeof(poly_last_mode_2_base_color));
+			break;
+		case 3:
+			memcpy(poly_base_color, poly_last_mode_2_base_color, sizeof(poly_base_color));
+			memset(poly_offs_color, 0, sizeof(poly_offs_color));
+			break;
+		default:
+			memset(poly_base_color, 0, sizeof(poly_base_color));
+			memset(poly_offs_color, 0, sizeof(poly_offs_color));
+			break;
+		}
+	} else if (paratype == 5) {
+		packed_argb_to_float_argb(poly_base_color, tafifo_buff[4]);
+		if (offset_color_enable) {
+			packed_argb_to_float_argb(poly_offs_color, tafifo_buff[5]);
+		} else {
+			memset(poly_offs_color, 0, sizeof(poly_offs_color));
+		}
+	}
+
 	// here we should generate the data for the various tiles
 	// for now, just interpret their meaning
 	if (paratype == 0)
@@ -1967,6 +2032,14 @@ void powervr2_device::process_ta_fifo()
 						tv[2].u = tv[0].u+tv[3].u-tv[1].u;
 						tv[2].v = tv[0].v+tv[3].v-tv[1].v;
 
+						int idx;
+						for (idx = 0; idx < 4; idx++) {
+							memcpy(tv[idx].b, poly_base_color,
+								   sizeof(tv[idx].b));
+							memcpy(tv[idx].o, poly_offs_color,
+								   sizeof(tv[idx].o));
+						}
+
 						ts = &rd->strips[rd->strips_size++];
 						tex_get_info(&ts->ti);
 						ts->svert = rd->verts_size;
@@ -1985,6 +2058,56 @@ void powervr2_device::process_ta_fifo()
 				#endif
 				if (rd->verts_size <= 65530)
 				{
+					float vert_offset_color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+					float vert_base_color[4];
+
+					float base_intensity, offs_intensity;
+
+					switch (coltype) {
+					case 0:
+						// packed color
+						packed_argb_to_float_argb(vert_base_color, tafifo_buff[6]);
+						break;
+					case 1:
+						// floating-point color
+						if (have_16_byte_header) {
+							memcpy(vert_base_color, tafifo_buff + 8,
+								   sizeof(vert_base_color));
+							memcpy(vert_offset_color, tafifo_buff + 12,
+								   sizeof(vert_offset_color));
+						} else {
+							memcpy(vert_base_color, tafifo_buff + 4,
+								   sizeof(vert_base_color));
+						}
+						break;
+					case 2:
+					case 3:
+						/*
+						* base/offset color were previously
+						* specified on a per-polygon basis.
+						* To get the per-vertex base and
+						* offset colors, they are scaled by
+						* per-vertex scalar values.
+						*/
+						memcpy(&base_intensity, tafifo_buff + 6, sizeof(base_intensity));
+						memcpy(&offs_intensity, tafifo_buff + 7, sizeof(offs_intensity));
+						vert_base_color[0] = poly_base_color[0] * base_intensity;
+						vert_base_color[1] = poly_base_color[1] * base_intensity;
+						vert_base_color[2] = poly_base_color[2] * base_intensity;
+						vert_base_color[3] = poly_base_color[3] * base_intensity;
+						if (offset_color_enable) {
+							vert_offset_color[0] = poly_offs_color[0] * offs_intensity;
+							vert_offset_color[1] = poly_offs_color[1] * offs_intensity;
+							vert_offset_color[2] = poly_offs_color[2] * offs_intensity;
+							vert_offset_color[3] = poly_offs_color[3] * offs_intensity;
+						}
+						break;
+					default:
+						// This will never actually happen, coltype is 2-bits.
+						logerror("line %d of %s - coltype is %d\n", coltype);
+						memset(vert_base_color, 0, sizeof(vert_base_color));
+					}
+
 					/* add a vertex to our list */
 					/* this is used for 3d stuff, ie most of the graphics (see guilty gear, confidential mission, maze of the kings etc.) */
 					/* -- this is also wildly inaccurate! */
@@ -1995,18 +2118,8 @@ void powervr2_device::process_ta_fifo()
 					tv->w=u2f(tafifo_buff[3]);
 					tv->u=u2f(tafifo_buff[4]);
 					tv->v=u2f(tafifo_buff[5]);
-					if (texture == 0)
-					{
-						if(coltype == 0)
-							nontextured_pal_int=tafifo_buff[6];
-						else if(coltype == 1)
-						{
-							nontextured_fpal_a=u2f(tafifo_buff[4]);
-							nontextured_fpal_r=u2f(tafifo_buff[5]);
-							nontextured_fpal_g=u2f(tafifo_buff[6]);
-							nontextured_fpal_b=u2f(tafifo_buff[7]);
-						}
-					}
+					memcpy(tv->b, vert_base_color, sizeof(tv->b));
+					memcpy(tv->o, vert_offset_color, sizeof(tv->o));
 
 					if((!rd->strips_size) ||
 						rd->strips[rd->strips_size-1].evert != -1)
@@ -2188,8 +2301,9 @@ void powervr2_device::computedilated()
 			dilatechose[(b << 3) + a]=3+(a < b ? a : b);
 }
 
-void powervr2_device::render_hline(bitmap_rgb32 &bitmap, texinfo *ti, int y, float xl, float xr, float ul, float ur, float vl, float vr, float wl, float wr)
+void powervr2_device::render_hline(bitmap_rgb32 &bitmap, texinfo *ti, int y, float xl, float xr, float ul, float ur, float vl, float vr, float wl, float wr, float const bl_in[4], float const br_in[4], float const offl_in[4], float const offr_in[4])
 {
+	int idx;
 	int xxl, xxr;
 	float dx, ddx, dudx, dvdx, dwdx;
 	uint32_t *tdata;
@@ -2197,6 +2311,10 @@ void powervr2_device::render_hline(bitmap_rgb32 &bitmap, texinfo *ti, int y, flo
 
 	// untextured cases aren't handled
 //  if (!ti->textured) return;
+
+	float bl[4], offl[4];
+	memcpy(bl, bl_in, sizeof(bl));
+	memcpy(offl, offl_in, sizeof(offl));
 
 	if(xr < 0 || xl >= 640)
 		return;
@@ -2212,6 +2330,20 @@ void powervr2_device::render_hline(bitmap_rgb32 &bitmap, texinfo *ti, int y, flo
 	dvdx = (vr-vl)/dx;
 	dwdx = (wr-wl)/dx;
 
+	float dbdx[4] = {
+		(br_in[0] - bl[0]) / dx,
+		(br_in[1] - bl[1]) / dx,
+		(br_in[2] - bl[2]) / dx,
+		(br_in[3] - bl[3]) / dx
+	};
+
+	float dodx[4] = {
+		(offr_in[0] - offl[0]) / dx,
+		(offr_in[1] - offl[1]) / dx,
+		(offr_in[2] - offl[2]) / dx,
+		(offr_in[3] - offl[3]) / dx
+	};
+
 	if(xxl < 0)
 		xxl = 0;
 	if(xxr > 640)
@@ -2222,29 +2354,69 @@ void powervr2_device::render_hline(bitmap_rgb32 &bitmap, texinfo *ti, int y, flo
 	ul += ddx*dudx;
 	vl += ddx*dvdx;
 	wl += ddx*dwdx;
-
+	for (idx = 0; idx < 4; idx++) {
+		bl[idx] += ddx * dbdx[idx];
+		offl[idx] += ddx * dodx[idx];
+	}
 
 	tdata = &bitmap.pix32(y, xxl);
 	wbufline = &wbuffer[y][xxl];
 
 	while(xxl < xxr) {
 		if((wl >= *wbufline)) {
-			uint32_t c;
 			float u = ul/wl;
 			float v = vl/wl;
 
-			c = (this->*(ti->r))(ti, u, v);
+			/*
+			 * TODO: Not sure if blending should be done in
+			 * floating point or fixed point, or if it even matters.
+			 */
+			uint32_t c;
+			uint32_t offset_color = float_argb_to_packed_argb(offl);
+			uint32_t base_color = float_argb_to_packed_argb(bl);
 
-			// debug dip to turn on/off bilinear filtering, it's slooooow
-			if (debug_dip_status&0x1)
-			{
-				if(ti->filter_mode >= TEX_FILTER_BILINEAR)
+			if (ti->textured) {
+				c = (this->*(ti->r))(ti, u, v);
+				// debug dip to turn on/off bilinear filtering, it's slooooow
+				if (debug_dip_status&0x1)
 				{
-					uint32_t c1 = (this->*(ti->r))(ti, u+1.0f, v);
-					uint32_t c2 = (this->*(ti->r))(ti, u+1.0f, v+1.0f);
-					uint32_t c3 = (this->*(ti->r))(ti, u, v+1.0f);
-					c = bilinear_filter(c, c1, c2, c3, u, v);
+					if(ti->filter_mode >= TEX_FILTER_BILINEAR)
+					{
+						uint32_t c1 = (this->*(ti->r))(ti, u+1.0f, v);
+						uint32_t c2 = (this->*(ti->r))(ti, u+1.0f, v+1.0f);
+						uint32_t c3 = (this->*(ti->r))(ti, u, v+1.0f);
+						c = bilinear_filter(c, c1, c2, c3, u, v);
+					}
 				}
+
+				uint32_t tmp;
+				switch (ti->tsinstruction) {
+				case 0:
+					// decal
+					c = bls24(c, offset_color) | (c & 0xff000000);
+					break;
+				case 1:
+					// modulate
+					tmp = blc(c, base_color);
+					tmp = bls24(tmp, offset_color);
+					tmp |= c & 0xff000000;
+					c = tmp;
+					break;
+				case 2:
+					// decal with alpha
+					tmp = bls24(bla(c, c), blia(base_color, c));
+					c = bls24(tmp, offset_color) | (base_color & 0xff000000);
+					break;
+				case 3:
+					// modulate with alpha
+					tmp = blc(c, base_color);
+					tmp = bls24(tmp, offset_color);
+					tmp |= (((c >> 24) * (base_color >> 24)) >> 8) << 24;
+					c = tmp;
+					break;
+				}
+			} else {
+				c = bls24(base_color, offset_color) | (base_color & 0xff000000);
 			}
 
 			if(c & 0xff000000) {
@@ -2258,6 +2430,10 @@ void powervr2_device::render_hline(bitmap_rgb32 &bitmap, texinfo *ti, int y, flo
 		ul += dudx;
 		vl += dvdx;
 		wl += dwdx;
+		for (idx = 0; idx < 4; idx++) {
+			bl[idx] += dbdx[idx];
+			offl[idx] += dodx[idx];
+		}
 		xxl ++;
 	}
 }
@@ -2268,11 +2444,16 @@ void powervr2_device::render_span(bitmap_rgb32 &bitmap, texinfo *ti,
 									float ul, float ur,
 									float vl, float vr,
 									float wl, float wr,
+									float const bl_in[4], float const br_in[4],
+									float const offl_in[4], float const offr_in[4],
 									float dxldy, float dxrdy,
 									float duldy, float durdy,
 									float dvldy, float dvrdy,
-									float dwldy, float dwrdy)
+									float dwldy, float dwrdy,
+									float const dbldy[4], float const dbrdy[4],
+									float const doldy[4], float const dordy[4])
 {
+	int idx;
 	float dy;
 	int yy0, yy1;
 
@@ -2280,6 +2461,12 @@ void powervr2_device::render_span(bitmap_rgb32 &bitmap, texinfo *ti,
 		return;
 	if(y1 > 480)
 		y1 = 480;
+
+	float bl[4], br[4], offl[4], offr[4];
+	memcpy(bl, bl_in, sizeof(bl));
+	memcpy(br, br_in, sizeof(br));
+	memcpy(offl, offl_in, sizeof(offl));
+	memcpy(offr, offr_in, sizeof(offr));
 
 	if(y0 < 0) {
 		xl += -dxldy*y0;
@@ -2290,6 +2477,13 @@ void powervr2_device::render_span(bitmap_rgb32 &bitmap, texinfo *ti,
 		vr += -dvrdy*y0;
 		wl += -dwldy*y0;
 		wr += -dwrdy*y0;
+
+		for (idx = 0; idx < 4; idx++) {
+			bl[idx] += -dbldy[idx] * y0;
+			br[idx] += -dbrdy[idx] * y0;
+			offl[idx] += -doldy[idx] * y0;
+			offr[idx] += -dordy[idx] * y0;
+		}
 		y0 = 0;
 	}
 
@@ -2314,9 +2508,15 @@ void powervr2_device::render_span(bitmap_rgb32 &bitmap, texinfo *ti,
 	vr += dy*dvrdy;
 	wl += dy*dwldy;
 	wr += dy*dwrdy;
+	for (idx = 0; idx < 4; idx++) {
+		bl[idx]   += dy * dbldy[idx];
+		br[idx]   += dy * dbrdy[idx];
+		offl[idx] += dy * doldy[idx];
+		offr[idx] += dy * dordy[idx];
+	}
 
 	while(yy0 < yy1) {
-		render_hline(bitmap, ti, yy0, xl, xr, ul, ur, vl, vr, wl, wr);
+		render_hline(bitmap, ti, yy0, xl, xr, ul, ur, vl, vr, wl, wr, bl, br, offl, offr);
 
 		xl += dxldy;
 		xr += dxrdy;
@@ -2326,6 +2526,13 @@ void powervr2_device::render_span(bitmap_rgb32 &bitmap, texinfo *ti,
 		vr += dvrdy;
 		wl += dwldy;
 		wr += dwrdy;
+		for (idx = 0; idx < 4; idx++) {
+			bl[idx] += dbldy[idx];
+			br[idx] += dbrdy[idx];
+			offl[idx] += doldy[idx];
+			offr[idx] += dordy[idx];
+		}
+
 		yy0 ++;
 	}
 }
@@ -2370,9 +2577,93 @@ void powervr2_device::render_tri_sorted(bitmap_rgb32 &bitmap, texinfo *ti, const
 	if(v0->y >= 480 || v2->y < 0)
 		return;
 
+	float db01[4] = {
+		v1->b[0] - v0->b[0],
+		v1->b[1] - v0->b[1],
+		v1->b[2] - v0->b[2],
+		v1->b[3] - v0->b[3]
+	};
+
+	float db02[4] = {
+		v2->b[0] - v0->b[0],
+		v2->b[1] - v0->b[1],
+		v2->b[2] - v0->b[2],
+		v2->b[3] - v0->b[3]
+	};
+
+	float db12[4] = {
+		v2->b[0] - v1->b[0],
+		v2->b[1] - v1->b[1],
+		v2->b[2] - v1->b[2],
+		v2->b[3] - v1->b[3]
+	};
+
+	float do01[4] = {
+		v1->o[0] - v0->o[0],
+		v1->o[1] - v0->o[1],
+		v1->o[2] - v0->o[2],
+		v1->o[3] - v0->o[3]
+	};
+
+	float do02[4] = {
+		v2->o[0] - v0->o[0],
+		v2->o[1] - v0->o[1],
+		v2->o[2] - v0->o[2],
+		v2->o[3] - v0->o[3]
+	};
+
+	float do12[4] = {
+		v2->o[0] - v1->o[0],
+		v2->o[1] - v1->o[1],
+		v2->o[2] - v1->o[2],
+		v2->o[3] - v1->o[3]
+	};
+
 	dy01 = v1->y - v0->y;
 	dy02 = v2->y - v0->y;
 	dy12 = v2->y - v1->y;
+
+	float db01dy[4] = {
+		dy01 ? db01[0]/dy01 : 0,
+		dy01 ? db01[1]/dy01 : 0,
+		dy01 ? db01[2]/dy01 : 0,
+		dy01 ? db01[3]/dy01 : 0
+	};
+
+	float db02dy[4] = {
+		dy01 ? db02[0]/dy02 : 0,
+		dy01 ? db02[1]/dy02 : 0,
+		dy01 ? db02[2]/dy02 : 0,
+		dy01 ? db02[3]/dy02 : 0
+	};
+
+	float db12dy[4] = {
+		dy01 ? db12[0]/dy12 : 0,
+		dy01 ? db12[1]/dy12 : 0,
+		dy01 ? db12[2]/dy12 : 0,
+		dy01 ? db12[3]/dy12 : 0
+	};
+
+	float do01dy[4] = {
+		dy01 ? do01[0]/dy01 : 0,
+		dy01 ? do01[1]/dy01 : 0,
+		dy01 ? do01[2]/dy01 : 0,
+		dy01 ? do01[3]/dy01 : 0
+	};
+
+	float do02dy[4] = {
+		dy01 ? do02[0]/dy02 : 0,
+		dy01 ? do02[1]/dy02 : 0,
+		dy01 ? do02[2]/dy02 : 0,
+		dy01 ? do02[3]/dy02 : 0
+	};
+
+	float do12dy[4] = {
+		dy01 ? do12[0]/dy12 : 0,
+		dy01 ? do12[1]/dy12 : 0,
+		dy01 ? do12[2]/dy12 : 0,
+		dy01 ? do12[3]/dy12 : 0
+	};
 
 	dx01dy = dy01 ? (v1->x-v0->x)/dy01 : 0;
 	dx02dy = dy02 ? (v2->x-v0->x)/dy02 : 0;
@@ -2395,31 +2686,43 @@ void powervr2_device::render_tri_sorted(bitmap_rgb32 &bitmap, texinfo *ti, const
 			return;
 
 		if(v1->x > v0->x)
-			render_span(bitmap, ti, v1->y, v2->y, v0->x, v1->x, v0->u, v1->u, v0->v, v1->v, v0->w, v1->w, dx02dy, dx12dy, du02dy, du12dy, dv02dy, dv12dy, dw02dy, dw12dy);
+			render_span(bitmap, ti, v1->y, v2->y, v0->x, v1->x, v0->u, v1->u, v0->v, v1->v, v0->w, v1->w, v0->b, v1->b, v0->o, v1->o, dx02dy, dx12dy, du02dy, du12dy, dv02dy, dv12dy, dw02dy, dw12dy, db02dy, db12dy, do02dy, do12dy);
 		else
-			render_span(bitmap, ti, v1->y, v2->y, v1->x, v0->x, v1->u, v0->u, v1->v, v0->v, v1->w, v0->w, dx12dy, dx02dy, du12dy, du02dy, dv12dy, dv02dy, dw12dy, dw02dy);
+			render_span(bitmap, ti, v1->y, v2->y, v1->x, v0->x, v1->u, v0->u, v1->v, v0->v, v1->w, v0->w, v1->b, v0->b, v1->o, v0->o, dx12dy, dx02dy, du12dy, du02dy, dv12dy, dv02dy, dw12dy, dw02dy, db12dy, db02dy, do12dy, do02dy);
 
 	} else if(!dy12) {
 		if(v2->x > v1->x)
-			render_span(bitmap, ti, v0->y, v1->y, v0->x, v0->x, v0->u, v0->u, v0->v, v0->v, v0->w, v0->w, dx01dy, dx02dy, du01dy, du02dy, dv01dy, dv02dy, dw01dy, dw02dy);
+			render_span(bitmap, ti, v0->y, v1->y, v0->x, v0->x, v0->u, v0->u, v0->v, v0->v, v0->w, v0->w, v0->b, v0->b, v0->o, v0->o, dx01dy, dx02dy, du01dy, du02dy, dv01dy, dv02dy, dw01dy, dw02dy, db01dy, db02dy, do01dy, do02dy);
 		else
-			render_span(bitmap, ti, v0->y, v1->y, v0->x, v0->x, v0->u, v0->u, v0->v, v0->v, v0->w, v0->w, dx02dy, dx01dy, du02dy, du01dy, dv02dy, dv01dy, dw02dy, dw01dy);
+			render_span(bitmap, ti, v0->y, v1->y, v0->x, v0->x, v0->u, v0->u, v0->v, v0->v, v0->w, v0->w, v0->b, v0->b, v0->o, v0->o, dx02dy, dx01dy, du02dy, du01dy, dv02dy, dv01dy, dw02dy, dw01dy, db02dy, db01dy, do02dy, do01dy);
 
 	} else {
+			float idk_b[4] = {
+				v0->b[0] + db02dy[0] * dy01,
+				v0->b[1] + db02dy[1] * dy01,
+				v0->b[2] + db02dy[2] * dy01,
+				v0->b[3] + db02dy[3] * dy01
+			};
+			float idk_o[4] = {
+				v0->o[0] + do02dy[0] * dy01,
+				v0->o[1] + do02dy[1] * dy01,
+				v0->o[2] + do02dy[2] * dy01,
+				v0->o[3] + do02dy[3] * dy01
+			};
 		if(dx01dy < dx02dy) {
 			render_span(bitmap, ti, v0->y, v1->y,
-						v0->x, v0->x, v0->u, v0->u, v0->v, v0->v, v0->w, v0->w,
-						dx01dy, dx02dy, du01dy, du02dy, dv01dy, dv02dy, dw01dy, dw02dy);
+						v0->x, v0->x, v0->u, v0->u, v0->v, v0->v, v0->w, v0->w, v0->b, v0->b, v0->o, v0->o,
+						dx01dy, dx02dy, du01dy, du02dy, dv01dy, dv02dy, dw01dy, dw02dy, db01dy, db02dy, do01dy, do02dy);
 			render_span(bitmap, ti, v1->y, v2->y,
-						v1->x, v0->x + dx02dy*dy01, v1->u, v0->u + du02dy*dy01, v1->v, v0->v + dv02dy*dy01, v1->w, v0->w + dw02dy*dy01,
-						dx12dy, dx02dy, du12dy, du02dy, dv12dy, dv02dy, dw12dy, dw02dy);
+						v1->x, v0->x + dx02dy*dy01, v1->u, v0->u + du02dy*dy01, v1->v, v0->v + dv02dy*dy01, v1->w, v0->w + dw02dy*dy01, v1->b, idk_b, v1->o, idk_o,
+						dx12dy, dx02dy, du12dy, du02dy, dv12dy, dv02dy, dw12dy, dw02dy, db12dy, db02dy, do12dy, do02dy);
 		} else {
 			render_span(bitmap, ti, v0->y, v1->y,
-						v0->x, v0->x, v0->u, v0->u, v0->v, v0->v, v0->w, v0->w,
-						dx02dy, dx01dy, du02dy, du01dy, dv02dy, dv01dy, dw02dy, dw01dy);
+						v0->x, v0->x, v0->u, v0->u, v0->v, v0->v, v0->w, v0->w, v0->b, v0->b, v0->o, v0->o,
+						dx02dy, dx01dy, du02dy, du01dy, dv02dy, dv01dy, dw02dy, dw01dy, db02dy, db01dy, do02dy, do01dy);
 			render_span(bitmap, ti, v1->y, v2->y,
-						v0->x + dx02dy*dy01, v1->x, v0->u + du02dy*dy01, v1->u, v0->v + dv02dy*dy01, v1->v, v0->w + dw02dy*dy01, v1->w,
-						dx02dy, dx12dy, du02dy, du12dy, dv02dy, dv12dy, dw02dy, dw12dy);
+						v0->x + dx02dy*dy01, v1->x, v0->u + du02dy*dy01, v1->u, v0->v + dv02dy*dy01, v1->v, v0->w + dw02dy*dy01, v1->w, idk_b, v1->b, idk_o, v1->o,
+						dx02dy, dx12dy, du02dy, du12dy, dv02dy, dv12dy, dw02dy, dw12dy, db02dy, db12dy, do02dy, do12dy);
 		}
 	}
 }

@@ -16,6 +16,7 @@ game details unknown
 #include "machine/ticket.h"
 #include "sound/okim6295.h"
 #include "video/hd44780.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -221,7 +222,7 @@ MACHINE_CONFIG_START(piggypas_state::piggypas)
 	MCFG_SCREEN_PALETTE("palette")
 
 	MCFG_PALETTE_ADD("palette", 2)
-	MCFG_DEFAULT_LAYOUT(layout_piggypas)
+	config.set_default_layout(layout_piggypas);
 
 	MCFG_HD44780_ADD("hd44780")
 	MCFG_HD44780_LCD_SIZE(1, 16)

@@ -334,7 +334,7 @@ void cclimber_state::cclimber_map(address_map &map)
 	map(0x9800, 0x981f).ram().share("column_scroll");
 	map(0x9880, 0x989f).ram().share("spriteram");
 	map(0x98dc, 0x98df).ram().share("bigspritectrl");
-	map(0x9c00, 0x9fff).ram().w(this, FUNC(cclimber_state::cclimber_colorram_w)).share("colorram");
+	map(0x9c00, 0x9fff).ram().w(FUNC(cclimber_state::cclimber_colorram_w)).share("colorram");
 	map(0xa000, 0xa007).w(m_mainlatch, FUNC(ls259_device::write_d0));
 	map(0xa000, 0xa000).portr("P1");
 	map(0xa800, 0xa800).portr("P2").w("cclimber_audio", FUNC(cclimber_audio_device::sample_rate_w));
@@ -362,7 +362,7 @@ void cclimber_state::cannonb_map(address_map &map)
 	map(0x9800, 0x981f).ram().share("column_scroll");
 	map(0x9880, 0x989f).ram().share("spriteram");
 	map(0x98dc, 0x98df).ram().share("bigspritectrl");
-	map(0x9c00, 0x9fff).ram().w(this, FUNC(cclimber_state::cclimber_colorram_w)).share("colorram");
+	map(0x9c00, 0x9fff).ram().w(FUNC(cclimber_state::cclimber_colorram_w)).share("colorram");
 	map(0xa000, 0xa007).w(m_mainlatch, FUNC(ls259_device::write_d0));
 	map(0xa000, 0xa000).portr("P1");
 	map(0xa800, 0xa800).portr("P2").w("cclimber_audio", FUNC(cclimber_audio_device::sample_rate_w));
@@ -379,10 +379,10 @@ void cclimber_state::swimmer_map(address_map &map)
 	map(0x9800, 0x981f).writeonly().share("column_scroll");
 	map(0x9880, 0x989f).writeonly().share("spriteram");
 	map(0x98fc, 0x98ff).writeonly().share("bigspritectrl");
-	map(0x9c00, 0x9fff).ram().w(this, FUNC(cclimber_state::cclimber_colorram_w)).share("colorram");
+	map(0x9c00, 0x9fff).ram().w(FUNC(cclimber_state::cclimber_colorram_w)).share("colorram");
 	map(0xa000, 0xa007).w(m_mainlatch, FUNC(ls259_device::write_d0));
 	map(0xa000, 0xa000).portr("P2");
-	map(0xa800, 0xa800).portr("P1").w(this, FUNC(cclimber_state::swimmer_sh_soundlatch_w));
+	map(0xa800, 0xa800).portr("P1").w(FUNC(cclimber_state::swimmer_sh_soundlatch_w));
 	map(0xb000, 0xb000).portr("DSW1");
 	map(0xb800, 0xb800).portr("DSW2").writeonly().share("bgcolor");
 	map(0xb880, 0xb880).portr("SYSTEM");
@@ -409,7 +409,7 @@ void cclimber_state::yamato_map(address_map &map)
 	map(0x9800, 0x981f).ram().share("column_scroll");
 	map(0x9880, 0x989f).ram().share("spriteram");
 	map(0x98dc, 0x98df).ram().share("bigspritectrl");
-	map(0x9c00, 0x9fff).ram().w(this, FUNC(cclimber_state::cclimber_colorram_w)).share("colorram");
+	map(0x9c00, 0x9fff).ram().w(FUNC(cclimber_state::cclimber_colorram_w)).share("colorram");
 	map(0xa000, 0xa007).w(m_mainlatch, FUNC(ls259_device::write_d0));
 	map(0xa000, 0xa000).portr("P1");
 	map(0xa800, 0xa800).portr("P2");
@@ -458,7 +458,7 @@ void cclimber_state::bagmanf_map(address_map &map)
 	map(0x9800, 0x9800).portr("SYSTEM");
 	map(0x98dc, 0x98df).ram().share("bigspritectrl"); // wrong
 	map(0x9c00, 0x9fff).ram();  /* not used, but initialized */
-	map(0xa000, 0xa000).r(this, FUNC(cclimber_state::bagmanf_a000_r));
+	map(0xa000, 0xa000).r(FUNC(cclimber_state::bagmanf_a000_r));
 	map(0xa000, 0xa007).w(m_mainlatch, FUNC(ls259_device::write_d0));
 	map(0xa800, 0xa800).nopr().w("cclimber_audio", FUNC(cclimber_audio_device::sample_rate_w));
 	map(0xb000, 0xb000).portr("DSW").w("cclimber_audio", FUNC(cclimber_audio_device::sample_volume_w));
@@ -481,8 +481,8 @@ void cclimber_state::cclimber_portmap(address_map &map)
 void cclimber_state::yamato_portmap(address_map &map)
 {
 	map.global_mask(0xff);
-	map(0x00, 0x00).w(this, FUNC(cclimber_state::yamato_p0_w));  /* ??? */
-	map(0x01, 0x01).w(this, FUNC(cclimber_state::yamato_p1_w));  /* ??? */
+	map(0x00, 0x00).w(FUNC(cclimber_state::yamato_p0_w));  /* ??? */
+	map(0x01, 0x01).w(FUNC(cclimber_state::yamato_p1_w));  /* ??? */
 }
 
 
@@ -513,8 +513,8 @@ void cclimber_state::yamato_audio_portmap(address_map &map)
 	map.global_mask(0xff);
 	map(0x00, 0x01).w("ay1", FUNC(ay8910_device::address_data_w));
 	map(0x02, 0x03).w("ay2", FUNC(ay8910_device::address_data_w));
-	map(0x04, 0x04).r(this, FUNC(cclimber_state::yamato_p0_r));   /* ??? */
-	map(0x08, 0x08).r(this, FUNC(cclimber_state::yamato_p1_r));   /* ??? */
+	map(0x04, 0x04).r(FUNC(cclimber_state::yamato_p0_r));   /* ??? */
+	map(0x08, 0x08).r(FUNC(cclimber_state::yamato_p1_r));   /* ??? */
 }
 
 
@@ -1111,11 +1111,11 @@ WRITE_LINE_MEMBER(cclimber_state::bagmanf_vblank_irq)
 MACHINE_CONFIG_START(cclimber_state::root)
 
 	/* basic machine hardware */
-	MCFG_DEVICE_ADD("maincpu", Z80, MASTER_CLOCK/3/2)  /* 3.072 MHz */
+	MCFG_DEVICE_ADD(m_maincpu, Z80, MASTER_CLOCK/3/2)  /* 3.072 MHz */
 	MCFG_DEVICE_PROGRAM_MAP(cclimber_map)
 	MCFG_DEVICE_IO_MAP(cclimber_portmap)
 
-	MCFG_DEVICE_ADD("mainlatch", LS259, 0)
+	MCFG_DEVICE_ADD(m_mainlatch, LS259, 0)
 	MCFG_ADDRESSABLE_LATCH_Q0_OUT_CB(WRITELINE(*this, cclimber_state, nmi_mask_w))
 	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(WRITELINE(*this, cclimber_state, flip_screen_x_w))
 	MCFG_ADDRESSABLE_LATCH_Q2_OUT_CB(WRITELINE(*this, cclimber_state, flip_screen_y_w))
@@ -1138,63 +1138,62 @@ MACHINE_CONFIG_START(cclimber_state::root)
 MACHINE_CONFIG_END
 
 
-MACHINE_CONFIG_START(cclimber_state::cclimber)
+void cclimber_state::cclimber(machine_config &config)
+{
 	root(config);
-	MCFG_DEVICE_MODIFY("mainlatch") // 7J on CCG-1
-	MCFG_ADDRESSABLE_LATCH_Q4_OUT_CB(WRITELINE("cclimber_audio", cclimber_audio_device, sample_trigger_w))
+
+	// 7J on CCG-1
+	m_mainlatch->q_out_cb<4>().set("cclimber_audio", FUNC(cclimber_audio_device::sample_trigger));
 
 	/* sound hardware */
 	SPEAKER(config, "speaker").front_center();
 
-	MCFG_DEVICE_ADD("cclimber_audio", CCLIMBER_AUDIO, 0)
-MACHINE_CONFIG_END
+	CCLIMBER_AUDIO(config, "cclimber_audio", 0);
+}
 
-MACHINE_CONFIG_START(cclimber_state::cclimberx)
+void cclimber_state::cclimberx(machine_config &config)
+{
 	cclimber(config);
-	MCFG_DEVICE_MODIFY("maincpu")
-	MCFG_DEVICE_OPCODES_MAP(decrypted_opcodes_map)
-MACHINE_CONFIG_END
+	m_maincpu->set_addrmap(AS_OPCODES, &cclimber_state::decrypted_opcodes_map);
+}
 
-MACHINE_CONFIG_START(cclimber_state::ckongb)
+void cclimber_state::ckongb(machine_config &config)
+{
 	cclimber(config);
-	MCFG_DEVICE_MODIFY("mainlatch")
-	MCFG_ADDRESSABLE_LATCH_Q3_OUT_CB(WRITELINE(*this, cclimber_state, nmi_mask_w)) //used by Crazy Kong Bootleg with alt levels and speed up
-MACHINE_CONFIG_END
+	m_mainlatch->q_out_cb<3>().set(FUNC(cclimber_state::nmi_mask_w)); //used by Crazy Kong Bootleg with alt levels and speed up
+}
 
 
 MACHINE_CONFIG_START(cclimber_state::cannonb)
 	cclimber(config);
 
 	/* basic machine hardware */
-	MCFG_DEVICE_MODIFY("maincpu")
-	MCFG_DEVICE_PROGRAM_MAP(cannonb_map)
+	m_maincpu->set_addrmap(AS_PROGRAM, &cclimber_state::cannonb_map);
 
-	MCFG_DEVICE_MODIFY("mainlatch")
-	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(WRITELINE(*this, cclimber_state, flip_screen_x_w))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE(*this, cclimber_state, flip_screen_y_w))
-	MCFG_ADDRESSABLE_LATCH_Q2_OUT_CB(NOOP) // not used
+	m_mainlatch->q_out_cb<1>().set(FUNC(cclimber_state::flip_screen_x_w));
+	m_mainlatch->q_out_cb<1>().append(FUNC(cclimber_state::flip_screen_y_w));
+	m_mainlatch->q_out_cb<2>().set_nop(); // not used
 
 	/* video hardware */
 	MCFG_GFXDECODE_MODIFY("gfxdecode", gfx_cannonb)
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_START(cclimber_state::bagmanf)
+void cclimber_state::bagmanf(machine_config &config)
+{
 	cclimber(config);
 
 	/* basic machine hardware */
-	MCFG_DEVICE_MODIFY("maincpu")
-	MCFG_DEVICE_PROGRAM_MAP(bagmanf_map)
+	m_maincpu->set_addrmap(AS_PROGRAM, &cclimber_state::bagmanf_map);
 
-	MCFG_DEVICE_MODIFY("screen")
-	MCFG_SCREEN_VBLANK_CALLBACK(WRITELINE(*this, cclimber_state, bagmanf_vblank_irq))
-MACHINE_CONFIG_END
+	subdevice<screen_device>("screen")->screen_vblank().set(FUNC(cclimber_state::bagmanf_vblank_irq));
+}
 
 
 MACHINE_CONFIG_START(cclimber_state::yamato)
 	root(config);
 
 	/* basic machine hardware */
-	MCFG_DEVICE_REPLACE("maincpu", SEGA_315_5018, MASTER_CLOCK/3/2)  /* 3.072 MHz */
+	MCFG_DEVICE_REPLACE(m_maincpu, SEGA_315_5018, MASTER_CLOCK/3/2)  /* 3.072 MHz */
 	MCFG_DEVICE_PROGRAM_MAP(yamato_map)
 	MCFG_DEVICE_IO_MAP(yamato_portmap)
 	MCFG_DEVICE_OPCODES_MAP(yamato_decrypted_opcodes_map)
@@ -1225,7 +1224,7 @@ MACHINE_CONFIG_END
 MACHINE_CONFIG_START(cclimber_state::toprollr)
 	cclimber(config);
 
-	MCFG_DEVICE_REPLACE("maincpu", SEGA_315_5018, MASTER_CLOCK/3/2)  /* 3.072 MHz */
+	MCFG_DEVICE_REPLACE(m_maincpu, SEGA_315_5018, MASTER_CLOCK/3/2)  /* 3.072 MHz */
 	MCFG_DEVICE_PROGRAM_MAP(toprollr_map)
 	MCFG_DEVICE_IO_MAP(cclimber_portmap)
 	MCFG_DEVICE_OPCODES_MAP(toprollr_decrypted_opcodes_map)
@@ -1233,9 +1232,8 @@ MACHINE_CONFIG_START(cclimber_state::toprollr)
 	MCFG_SEGACRPT_SET_NUMBANKS(3)
 	MCFG_SEGACRPT_SET_BANKSIZE(0x6000)
 
-	MCFG_DEVICE_MODIFY("mainlatch")
-	MCFG_ADDRESSABLE_LATCH_Q5_OUT_CB(WRITELINE(*this, cclimber_state, toprollr_rombank_w))
-	MCFG_ADDRESSABLE_LATCH_Q6_OUT_CB(WRITELINE(*this, cclimber_state, toprollr_rombank_w))
+	m_mainlatch->q_out_cb<5>().set(FUNC(cclimber_state::toprollr_rombank_w));
+	m_mainlatch->q_out_cb<6>().set(FUNC(cclimber_state::toprollr_rombank_w));
 
 	/* video hardware */
 	MCFG_GFXDECODE_MODIFY("gfxdecode", gfx_toprollr)
@@ -1252,10 +1250,10 @@ MACHINE_CONFIG_END
 MACHINE_CONFIG_START(cclimber_state::swimmer)
 
 	/* basic machine hardware */
-	MCFG_DEVICE_ADD("maincpu", Z80, XTAL(18'432'000)/6)    /* verified on pcb */
+	MCFG_DEVICE_ADD(m_maincpu, Z80, XTAL(18'432'000)/6)    /* verified on pcb */
 	MCFG_DEVICE_PROGRAM_MAP(swimmer_map)
 
-	MCFG_DEVICE_ADD("mainlatch", LS259, 0)
+	MCFG_DEVICE_ADD(m_mainlatch, LS259, 0)
 	MCFG_ADDRESSABLE_LATCH_Q0_OUT_CB(WRITELINE(*this, cclimber_state, nmi_mask_w))
 	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(WRITELINE(*this, cclimber_state, flip_screen_x_w))
 	MCFG_ADDRESSABLE_LATCH_Q2_OUT_CB(WRITELINE(*this, cclimber_state, flip_screen_y_w))
@@ -1295,12 +1293,12 @@ MACHINE_CONFIG_START(cclimber_state::swimmer)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "speaker", 0.25)
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_START(cclimber_state::guzzler)
+void cclimber_state::guzzler(machine_config &config)
+{
 	swimmer(config);
 	/* basic machine hardware */
-	MCFG_DEVICE_MODIFY("maincpu")
-	MCFG_DEVICE_PROGRAM_MAP(guzzler_map)
-MACHINE_CONFIG_END
+	m_maincpu->set_addrmap(AS_PROGRAM, &cclimber_state::guzzler_map);
+}
 
 
 /***************************************************************************

@@ -20,6 +20,7 @@
 #include "machine/wd_fdc.h"
 #include "sound/ay8910.h"
 #include "sound/lmc1992.h"
+#include "emupal.h"
 #include "screen.h"
 
 #define M68000_TAG      "m68000"
@@ -113,8 +114,6 @@ public:
 			m_mousex(*this, "IKBD_MOUSEX"),
 			m_mousey(*this, "IKBD_MOUSEY"),
 			m_config(*this, "config"),
-			m_acia_ikbd_irq(1),
-			m_acia_midi_irq(1),
 			m_ikbd_mouse_x(0),
 			m_ikbd_mouse_y(0),
 			m_ikbd_mouse_px(IKBD_MOUSE_PHASE_STATIC),
@@ -235,8 +234,6 @@ public:
 	DECLARE_WRITE8_MEMBER( psg_pa_w );
 
 	DECLARE_WRITE_LINE_MEMBER( ikbd_tx_w );
-	DECLARE_WRITE_LINE_MEMBER( acia_ikbd_irq_w );
-	DECLARE_WRITE_LINE_MEMBER( acia_midi_irq_w );
 
 	DECLARE_READ8_MEMBER( mfp_gpio_r );
 	DECLARE_WRITE_LINE_MEMBER( mfp_tdo_w );
@@ -255,8 +252,6 @@ public:
 	uint8_t m_mmu;
 
 	/* keyboard state */
-	int m_acia_ikbd_irq;
-	int m_acia_midi_irq;
 	uint16_t m_ikbd_keylatch;
 	uint8_t m_ikbd_mouse;
 	uint8_t m_ikbd_mouse_x;

@@ -264,7 +264,7 @@ WRITE8_MEMBER(gsword_state::sound_command_w)
 
 WRITE8_MEMBER(gsword_state::adpcm_data_w)
 {
-	m_msm->data_w(data & 0x0f);     // bit 0..3
+	m_msm->write_data(data & 0x0f); // bit 0..3
 	m_msm->reset_w(BIT(data, 5));   // bit 5
 	m_msm->vclk_w(BIT(data, 4));    // bit 4
 }
@@ -463,11 +463,11 @@ void gsword_state_base::cpu1_map(address_map &map)
 	map(0xa380, 0xa3ff).ram().share("spritetile_ram");
 	map(0xa400, 0xa77f).ram();
 	map(0xa780, 0xa7ff).ram().share("spritexy_ram");
-	map(0xa980, 0xa980).w(this, FUNC(gsword_state_base::charbank_w));
-	map(0xaa80, 0xaa80).w(this, FUNC(gsword_state_base::videoctrl_w));   /* flip screen, char palette bank */
-	map(0xab00, 0xab00).w(this, FUNC(gsword_state_base::scroll_w));
+	map(0xa980, 0xa980).w(FUNC(gsword_state_base::charbank_w));
+	map(0xaa80, 0xaa80).w(FUNC(gsword_state_base::videoctrl_w));   /* flip screen, char palette bank */
+	map(0xab00, 0xab00).w(FUNC(gsword_state_base::scroll_w));
 	map(0xab80, 0xabff).writeonly().share("spriteattram");
-	map(0xb000, 0xb7ff).readonly().w(this, FUNC(gsword_state_base::videoram_w)).share("videoram");
+	map(0xb000, 0xb7ff).readonly().w(FUNC(gsword_state_base::videoram_w)).share("videoram");
 }
 
 
@@ -481,7 +481,7 @@ void gsword_state::cpu2_map(address_map &map)
 {
 	map(0x0000, 0x3fff).rom();
 	map(0x4000, 0x43ff).ram().share("cpu2_ram");
-	map(0x6000, 0x6000).w(this, FUNC(gsword_state::sound_command_w));
+	map(0x6000, 0x6000).w(FUNC(gsword_state::sound_command_w));
 }
 
 void gsword_state::cpu2_io_map(address_map &map)
@@ -490,9 +490,9 @@ void gsword_state::cpu2_io_map(address_map &map)
 	map(0x00, 0x01).rw("taito8741", FUNC(taito8741_4pack_device::read_2), FUNC(taito8741_4pack_device::write_2));
 	map(0x20, 0x21).rw("taito8741", FUNC(taito8741_4pack_device::read_3), FUNC(taito8741_4pack_device::write_3));
 	map(0x40, 0x41).rw("taito8741", FUNC(taito8741_4pack_device::read_1), FUNC(taito8741_4pack_device::write_1));
-	map(0x60, 0x60).rw(this, FUNC(gsword_state::fake_0_r), FUNC(gsword_state::ay8910_control_port_0_w));
+	map(0x60, 0x60).rw(FUNC(gsword_state::fake_0_r), FUNC(gsword_state::ay8910_control_port_0_w));
 	map(0x61, 0x61).rw(m_ay0, FUNC(ay8910_device::data_r), FUNC(ay8910_device::data_w));
-	map(0x80, 0x80).rw(this, FUNC(gsword_state::fake_1_r), FUNC(gsword_state::ay8910_control_port_1_w));
+	map(0x80, 0x80).rw(FUNC(gsword_state::fake_1_r), FUNC(gsword_state::ay8910_control_port_1_w));
 	map(0x81, 0x81).rw(m_ay1, FUNC(ay8910_device::data_r), FUNC(ay8910_device::data_w));
 
 	map(0xe0, 0xe0).nopr(); /* ?? */
@@ -503,7 +503,7 @@ void gsword_state::cpu2_io_map(address_map &map)
 void gsword_state::cpu3_map(address_map &map)
 {
 	map(0x0000, 0x7fff).rom();
-	map(0x8000, 0x8000).w(this, FUNC(gsword_state::adpcm_data_w));
+	map(0x8000, 0x8000).w(FUNC(gsword_state::adpcm_data_w));
 	map(0xa000, 0xa000).r(m_soundlatch, FUNC(generic_latch_8_device::read));
 }
 
@@ -529,13 +529,13 @@ void josvolly_state::josvolly_cpu2_map(address_map &map)
 void josvolly_state::josvolly_cpu2_io_map(address_map &map)
 {
 	map.global_mask(0xff);
-	map(0x00, 0x00).rw(this, FUNC(josvolly_state::fake_0_r), FUNC(josvolly_state::ay8910_control_port_0_w));
+	map(0x00, 0x00).rw(FUNC(josvolly_state::fake_0_r), FUNC(josvolly_state::ay8910_control_port_0_w));
 	map(0x01, 0x01).rw(m_ay0, FUNC(ay8910_device::data_r), FUNC(ay8910_device::data_w));
-	map(0x40, 0x40).rw(this, FUNC(josvolly_state::fake_1_r), FUNC(josvolly_state::ay8910_control_port_1_w));
+	map(0x40, 0x40).rw(FUNC(josvolly_state::fake_1_r), FUNC(josvolly_state::ay8910_control_port_1_w));
 	map(0x41, 0x41).rw(m_ay1, FUNC(ay8910_device::data_r), FUNC(ay8910_device::data_w));
 
-	map(0x81, 0x81).w(this, FUNC(josvolly_state::cpu2_nmi_enable_w));
-	map(0xC1, 0xC1).w(this, FUNC(josvolly_state::cpu2_irq_clear_w));
+	map(0x81, 0x81).w(FUNC(josvolly_state::cpu2_nmi_enable_w));
+	map(0xC1, 0xC1).w(FUNC(josvolly_state::cpu2_irq_clear_w));
 }
 
 
@@ -859,14 +859,14 @@ MACHINE_CONFIG_START(josvolly_state::josvolly)
 	MCFG_MCS48_PORT_P2_IN_CB(READ8(*this, josvolly_state, mcu1_p2_r))
 	MCFG_MCS48_PORT_P2_OUT_CB(WRITE8(*this, josvolly_state, mcu1_p2_w))
 
-	MCFG_DEVICE_ADD("mcu2", I8741, 12000000/2) /* ? */
-	MCFG_MCS48_PORT_P1_IN_CB(READ8(*this, josvolly_state, mcu2_p1_r))
-	MCFG_MCS48_PORT_P1_OUT_CB(WRITE8(*this, josvolly_state, mcu2_p1_w))
-	MCFG_MCS48_PORT_P2_IN_CB(READ8(*this, josvolly_state, mcu2_p2_r))
-	MCFG_MCS48_PORT_P2_OUT_CB(WRITE8(*this, josvolly_state, mcu2_p2_w))
+	i8741_device &mcu2(I8741(config, "mcu2", 12000000/2)); /* ? */
+	mcu2.p1_in_cb().set(FUNC(josvolly_state::mcu2_p1_r));
+	mcu2.p1_out_cb().set(FUNC(josvolly_state::mcu2_p1_w));
+	mcu2.p2_in_cb().set(FUNC(josvolly_state::mcu2_p2_r));
+	mcu2.p2_out_cb().set(FUNC(josvolly_state::mcu2_p2_w));
 	// TEST0 and TEST1 are driven by P20 and P21 on the other MCU
-	MCFG_MCS48_PORT_T0_IN_CB(READ8("mcu1", i8741_device, p2_r)) MCFG_DEVCB_RSHIFT(0)
-	MCFG_MCS48_PORT_T1_IN_CB(READ8("mcu1", i8741_device, p2_r)) MCFG_DEVCB_RSHIFT(1)
+	mcu2.t0_in_cb().set("mcu1", FUNC(i8741_device::p2_r)).bit(0);
+	mcu2.t1_in_cb().set("mcu1", FUNC(i8741_device::p2_r)).bit(1);
 
 	MCFG_DEVICE_ADD("aa_007", I8255, 0)
 	MCFG_I8255_IN_PORTA_CB(IOPORT("IN1"))   // 1PL

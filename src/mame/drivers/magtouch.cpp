@@ -89,11 +89,15 @@ class magtouch_state : public pcat_base_state
 {
 public:
 	magtouch_state(const machine_config &mconfig, device_type type, const char *tag)
-		: pcat_base_state(mconfig, type, tag),
-			m_isabus(*this, "isa"),
-			m_rombank(*this, "rombank"),
-			m_in0(*this, "IN0"){ }
+		: pcat_base_state(mconfig, type, tag)
+		, m_isabus(*this, "isa")
+		, m_rombank(*this, "rombank")
+		, m_in0(*this, "IN0")
+	{ }
 
+	void magtouch(machine_config &config);
+
+private:
 	required_device<isa8_device> m_isabus;
 	required_memory_bank m_rombank;
 	required_ioport m_in0;
@@ -103,7 +107,6 @@ public:
 	DECLARE_WRITE8_MEMBER(dma8237_1_dack_w);
 	virtual void machine_start() override;
 	static void magtouch_sb_conf(device_t *device);
-	void magtouch(machine_config &config);
 	void magtouch_io(address_map &map);
 	void magtouch_map(address_map &map);
 };
@@ -149,7 +152,7 @@ void magtouch_state::magtouch_map(address_map &map)
 void magtouch_state::magtouch_io(address_map &map)
 {
 	pcat32_io_common(map);
-	map(0x02e0, 0x02e7).rw(this, FUNC(magtouch_state::magtouch_io_r), FUNC(magtouch_state::magtouch_io_w));
+	map(0x02e0, 0x02e7).rw(FUNC(magtouch_state::magtouch_io_r), FUNC(magtouch_state::magtouch_io_w));
 	map(0x03b0, 0x03bf).rw("vga", FUNC(trident_vga_device::port_03b0_r), FUNC(trident_vga_device::port_03b0_w));
 	map(0x03c0, 0x03cf).rw("vga", FUNC(trident_vga_device::port_03c0_r), FUNC(trident_vga_device::port_03c0_w));
 	map(0x03d0, 0x03df).rw("vga", FUNC(trident_vga_device::port_03d0_r), FUNC(trident_vga_device::port_03d0_w));
@@ -172,7 +175,7 @@ void magtouch_state::machine_start()
 {
 	m_rombank->configure_entries(0, 0x80, memregion("game_prg")->base(), 0x8000 );
 	m_rombank->set_entry(0);
-	machine().device<nvram_device>("nvram")->set_base(memshare("nvram")->ptr(), 0x2000);
+	subdevice<nvram_device>("nvram")->set_base(memshare("nvram")->ptr(), 0x2000);
 }
 
 static void magtouch_isa8_cards(device_slot_interface &device)
@@ -209,8 +212,7 @@ MACHINE_CONFIG_START(magtouch_state::magtouch)
 
 	MCFG_NVRAM_ADD_0FILL("nvram")
 
-	MCFG_DEVICE_MODIFY("dma8237_1")
-	MCFG_I8237_OUT_IOW_1_CB(WRITE8(*this, magtouch_state, dma8237_1_dack_w))
+	m_dma8237_1->out_iow_callback<1>().set(FUNC(magtouch_state::dma8237_1_dack_w));
 
 	MCFG_DEVICE_ADD("isa", ISA8, 0)
 	MCFG_ISA8_CPU("maincpu")

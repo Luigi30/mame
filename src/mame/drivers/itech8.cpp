@@ -869,15 +869,15 @@ WRITE8_MEMBER(itech8_state::ninclown_palette_w)
 /*------ common layout with TMS34061 at 0000 ------*/
 void itech8_state::tmslo_map(address_map &map)
 {
-	map(0x0000, 0x0fff).rw(this, FUNC(itech8_state::tms34061_r), FUNC(itech8_state::tms34061_w));
+	map(0x0000, 0x0fff).rw(FUNC(itech8_state::tms34061_r), FUNC(itech8_state::tms34061_w));
 	map(0x1100, 0x1100).nopw();
-	map(0x1120, 0x1120).w(this, FUNC(itech8_state::sound_data_w));
-	map(0x1140, 0x1140).portr("40").w(this, FUNC(itech8_state::grom_bank_w));
-	map(0x1160, 0x1160).portr("60").w(this, FUNC(itech8_state::page_w));
+	map(0x1120, 0x1120).w(FUNC(itech8_state::sound_data_w));
+	map(0x1140, 0x1140).portr("40").w(FUNC(itech8_state::grom_bank_w));
+	map(0x1160, 0x1160).portr("60").w(FUNC(itech8_state::page_w));
 	map(0x1180, 0x1180).portr("80").w(m_tms34061, FUNC(tms34061_device::latch_w));
-	map(0x11a0, 0x11a0).w(this, FUNC(itech8_state::nmi_ack_w));
-	map(0x11c0, 0x11df).r(this, FUNC(itech8_state::blitter_r)).w(this, FUNC(itech8_state::blitter_bank_w));
-	map(0x11e0, 0x11ff).w(this, FUNC(itech8_state::palette_w));
+	map(0x11a0, 0x11a0).w(FUNC(itech8_state::nmi_ack_w));
+	map(0x11c0, 0x11df).r(FUNC(itech8_state::blitter_r)).w(FUNC(itech8_state::blitter_bank_w));
+	map(0x11e0, 0x11ff).w(FUNC(itech8_state::palette_w));
 	map(0x2000, 0x3fff).ram().share("nvram");
 	map(0x4000, 0xffff).bankr("bank1");
 }
@@ -886,15 +886,15 @@ void itech8_state::tmslo_map(address_map &map)
 /*------ common layout with TMS34061 at 1000 ------*/
 void itech8_state::tmshi_map(address_map &map)
 {
-	map(0x1000, 0x1fff).rw(this, FUNC(itech8_state::tms34061_r), FUNC(itech8_state::tms34061_w));
+	map(0x1000, 0x1fff).rw(FUNC(itech8_state::tms34061_r), FUNC(itech8_state::tms34061_w));
 	map(0x0100, 0x0100).nopw();
-	map(0x0120, 0x0120).w(this, FUNC(itech8_state::sound_data_w));
-	map(0x0140, 0x0140).portr("40").w(this, FUNC(itech8_state::grom_bank_w));
-	map(0x0160, 0x0160).portr("60").w(this, FUNC(itech8_state::page_w));
+	map(0x0120, 0x0120).w(FUNC(itech8_state::sound_data_w));
+	map(0x0140, 0x0140).portr("40").w(FUNC(itech8_state::grom_bank_w));
+	map(0x0160, 0x0160).portr("60").w(FUNC(itech8_state::page_w));
 	map(0x0180, 0x0180).portr("80").w(m_tms34061, FUNC(tms34061_device::latch_w));
-	map(0x01a0, 0x01a0).w(this, FUNC(itech8_state::nmi_ack_w));
-	map(0x01c0, 0x01df).r(this, FUNC(itech8_state::blitter_r)).w(this, FUNC(itech8_state::blitter_bank_w));
-	map(0x01e0, 0x01ff).w(this, FUNC(itech8_state::palette_w));
+	map(0x01a0, 0x01a0).w(FUNC(itech8_state::nmi_ack_w));
+	map(0x01c0, 0x01df).r(FUNC(itech8_state::blitter_r)).w(FUNC(itech8_state::blitter_bank_w));
+	map(0x01e0, 0x01ff).w(FUNC(itech8_state::palette_w));
 	map(0x2000, 0x3fff).ram().share("nvram");
 	map(0x4000, 0xffff).bankr("bank1");
 }
@@ -903,15 +903,15 @@ void itech8_state::tmshi_map(address_map &map)
 /*------ Golden Tee Golf II 1992 layout ------*/
 void itech8_state::gtg2_map(address_map &map)
 {
-	map(0x0100, 0x0100).portr("40").w(this, FUNC(itech8_state::nmi_ack_w));
-	map(0x0120, 0x0120).portr("60").w(this, FUNC(itech8_state::page_w));
-	map(0x0140, 0x015f).w(this, FUNC(itech8_state::palette_w));
+	map(0x0100, 0x0100).portr("40").w(FUNC(itech8_state::nmi_ack_w));
+	map(0x0120, 0x0120).portr("60").w(FUNC(itech8_state::page_w));
+	map(0x0140, 0x015f).w(FUNC(itech8_state::palette_w));
 	map(0x0140, 0x0140).portr("80");
-	map(0x0160, 0x0160).w(this, FUNC(itech8_state::grom_bank_w));
-	map(0x0180, 0x019f).r(this, FUNC(itech8_state::blitter_r)).w(this, FUNC(itech8_state::blitter_bank_w));
-	map(0x01c0, 0x01c0).w(this, FUNC(itech8_state::gtg2_sound_data_w));
+	map(0x0160, 0x0160).w(FUNC(itech8_state::grom_bank_w));
+	map(0x0180, 0x019f).r(FUNC(itech8_state::blitter_r)).w(FUNC(itech8_state::blitter_bank_w));
+	map(0x01c0, 0x01c0).w(FUNC(itech8_state::gtg2_sound_data_w));
 	map(0x01e0, 0x01e0).w(m_tms34061, FUNC(tms34061_device::latch_w));
-	map(0x1000, 0x1fff).rw(this, FUNC(itech8_state::tms34061_r), FUNC(itech8_state::tms34061_w));
+	map(0x1000, 0x1fff).rw(FUNC(itech8_state::tms34061_r), FUNC(itech8_state::tms34061_w));
 	map(0x2000, 0x3fff).ram().share("nvram");
 	map(0x4000, 0xffff).bankr("bank1");
 }
@@ -922,15 +922,15 @@ void itech8_state::ninclown_map(address_map &map)
 	map(0x000000, 0x00007f).ram().region("maincpu", 0);
 	map(0x000080, 0x003fff).ram().share("nvram");
 	map(0x004000, 0x03ffff).rom();
-	map(0x040000, 0x07ffff).r(this, FUNC(itech8_state::rom_constant_r));
-	map(0x100080, 0x100080).w(this, FUNC(itech8_state::sound_data_w));
-	map(0x100100, 0x100101).portr("40").w(this, FUNC(itech8_state::grom_bank16_w));
-	map(0x100180, 0x100181).portr("60").w(this, FUNC(itech8_state::display_page16_w));
+	map(0x040000, 0x07ffff).r(FUNC(itech8_state::rom_constant_r));
+	map(0x100080, 0x100080).w(FUNC(itech8_state::sound_data_w));
+	map(0x100100, 0x100101).portr("40").w(FUNC(itech8_state::grom_bank16_w));
+	map(0x100180, 0x100181).portr("60").w(FUNC(itech8_state::display_page16_w));
 	map(0x100240, 0x100240).w(m_tms34061, FUNC(tms34061_device::latch_w));
 	map(0x100280, 0x100281).portr("80").nopw();
-	map(0x100300, 0x10031f).rw(this, FUNC(itech8_state::blitter_r), FUNC(itech8_state::blitter_w));
-	map(0x100380, 0x1003ff).rw(this, FUNC(itech8_state::ninclown_palette_r), FUNC(itech8_state::ninclown_palette_w)).umask16(0xff00);
-	map(0x110000, 0x110fff).rw(this, FUNC(itech8_state::tms34061_r), FUNC(itech8_state::tms34061_w));
+	map(0x100300, 0x10031f).rw(FUNC(itech8_state::blitter_r), FUNC(itech8_state::blitter_w));
+	map(0x100380, 0x1003ff).rw(FUNC(itech8_state::ninclown_palette_r), FUNC(itech8_state::ninclown_palette_w)).umask16(0xff00);
+	map(0x110000, 0x110fff).rw(FUNC(itech8_state::tms34061_r), FUNC(itech8_state::tms34061_w));
 }
 
 
@@ -945,7 +945,7 @@ void itech8_state::ninclown_map(address_map &map)
 void itech8_state::sound2203_map(address_map &map)
 {
 	map(0x0000, 0x0000).nopw();
-	map(0x1000, 0x1000).r(this, FUNC(itech8_state::sound_data_r));
+	map(0x1000, 0x1000).r(FUNC(itech8_state::sound_data_r));
 	map(0x2000, 0x2001).mirror(0x0002).rw("ymsnd", FUNC(ym2203_device::read), FUNC(ym2203_device::write));
 	map(0x3000, 0x37ff).ram();
 	map(0x4000, 0x4000).rw("oki", FUNC(okim6295_device::read), FUNC(okim6295_device::write));
@@ -957,7 +957,7 @@ void itech8_state::sound2203_map(address_map &map)
 void itech8_state::sound2608b_map(address_map &map)
 {
 	map(0x1000, 0x1000).nopw();
-	map(0x2000, 0x2000).r(this, FUNC(itech8_state::sound_data_r));
+	map(0x2000, 0x2000).r(FUNC(itech8_state::sound_data_r));
 	map(0x4000, 0x4003).rw("ymsnd", FUNC(ym2608_device::read), FUNC(ym2608_device::write));
 	map(0x6000, 0x67ff).ram();
 	map(0x8000, 0xffff).rom();
@@ -968,7 +968,7 @@ void itech8_state::sound2608b_map(address_map &map)
 void itech8_state::sound3812_map(address_map &map)
 {
 	map(0x0000, 0x0000).nopw();
-	map(0x1000, 0x1000).r(this, FUNC(itech8_state::sound_data_r));
+	map(0x1000, 0x1000).r(FUNC(itech8_state::sound_data_r));
 	map(0x2000, 0x2001).rw("ymsnd", FUNC(ym3812_device::read), FUNC(ym3812_device::write));
 	map(0x3000, 0x37ff).ram();
 	map(0x4000, 0x4000).rw("oki", FUNC(okim6295_device::read), FUNC(okim6295_device::write));
@@ -981,7 +981,7 @@ void itech8_state::sound3812_map(address_map &map)
 void itech8_state::sound3812_external_map(address_map &map)
 {
 	map(0x0000, 0x0000).nopw();
-	map(0x1000, 0x1000).r(this, FUNC(itech8_state::sound_data_r));
+	map(0x1000, 0x1000).r(FUNC(itech8_state::sound_data_r));
 	map(0x2000, 0x2001).rw("ymsnd", FUNC(ym3812_device::read), FUNC(ym3812_device::write));
 	map(0x3000, 0x37ff).ram();
 	map(0x4000, 0x4000).rw("oki", FUNC(okim6295_device::read), FUNC(okim6295_device::write));
@@ -1006,7 +1006,7 @@ void itech8_state::slikz80_mem_map(address_map &map)
 void itech8_state::slikz80_io_map(address_map &map)
 {
 	map.global_mask(0xff);
-	map(0x00, 0x00).rw(this, FUNC(itech8_state::slikz80_port_r), FUNC(itech8_state::slikz80_port_w));
+	map(0x00, 0x00).rw(FUNC(itech8_state::slikz80_port_r), FUNC(itech8_state::slikz80_port_w));
 }
 
 
@@ -2190,23 +2190,23 @@ ROM_END
 ROM_START( gtg2t )
 	/* banks are loaded in the opposite order from the others, */
 	ROM_REGION( 0x1c000, "maincpu", 0 )
-	ROM_LOAD( "gtg2.bin_1.1.u5", 0x10000, 0x4000, CRC(c7b3a9f3) SHA1(5edaca6fd6ee58bd1676dc9b2c86da4dd2f51687) ) /* Trackball version */
-	ROM_CONTINUE(        0x04000, 0xc000 )
-	ROM_COPY( "maincpu", 0x8000, 0x14000, 0x8000 )
+	ROM_LOAD( "gtgii_tb_v1.1.u5", 0x10000, 0x4000, CRC(c7b3a9f3) SHA1(5edaca6fd6ee58bd1676dc9b2c86da4dd2f51687) ) /* Trackball version - labeled GTGII TB V1.1 (U5) */
+	ROM_CONTINUE(                 0x04000, 0xc000 )
+	ROM_COPY( "maincpu",  0x8000, 0x14000, 0x8000 )
 
 	ROM_REGION( 0x10000, "soundcpu", 0 )
-	ROM_LOAD( "u27.bin", 0x08000, 0x8000, CRC(dd2a5905) SHA1(dc93f13de3953852a6757361eb9683a57d3ed326) )
+	ROM_LOAD( "gtgii_snd_v1_u27.u27", 0x08000, 0x8000, CRC(dd2a5905) SHA1(dc93f13de3953852a6757361eb9683a57d3ed326) ) /* labeled GTGII SND V1 (U27) */
 
 	ROM_REGION( 0xc0000, "grom", 0 )
-	ROM_LOAD( "grom0.bin", 0x00000, 0x20000, CRC(a29c688a) SHA1(32dbb996a5e4c23cfd44b79312ac4a767658f20a) )
-	ROM_LOAD( "grom1.bin", 0x20000, 0x20000, CRC(a4182776) SHA1(9f4704d1a61a4fffce454c82cb3eb4629d9a2006) )
-	ROM_LOAD( "grom2.bin", 0x40000, 0x20000, CRC(0580bb99) SHA1(012d473bc63632a5ed1a250daa54a00a4e30e8b2) )
-	ROM_LOAD( "grom3.bin", 0x60000, 0x20000, CRC(89edb624) SHA1(e77d5ecd04f44f184e76eb2506660a04b6bc7fe8) )
-	ROM_LOAD( "grom4.bin", 0x80000, 0x20000, CRC(f6557950) SHA1(fd2bbd6b852a9f2775a23d9fdaa20d31d6766d7f) )
-	ROM_LOAD( "grom5.bin", 0xa0000, 0x20000, CRC(a680ce6a) SHA1(fe51546933c093cea81858b213afb0e926e9eb4e) )
+	ROM_LOAD( "gtgii-grom0.grom0", 0x00000, 0x20000, CRC(a29c688a) SHA1(32dbb996a5e4c23cfd44b79312ac4a767658f20a) )
+	ROM_LOAD( "gtgii-grom1.grom1", 0x20000, 0x20000, CRC(a4182776) SHA1(9f4704d1a61a4fffce454c82cb3eb4629d9a2006) )
+	ROM_LOAD( "gtgii-grom2.grom2", 0x40000, 0x20000, CRC(0580bb99) SHA1(012d473bc63632a5ed1a250daa54a00a4e30e8b2) )
+	ROM_LOAD( "gtgii-grom3.grom3", 0x60000, 0x20000, CRC(89edb624) SHA1(e77d5ecd04f44f184e76eb2506660a04b6bc7fe8) )
+	ROM_LOAD( "gtgii-grom4.grom4", 0x80000, 0x20000, CRC(f6557950) SHA1(fd2bbd6b852a9f2775a23d9fdaa20d31d6766d7f) )
+	ROM_LOAD( "gtgii-grom5.grom5", 0xa0000, 0x20000, CRC(a680ce6a) SHA1(fe51546933c093cea81858b213afb0e926e9eb4e) )
 
 	ROM_REGION( 0x40000, "oki", 0 )
-	ROM_LOAD( "srom00.bin", 0x00000, 0x20000, CRC(4dd4db42) SHA1(0dffb51e8de36d8747f443fd65fe9927815eaff0) )
+	ROM_LOAD( "gtgii_vr_srom0.srom0", 0x00000, 0x20000, CRC(4dd4db42) SHA1(0dffb51e8de36d8747f443fd65fe9927815eaff0) ) /* labeled GTGII VR-SROM0 */
 
 	ROM_REGION( 0x0200, "plds", 0 )
 	ROM_LOAD( "tibpal16l8.u11", 0x0000, 0x0104, CRC(9bf5a75f) SHA1(79786f7ce656f30a33a92887a290b767a7cbbf31) )
@@ -2220,15 +2220,15 @@ ROM_START( gtg2j )
 	ROM_COPY( "maincpu", 0x14000, 0x8000, 0x8000 )
 
 	ROM_REGION( 0x10000, "soundcpu", 0 )
-	ROM_LOAD( "u27.bin", 0x08000, 0x8000, CRC(dd2a5905) SHA1(dc93f13de3953852a6757361eb9683a57d3ed326) )
+	ROM_LOAD( "gtgii_snd_v1_u27.u27", 0x08000, 0x8000, CRC(dd2a5905) SHA1(dc93f13de3953852a6757361eb9683a57d3ed326) ) /* labeled GTGII SND V1 (U27) */
 
 	ROM_REGION( 0xc0000, "grom", 0 )
-	ROM_LOAD( "grom0.bin", 0x00000, 0x20000, CRC(a29c688a) SHA1(32dbb996a5e4c23cfd44b79312ac4a767658f20a) )
-	ROM_LOAD( "grom1.bin", 0x20000, 0x20000, CRC(a4182776) SHA1(9f4704d1a61a4fffce454c82cb3eb4629d9a2006) )
-	ROM_LOAD( "grom2.bin", 0x40000, 0x20000, CRC(0580bb99) SHA1(012d473bc63632a5ed1a250daa54a00a4e30e8b2) )
-	ROM_LOAD( "grom3.bin", 0x60000, 0x20000, CRC(89edb624) SHA1(e77d5ecd04f44f184e76eb2506660a04b6bc7fe8) )
-	ROM_LOAD( "grom4.bin", 0x80000, 0x20000, CRC(f6557950) SHA1(fd2bbd6b852a9f2775a23d9fdaa20d31d6766d7f) )
-	ROM_LOAD( "grom5.bin", 0xa0000, 0x20000, CRC(a680ce6a) SHA1(fe51546933c093cea81858b213afb0e926e9eb4e) )
+	ROM_LOAD( "gtgii-grom0.grom0", 0x00000, 0x20000, CRC(a29c688a) SHA1(32dbb996a5e4c23cfd44b79312ac4a767658f20a) )
+	ROM_LOAD( "gtgii-grom1.grom1", 0x20000, 0x20000, CRC(a4182776) SHA1(9f4704d1a61a4fffce454c82cb3eb4629d9a2006) )
+	ROM_LOAD( "gtgii-grom2.grom2", 0x40000, 0x20000, CRC(0580bb99) SHA1(012d473bc63632a5ed1a250daa54a00a4e30e8b2) )
+	ROM_LOAD( "gtgii-grom3.grom3", 0x60000, 0x20000, CRC(89edb624) SHA1(e77d5ecd04f44f184e76eb2506660a04b6bc7fe8) )
+	ROM_LOAD( "gtgii-grom4.grom4", 0x80000, 0x20000, CRC(f6557950) SHA1(fd2bbd6b852a9f2775a23d9fdaa20d31d6766d7f) )
+	ROM_LOAD( "gtgii-grom5.grom5", 0xa0000, 0x20000, CRC(a680ce6a) SHA1(fe51546933c093cea81858b213afb0e926e9eb4e) )
 
 	ROM_REGION( 0x40000, "oki", 0 )
 	ROM_LOAD( "srom0.bin", 0x00000, 0x20000, CRC(1cccbfdf) SHA1(546059fea2e7cd5627a666d80b1fc3ed8fcc0762) )

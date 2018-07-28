@@ -44,7 +44,7 @@ WRITE8_MEMBER( tmc600_state::page_ram_w )
 
 void tmc600_state::cdp1869_page_ram(address_map &map)
 {
-	map(0x000, 0x3ff).mirror(0x400).ram().share("page_ram").w(this, FUNC(tmc600_state::page_ram_w));
+	map(0x000, 0x3ff).mirror(0x400).ram().share("page_ram").w(FUNC(tmc600_state::page_ram_w));
 }
 
 CDP1869_CHAR_RAM_READ_MEMBER( tmc600_state::tmc600_char_ram_r )
@@ -128,7 +128,7 @@ MACHINE_CONFIG_START(tmc600_state::tmc600_video)
 	MCFG_CDP1869_COLOR_CLOCK(cdp1869_device::COLOR_CLK_PAL)
 	MCFG_CDP1869_CHAR_PCB_READ_OWNER(tmc600_state, tmc600_pcb_r)
 	MCFG_CDP1869_CHAR_RAM_READ_OWNER(tmc600_state, tmc600_char_ram_r)
-	MCFG_CDP1869_PAL_NTSC_CALLBACK(VCC)
+	MCFG_CDP1869_PAL_NTSC_CALLBACK(CONSTANT(1))
 	MCFG_CDP1869_PRD_CALLBACK(WRITELINE(*this, tmc600_state, prd_w))
 	MCFG_VIDEO_SET_SCREEN(SCREEN_TAG)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)

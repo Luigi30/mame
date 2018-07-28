@@ -580,7 +580,7 @@ READ_LINE_MEMBER( newbrain_state::tdi_r )
 void newbrain_state::newbrain_mreq(address_map &map)
 {
 	map.unmap_value_high();
-	map(0x0000, 0xffff).rw(this, FUNC(newbrain_state::mreq_r), FUNC(newbrain_state::mreq_w));
+	map(0x0000, 0xffff).rw(FUNC(newbrain_state::mreq_r), FUNC(newbrain_state::mreq_w));
 }
 
 
@@ -591,7 +591,7 @@ void newbrain_state::newbrain_mreq(address_map &map)
 void newbrain_state::newbrain_iorq(address_map &map)
 {
 	map.unmap_value_high();
-	map(0x0000, 0xffff).rw(this, FUNC(newbrain_state::iorq_r), FUNC(newbrain_state::iorq_w));
+	map(0x0000, 0xffff).rw(FUNC(newbrain_state::iorq_r), FUNC(newbrain_state::iorq_w));
 }
 
 
@@ -852,7 +852,7 @@ MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(newbrain_state::newbrain_ad)
 	newbrain(config);
-	MCFG_DEFAULT_LAYOUT(layout_newbrain)
+	config.set_default_layout(layout_newbrain);
 MACHINE_CONFIG_END
 
 
@@ -862,7 +862,7 @@ MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(newbrain_state::newbrain_a)
 	newbrain(config);
-	MCFG_DEFAULT_LAYOUT(layout_newbraina)
+	config.set_default_layout(layout_newbraina);
 MACHINE_CONFIG_END
 
 
@@ -872,7 +872,7 @@ MACHINE_CONFIG_END
 
 MACHINE_CONFIG_START(newbrain_state::newbrain_md)
 	newbrain(config);
-	MCFG_DEFAULT_LAYOUT(layout_newbrain)
+	config.set_default_layout(layout_newbrain);
 MACHINE_CONFIG_END
 
 

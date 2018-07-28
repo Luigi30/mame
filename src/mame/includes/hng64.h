@@ -8,6 +8,7 @@
 #include "sound/l7a1045_l6028_dsp_a.h"
 #include "video/poly.h"
 #include "cpu/tlcs870/tlcs870.h"
+#include "emupal.h"
 #include "screen.h"
 
 enum
@@ -138,8 +139,11 @@ class hng64_state : public driver_device
 public:
 	hng64_state(const machine_config &mconfig, device_type type, const char *tag)
 		: driver_device(mconfig, type, tag),
+		m_screen(*this, "screen"),
+		m_palette(*this, "palette"),
 		m_maincpu(*this, "maincpu"),
 		m_audiocpu(*this, "audiocpu"),
+		m_iomcu(*this, "iomcu"),
 		m_dsp(*this, "l7a1045"),
 		m_comm(*this, "network"),
 		m_rtc(*this, "rtc"),
@@ -157,12 +161,32 @@ public:
 		m_3d_1(*this, "3d_1"),
 		m_3d_2(*this, "3d_2"),
 		m_com_ram(*this, "com_ram"),
-		m_gfxdecode(*this, "gfxdecode"),
-		m_screen(*this, "screen"),
-		m_palette(*this, "palette") { }
+		m_gfxdecode(*this, "gfxdecode")
+	{}
 
+	void hng64(machine_config &config);
+
+	void init_hng64_race();
+	void init_fatfurwa();
+	void init_buriki();
+	void init_hng64();
+	void init_hng64_shoot();
+	void init_ss64();
+	void init_hng64_fght();
+
+	DECLARE_CUSTOM_INPUT_MEMBER(left_handle_r);
+	DECLARE_CUSTOM_INPUT_MEMBER(right_handle_r);
+	DECLARE_CUSTOM_INPUT_MEMBER(acc_down_r);
+	DECLARE_CUSTOM_INPUT_MEMBER(brake_down_r);
+
+	uint8_t *m_texturerom;
+	required_device<screen_device> m_screen;
+	required_device<palette_device> m_palette;
+
+private:
 	required_device<mips3_device> m_maincpu;
 	required_device<v53a_device> m_audiocpu;
+	required_device<tmp87ph40an_device> m_iomcu;
 	required_device<l7a1045_sound_device> m_dsp;
 	required_device<cpu_device> m_comm;
 	required_device<msm6242_device> m_rtc;
@@ -187,8 +211,6 @@ public:
 	//required_shared_ptr<uint8_t> m_com_mmu_mem;
 
 	required_device<gfxdecode_device> m_gfxdecode;
-	required_device<screen_device> m_screen;
-	required_device<palette_device> m_palette;
 
 	int m_mcu_type;
 
@@ -282,13 +304,25 @@ public:
 	DECLARE_WRITE8_MEMBER(hng64_comm_space_w);
 	DECLARE_READ8_MEMBER(hng64_comm_mmu_r);
 	DECLARE_WRITE8_MEMBER(hng64_comm_mmu_w);
-	void init_hng64_race();
-	void init_fatfurwa();
-	void init_buriki();
-	void init_hng64();
-	void init_hng64_shoot();
-	void init_ss64();
-	void init_hng64_fght();
+
+	DECLARE_READ8_MEMBER(ioport0_r);
+	DECLARE_READ8_MEMBER(ioport1_r);
+	DECLARE_READ8_MEMBER(ioport2_r);
+	DECLARE_READ8_MEMBER(ioport3_r);
+	DECLARE_READ8_MEMBER(ioport4_r);
+	DECLARE_READ8_MEMBER(ioport5_r);
+	DECLARE_READ8_MEMBER(ioport6_r);
+	DECLARE_READ8_MEMBER(ioport7_r);
+
+	DECLARE_WRITE8_MEMBER(ioport0_w);
+	DECLARE_WRITE8_MEMBER(ioport1_w);
+	DECLARE_WRITE8_MEMBER(ioport2_w);
+	DECLARE_WRITE8_MEMBER(ioport3_w);
+	DECLARE_WRITE8_MEMBER(ioport4_w);
+	DECLARE_WRITE8_MEMBER(ioport5_w);
+	DECLARE_WRITE8_MEMBER(ioport6_w);
+	DECLARE_WRITE8_MEMBER(ioport7_w);
+
 	void init_hng64_reorder_gfx();
 
 	void set_irq(uint32_t irq_vector);
@@ -334,17 +368,12 @@ public:
 
 
 
-	DECLARE_CUSTOM_INPUT_MEMBER(left_handle_r);
-	DECLARE_CUSTOM_INPUT_MEMBER(right_handle_r);
-	DECLARE_CUSTOM_INPUT_MEMBER(acc_down_r);
-	DECLARE_CUSTOM_INPUT_MEMBER(brake_down_r);
 
 	std::unique_ptr<hng64_poly_renderer> m_poly_renderer;
 
 	TIMER_CALLBACK_MEMBER(hng64_3dfifo_processed);
 	emu_timer *m_3dfifo_timer;
 
-	uint8_t *m_texturerom;
 	uint16_t* m_vertsrom;
 	int m_vertsrom_size;
 	std::vector<polygon> m_polys;  // HNG64_MAX_POLYGONS
@@ -393,7 +422,6 @@ public:
 	DECLARE_WRITE16_MEMBER(sound_comms_w);
 	uint16_t main_latch[2];
 	uint16_t sound_latch[2];
-	void hng64(machine_config &config);
 	void hng64_audio(machine_config &config);
 	void hng64_network(machine_config &config);
 	void hng_comm_io_map(address_map &map);

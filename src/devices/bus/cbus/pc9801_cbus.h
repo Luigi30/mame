@@ -27,26 +27,29 @@
 	MCFG_DEVICE_ADD(_tag, PC9801CBUS_SLOT, 0) \
 	MCFG_DEVICE_SLOT_INTERFACE(_slot_intf, _def_slot, false)
 
+#define MCFG_PC9801CBUS_CPU(_cputag) \
+	downcast<pc9801_slot_device &>(*device).set_cpu_tag(_cputag);
+
 #define MCFG_PC9801CBUS_INT0_CALLBACK(_devcb) \
-	devcb = &downcast<pc9801_slot_device &>(*device).set_int_callback<0>(DEVCB_##_devcb);
+	downcast<pc9801_slot_device &>(*device).set_int_callback<0>(DEVCB_##_devcb);
 
 #define MCFG_PC9801CBUS_INT1_CALLBACK(_devcb) \
-	devcb = &downcast<pc9801_slot_device &>(*device).set_int_callback<1>(DEVCB_##_devcb);
+	downcast<pc9801_slot_device &>(*device).set_int_callback<1>(DEVCB_##_devcb);
 
 #define MCFG_PC9801CBUS_INT2_CALLBACK(_devcb) \
-	devcb = &downcast<pc9801_slot_device &>(*device).set_int_callback<2>(DEVCB_##_devcb);
+	downcast<pc9801_slot_device &>(*device).set_int_callback<2>(DEVCB_##_devcb);
 
 #define MCFG_PC9801CBUS_INT3_CALLBACK(_devcb) \
-	devcb = &downcast<pc9801_slot_device &>(*device).set_int_callback<3>(DEVCB_##_devcb);
+	downcast<pc9801_slot_device &>(*device).set_int_callback<3>(DEVCB_##_devcb);
 
 #define MCFG_PC9801CBUS_INT4_CALLBACK(_devcb) \
-	devcb = &downcast<pc9801_slot_device &>(*device).set_int_callback<4>(DEVCB_##_devcb);
+	downcast<pc9801_slot_device &>(*device).set_int_callback<4>(DEVCB_##_devcb);
 
 #define MCFG_PC9801CBUS_INT5_CALLBACK(_devcb) \
-	devcb = &downcast<pc9801_slot_device &>(*device).set_int_callback<5>(DEVCB_##_devcb);
+	downcast<pc9801_slot_device &>(*device).set_int_callback<5>(DEVCB_##_devcb);
 
 #define MCFG_PC9801CBUS_INT6_CALLBACK(_devcb) \
-	devcb = &downcast<pc9801_slot_device &>(*device).set_int_callback<6>(DEVCB_##_devcb);
+	downcast<pc9801_slot_device &>(*device).set_int_callback<6>(DEVCB_##_devcb);
 
 
 //**************************************************************************
@@ -79,6 +82,7 @@ public:
 	pc9801_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// configuration access
+	template<class T> void set_cpu_tag(T &&tag) { m_cpu.set_tag(std::forward<T>(tag)); }
 	template<int I, class Object> devcb_base &set_int_callback(Object &&cb) { return m_int_callback[I].set_callback(std::forward<Object>(cb)); }
 
 	address_space &program_space() const { return m_cpu->space(AS_PROGRAM); }

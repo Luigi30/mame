@@ -223,7 +223,6 @@ seem to have access to.
 #include "includes/system1.h"
 
 #include "cpu/mcs51/mcs51.h"
-#include "machine/z80pio.h"
 #include "machine/segacrpt_device.h"
 #include "machine/mc8123.h"
 #include "sound/sn76496.h"
@@ -526,8 +525,6 @@ WRITE8_MEMBER(system1_state::sound_control_w)
 
 READ8_MEMBER(system1_state::sound_data_r)
 {
-	z80pio_device *pio = machine().device<z80pio_device>("pio");
-
 	/* if we have an 8255 PPI, get the data from the port and toggle the ack */
 	if (m_ppi8255 != nullptr)
 	{
@@ -537,11 +534,11 @@ READ8_MEMBER(system1_state::sound_data_r)
 	}
 
 	/* if we have a Z80 PIO, get the data from the port and toggle the strobe */
-	else if (pio != nullptr)
+	else if (m_pio != nullptr)
 	{
-		uint8_t data = pio->port_read(z80pio_device::PORT_A);
-		pio->strobe(z80pio_device::PORT_A, false);
-		pio->strobe(z80pio_device::PORT_A, true);
+		uint8_t data = m_pio->port_read(z80pio_device::PORT_A);
+		m_pio->strobe(z80pio_device::PORT_A, false);
+		m_pio->strobe(z80pio_device::PORT_A, true);
 		return data;
 	}
 
@@ -760,12 +757,12 @@ void system1_state::system1_map(address_map &map)
 	map(0x8000, 0xbfff).bankr("bank1");
 	map(0xc000, 0xcfff).ram().share("ram");
 	map(0xd000, 0xd7ff).ram().share("spriteram");
-	map(0xd800, 0xdfff).ram().w(this, FUNC(system1_state::system1_paletteram_w)).share("palette");
-	map(0xe000, 0xefff).rw(this, FUNC(system1_state::system1_videoram_r), FUNC(system1_state::system1_videoram_w));
-	map(0xf000, 0xf3ff).rw(this, FUNC(system1_state::system1_mixer_collision_r), FUNC(system1_state::system1_mixer_collision_w));
-	map(0xf400, 0xf7ff).w(this, FUNC(system1_state::system1_mixer_collision_reset_w));
-	map(0xf800, 0xfbff).rw(this, FUNC(system1_state::system1_sprite_collision_r), FUNC(system1_state::system1_sprite_collision_w));
-	map(0xfc00, 0xffff).w(this, FUNC(system1_state::system1_sprite_collision_reset_w));
+	map(0xd800, 0xdfff).ram().w(FUNC(system1_state::system1_paletteram_w)).share("palette");
+	map(0xe000, 0xefff).rw(FUNC(system1_state::system1_videoram_r), FUNC(system1_state::system1_videoram_w));
+	map(0xf000, 0xf3ff).rw(FUNC(system1_state::system1_mixer_collision_r), FUNC(system1_state::system1_mixer_collision_w));
+	map(0xf400, 0xf7ff).w(FUNC(system1_state::system1_mixer_collision_reset_w));
+	map(0xf800, 0xfbff).rw(FUNC(system1_state::system1_sprite_collision_r), FUNC(system1_state::system1_sprite_collision_w));
+	map(0xfc00, 0xffff).w(FUNC(system1_state::system1_sprite_collision_reset_w));
 }
 
 void system1_state::decrypted_opcodes_map(address_map &map)
@@ -774,7 +771,7 @@ void system1_state::decrypted_opcodes_map(address_map &map)
 	map(0x8000, 0xbfff).bankr("bank1");
 	map(0xc000, 0xcfff).ram().share("ram");
 	map(0xd000, 0xd7ff).ram().share("spriteram");
-	map(0xd800, 0xdfff).ram().w(this, FUNC(system1_state::system1_paletteram_w)).share("palette");
+	map(0xd800, 0xdfff).ram().w(FUNC(system1_state::system1_paletteram_w)).share("palette");
 }
 
 void system1_state::banked_decrypted_opcodes_map(address_map &map)
@@ -783,7 +780,7 @@ void system1_state::banked_decrypted_opcodes_map(address_map &map)
 	map(0x8000, 0xbfff).bankr("bank1d");
 	map(0xc000, 0xcfff).ram().share("ram");
 	map(0xd000, 0xd7ff).ram().share("spriteram");
-	map(0xd800, 0xdfff).ram().w(this, FUNC(system1_state::system1_paletteram_w)).share("palette");
+	map(0xd800, 0xdfff).ram().w(FUNC(system1_state::system1_paletteram_w)).share("palette");
 }
 
 /* same as normal System 1 except address map is shuffled (RAM/collision are swapped) */
@@ -791,13 +788,13 @@ void system1_state::nobo_map(address_map &map)
 {
 	map(0x0000, 0x7fff).rom();
 	map(0x8000, 0xbfff).bankr("bank1");
-	map(0xc000, 0xc3ff).rw(this, FUNC(system1_state::system1_mixer_collision_r), FUNC(system1_state::system1_mixer_collision_w));
-	map(0xc400, 0xc7ff).w(this, FUNC(system1_state::system1_mixer_collision_reset_w));
-	map(0xc800, 0xcbff).rw(this, FUNC(system1_state::system1_sprite_collision_r), FUNC(system1_state::system1_sprite_collision_w));
-	map(0xcc00, 0xcfff).w(this, FUNC(system1_state::system1_sprite_collision_reset_w));
+	map(0xc000, 0xc3ff).rw(FUNC(system1_state::system1_mixer_collision_r), FUNC(system1_state::system1_mixer_collision_w));
+	map(0xc400, 0xc7ff).w(FUNC(system1_state::system1_mixer_collision_reset_w));
+	map(0xc800, 0xcbff).rw(FUNC(system1_state::system1_sprite_collision_r), FUNC(system1_state::system1_sprite_collision_w));
+	map(0xcc00, 0xcfff).w(FUNC(system1_state::system1_sprite_collision_reset_w));
 	map(0xd000, 0xd7ff).ram().share("spriteram");
-	map(0xd800, 0xdfff).ram().w(this, FUNC(system1_state::system1_paletteram_w)).share("palette");
-	map(0xe000, 0xefff).rw(this, FUNC(system1_state::system1_videoram_r), FUNC(system1_state::system1_videoram_w));
+	map(0xd800, 0xdfff).ram().w(FUNC(system1_state::system1_paletteram_w)).share("palette");
+	map(0xe000, 0xefff).rw(FUNC(system1_state::system1_videoram_r), FUNC(system1_state::system1_videoram_w));
 	map(0xf000, 0xffff).ram().share("ram");
 }
 
@@ -839,9 +836,9 @@ void system1_state::sound_map(address_map &map)
 {
 	map(0x0000, 0x7fff).rom();
 	map(0x8000, 0x87ff).mirror(0x1800).ram();
-	map(0xa000, 0xa000).mirror(0x1fff).w("sn1", FUNC(sn76489a_device::write));
-	map(0xc000, 0xc000).mirror(0x1fff).w("sn2", FUNC(sn76489a_device::write));
-	map(0xe000, 0xe000).mirror(0x1fff).r(this, FUNC(system1_state::sound_data_r));
+	map(0xa000, 0xa000).mirror(0x1fff).w("sn1", FUNC(sn76489a_device::command_w));
+	map(0xc000, 0xc000).mirror(0x1fff).w("sn2", FUNC(sn76489a_device::command_w));
+	map(0xe000, 0xe000).mirror(0x1fff).r(FUNC(system1_state::sound_data_r));
 }
 
 
@@ -854,7 +851,7 @@ void system1_state::sound_map(address_map &map)
 
 void system1_state::mcu_io_map(address_map &map)
 {
-	map(0x0000, 0xffff).rw(this, FUNC(system1_state::mcu_io_r), FUNC(system1_state::mcu_io_w));
+	map(0x0000, 0xffff).rw(FUNC(system1_state::mcu_io_r), FUNC(system1_state::mcu_io_w));
 }
 
 
@@ -2584,9 +2581,9 @@ MACHINE_CONFIG_END
 /* ROM is #5318, is probably the first or second System 1 game produced */
 ROM_START( starjack )
 	ROM_REGION( 0x10000, "maincpu", 0 )
-	ROM_LOAD( "epr5320b.129",   0x0000, 0x2000, CRC(7ab72ecd) SHA1(28d3f87851cccc94a86eb0217893de0baf8e62fd) )
-	ROM_LOAD( "epr5321a.130",   0x2000, 0x2000, CRC(38b99050) SHA1(79fd23bb7db577d1dbf1b50503085eccdd17b98c) )
-	ROM_LOAD( "epr5322a.131",   0x4000, 0x2000, CRC(103a595b) SHA1(6bb8a063279c93341ff472351b79c92795845f74) )
+	ROM_LOAD( "epr-5320b.129",  0x0000, 0x2000, CRC(7ab72ecd) SHA1(28d3f87851cccc94a86eb0217893de0baf8e62fd) )
+	ROM_LOAD( "epr-5321a.130",  0x2000, 0x2000, CRC(38b99050) SHA1(79fd23bb7db577d1dbf1b50503085eccdd17b98c) )
+	ROM_LOAD( "epr-5322a.131",  0x4000, 0x2000, CRC(103a595b) SHA1(6bb8a063279c93341ff472351b79c92795845f74) )
 	ROM_LOAD( "epr-5323.132",   0x6000, 0x2000, CRC(46af0d58) SHA1(6cfa288e28e3b415db5ef3cef8e8849259234af9) )
 	ROM_LOAD( "epr-5324.133",   0x8000, 0x2000, CRC(1e89efe2) SHA1(d36ef8f176d5e44884d3d0b9af81be6f7fbd0cde) )
 	ROM_LOAD( "epr-5325.134",   0xa000, 0x2000, CRC(d6e379a1) SHA1(27362b3e10d9d4235647eadb9cd1404700a8fb49) )
@@ -2612,27 +2609,27 @@ ROM_END
 
 ROM_START( starjacks )
 	ROM_REGION( 0x10000, "maincpu", 0 )
-	ROM_LOAD( "a1_ic29.129",    0x0000, 0x2000, CRC(59a22a1f) SHA1(4827b537f8df04429ed53c2119c67a32efcf04a2) )
-	ROM_LOAD( "a1_ic30.130",    0x2000, 0x2000, CRC(7f4597dc) SHA1(7574853fc2e38880f8493cf628100a890f7aa7dc) )
-	ROM_LOAD( "a1_ic31.131",    0x4000, 0x2000, CRC(6074c046) SHA1(5d2bd679d6a13a6c3b203662ce5496b801383db9) )
-	ROM_LOAD( "a1_ic32.132",    0x6000, 0x2000, CRC(1c48a3fa) SHA1(4a2e7798600bc4a5fd68533083547212d148d347) )
-	ROM_LOAD( "a1_ic33.133",    0x8000, 0x2000, CRC(7598bd51) SHA1(0c18b83dc7874aefcd94593ffbe2b50cc0329367) )
-	ROM_LOAD( "a1_ic34.134",    0xa000, 0x2000, CRC(f66fa604) SHA1(d7a81920217fcf7a687ba5e2d10abad5c78085d2) )
+	ROM_LOAD( "star_jacker_a1_ic29.129", 0x0000, 0x2000, CRC(59a22a1f) SHA1(4827b537f8df04429ed53c2119c67a32efcf04a2) )
+	ROM_LOAD( "star_jacker_a1_ic30.130", 0x2000, 0x2000, CRC(7f4597dc) SHA1(7574853fc2e38880f8493cf628100a890f7aa7dc) )
+	ROM_LOAD( "star_jacker_a1_ic31.131", 0x4000, 0x2000, CRC(6074c046) SHA1(5d2bd679d6a13a6c3b203662ce5496b801383db9) )
+	ROM_LOAD( "star_jacker_a1_ic32.132", 0x6000, 0x2000, CRC(1c48a3fa) SHA1(4a2e7798600bc4a5fd68533083547212d148d347) )
+	ROM_LOAD( "star_jacker_a1_ic33.133", 0x8000, 0x2000, CRC(7598bd51) SHA1(0c18b83dc7874aefcd94593ffbe2b50cc0329367) )
+	ROM_LOAD( "star_jacker_a1_ic34.134", 0xa000, 0x2000, CRC(f66fa604) SHA1(d7a81920217fcf7a687ba5e2d10abad5c78085d2) )
 
 	ROM_REGION( 0x10000, "soundcpu", 0 )
-	ROM_LOAD( "epr-5332.3",     0x0000, 0x2000, CRC(7a72ab3d) SHA1(4a6ad09949a438562d7043532d628cefdbb5a2fe) )
+	ROM_LOAD( "star_jacker_a1_ic3.3",    0x0000, 0x2000, CRC(7a72ab3d) SHA1(4a6ad09949a438562d7043532d628cefdbb5a2fe) ) /* same as EPR-5332 */
 
 	ROM_REGION( 0xc000, "tiles", 0 )
-	ROM_LOAD( "epr-5331.82",    0x0000, 0x2000, CRC(251d898f) SHA1(353067a75d583d5f53ce2f473b52a35dd912639f) )
-	ROM_LOAD( "a1_ic65.65",     0x2000, 0x2000, CRC(0ab1893c) SHA1(97877f5d8be7a7b80bbf9fe8dae2acd47c411d64) )
-	ROM_LOAD( "epr-5329.81",    0x4000, 0x2000, CRC(3e8bcaed) SHA1(6d19543427b9c4d8d8f5ea0872cdf8cc4fe5018c) )
-	ROM_LOAD( "a1_ic64.64",     0x6000, 0x2000, CRC(7f628ae6) SHA1(f859a505b543382b42a478c8ae5cd90f3ea2bc2c) )
-	ROM_LOAD( "epr-5327.80",    0x8000, 0x2000, CRC(79e92cb1) SHA1(03124ce123684b8469cf42be6ed5f0fffa64c480) )
-	ROM_LOAD( "a1_ic63.63",     0xa000, 0x2000, CRC(5bcb253e) SHA1(8c34a8377344940bcfb2495bfda3ffc6794f261b) )
+	ROM_LOAD( "star_jacker_a1_ic82.82",  0x0000, 0x2000, CRC(251d898f) SHA1(353067a75d583d5f53ce2f473b52a35dd912639f) )
+	ROM_LOAD( "star_jacker_a1_ic65.65",  0x2000, 0x2000, CRC(0ab1893c) SHA1(97877f5d8be7a7b80bbf9fe8dae2acd47c411d64) )
+	ROM_LOAD( "epr-5456.81",             0x4000, 0x2000, CRC(3e8bcaed) SHA1(6d19543427b9c4d8d8f5ea0872cdf8cc4fe5018c) )
+	ROM_LOAD( "epr-5455.64",             0x6000, 0x2000, CRC(7f628ae6) SHA1(f859a505b543382b42a478c8ae5cd90f3ea2bc2c) ) /* Also found labeled as STAR JACKER A1 IC64 */
+	ROM_LOAD( "epr-5454.80",             0x8000, 0x2000, CRC(79e92cb1) SHA1(03124ce123684b8469cf42be6ed5f0fffa64c480) )
+	ROM_LOAD( "epr-5453.63",             0xa000, 0x2000, CRC(5bcb253e) SHA1(8c34a8377344940bcfb2495bfda3ffc6794f261b) ) /* Also found labeled as STAR JACKER A1 IC63 */
 
 	ROM_REGION( 0x8000, "sprites", 0 )
-	ROM_LOAD( "a1_ic86.86",   0x0000, 0x4000, CRC(6f2e1fd3) SHA1(326d538551245fce67d0fdba85975e27093b7a93) )
-	ROM_LOAD( "a1_ic93.93",   0x4000, 0x4000, CRC(07987244) SHA1(8468b95684b1f62c6de6af1b1d405bfb333e4e26) )
+	ROM_LOAD( "star_jacker_a1_ic86.86",  0x0000, 0x4000, CRC(6f2e1fd3) SHA1(326d538551245fce67d0fdba85975e27093b7a93) )
+	ROM_LOAD( "epr-5446.93",             0x4000, 0x4000, CRC(07987244) SHA1(8468b95684b1f62c6de6af1b1d405bfb333e4e26) ) /* Also found labeled as STAR JACKER A1 IC93 */
 
 	ROM_REGION( 0x0100, "proms", 0 )
 	ROM_LOAD( "pr-5317.106",    0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) )
@@ -2987,6 +2984,33 @@ ROM_START( flickyo )
 
 	ROM_REGION( 0x0100, "proms", 0 )
 	ROM_LOAD( "pr-5317.76",     0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) )
+ROM_END
+
+// Coverted from and running on a Up n' Down board.
+ROM_START( flickyup )
+	ROM_REGION( 0x10000, "maincpu", 0 )
+	ROM_LOAD( "2764-ic29",  0x0000, 0x2000, CRC(59ba3107) SHA1(2d37f00b8a81b97e45aa78ae75449663c35acece) ) /* encrypted */
+	ROM_LOAD( "2764-ic30",  0x2000, 0x2000, CRC(5c84216f) SHA1(8147a51e5d5aee788f1aab8e9032a5813e5c43a1) ) /* encrypted */
+	ROM_LOAD( "2764-ic31",  0x4000, 0x2000, CRC(106132fa) SHA1(669d9cbc1f18649a7d7a8cb462b76a6c34362ed3) ) /* encrypted */
+	ROM_LOAD( "2764-ic32",  0x6000, 0x2000, CRC(c5ea7f58) SHA1(0adcbee77dad813fe168ad383e579c94bc31635f) ) /* encrypted */
+
+	ROM_REGION( 0x10000, "soundcpu", 0 )
+	ROM_LOAD( "epr-5869.120",   0x0000, 0x2000, CRC(6d220d4e) SHA1(fe02a7a94a1ad046fc775a7f67f460c8d0f6dca6) ) /* 2764-ic3 */
+
+	ROM_REGION( 0xc000, "tiles", 0 )
+	ROM_LOAD( "epr-5868.62",    0x0000, 0x2000, CRC(7402256b) SHA1(5bd660ac24a2d0d8ad983e948674a82a2d2e8b49) ) /* 2764-ic82 */
+	ROM_LOAD( "epr-5867.61",    0x2000, 0x2000, CRC(2f5ce930) SHA1(4bc3bc6eb8f03926d3710c9f96fcc1b116e918d3) ) /* 2764-ic65 */
+	ROM_LOAD( "epr-5866.64",    0x4000, 0x2000, CRC(967f1d9a) SHA1(652be7848526c6e61db4a502f75d1689d2ff2f59) ) /* 2764-ic81 */
+	ROM_LOAD( "epr-5865.63",    0x6000, 0x2000, CRC(03d9a34c) SHA1(e158db3e0b86f2b8ad34cefc2714cb0a942efde7) ) /* 2764-ic64 */
+	ROM_LOAD( "epr-5864.66",    0x8000, 0x2000, CRC(e659f358) SHA1(cf59f1fb0f9fb77d5ac36be52b6ee946ee85d6de) ) /* 2764-ic80 */
+	ROM_LOAD( "epr-5863.65",    0xa000, 0x2000, CRC(a496ca15) SHA1(8c629a853486bbe049b1deecdc00f9e16b87698f) ) /* 2764-ic63 */
+
+	ROM_REGION( 0x8000, "sprites", 0 )
+	ROM_LOAD( "epr-5855.117",   0x0000, 0x4000, CRC(b5f894a1) SHA1(2c72dc16739dad155fcd572e1add067a7647f5bd) ) /* 27128-ic86 */
+	ROM_LOAD( "epr-5856.110",   0x4000, 0x4000, CRC(266af78f) SHA1(dcbfce550d10a1f2b3ce3e7e081fc008cb575708) ) /* 27128-ic93 */
+
+	ROM_REGION( 0x0100, "proms", 0 )
+	ROM_LOAD( "pr-5317.76",     0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) ) /* location ic106 */
 ROM_END
 
 
@@ -4340,10 +4364,10 @@ ROM_START( wboy5 )
 	ROM_LOAD( "epr-7492.65",0xa000, 0x2000, CRC(60f806b1) SHA1(f91e5868a455dff2bce3c2891a7cfd648957cd73) )
 
 	ROM_REGION( 0x10000, "sprites", 0 )
-	ROM_LOAD( "epr-7485.117",0x0000, 0x4000, CRC(c2891722) SHA1(e4e11c0e9bd0dc121c25349493f2b13d2ff8c807) )
-	ROM_LOAD( "epr-7487.04",0x4000, 0x4000, CRC(2d3a421b) SHA1(d70440a8703ccface3212cd9544c950b36263e8c) )
-	ROM_LOAD( "epr-7486.110",0x8000, 0x4000, CRC(8d622c50) SHA1(9a76a50204c618347d3e8eee6cda841becd906eb) )
-	ROM_LOAD( "epr-7488.05",0xc000, 0x4000, CRC(007c2f1b) SHA1(c2f1376144a49d20cb35384648e06d06978474c1) )
+	ROM_LOAD( "epr-7485.117", 0x0000, 0x4000, CRC(c2891722) SHA1(e4e11c0e9bd0dc121c25349493f2b13d2ff8c807) )
+	ROM_LOAD( "epr-7487.04",  0x4000, 0x4000, CRC(2d3a421b) SHA1(d70440a8703ccface3212cd9544c950b36263e8c) )
+	ROM_LOAD( "epr-7486.110", 0x8000, 0x4000, CRC(8d622c50) SHA1(9a76a50204c618347d3e8eee6cda841becd906eb) )
+	ROM_LOAD( "epr-7488.05",  0xc000, 0x4000, CRC(007c2f1b) SHA1(c2f1376144a49d20cb35384648e06d06978474c1) )
 
 	ROM_REGION( 0x0100, "proms", 0 )
 	ROM_LOAD( "pr-5317.76",0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) )
@@ -4376,8 +4400,7 @@ ROM_START( wboy6 )
 	ROM_LOAD( "epr-7488.05",    0xc000, 0x4000, CRC(007c2f1b) SHA1(c2f1376144a49d20cb35384648e06d06978474c1) ) /* epr-7488.2 */
 
 	ROM_REGION( 0x0100, "proms", 0 )
-	ROM_LOAD( "pr-5317.76",     0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) )
-																/* pr-5317.106 */
+	ROM_LOAD( "pr-5317.76",     0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) ) /* pr-5317.106 */
 ROM_END
 
 ROM_START( wboyu )
@@ -4426,9 +4449,9 @@ ROM_START( wboysys2 )
 	ROM_LOAD( "epr7577.86",  0x08000, 0x8000, CRC(58b3705e) SHA1(1a8ff3f1765a3b21145bd1a6c85441f806f7b17d) )
 
 	ROM_REGION( 0x0300, "palette", 0 )
-	ROM_LOAD( "pr-7345.20",      0x0000, 0x0100, CRC(8eee0f72) SHA1(b5694c120f604a5f7cc95618a71ab16a1a6151ed) ) /* palette red component */
-	ROM_LOAD( "pr-7344.14",      0x0100, 0x0100, CRC(3e7babd7) SHA1(d4f8790db4dce75e27156a4c6de2dcef2baf6d76) ) /* palette green component */
-	ROM_LOAD( "pr-7343.8",      0x0200, 0x0100, CRC(371c44a6) SHA1(ac37458d1feb6566b09a795b20c21953d4ab109d) ) /* palette blue component */
+	ROM_LOAD( "pr-7345.ic20", 0x0000, 0x0100, CRC(8eee0f72) SHA1(b5694c120f604a5f7cc95618a71ab16a1a6151ed) ) /* palette red component */
+	ROM_LOAD( "pr-7344.ic14", 0x0100, 0x0100, CRC(3e7babd7) SHA1(d4f8790db4dce75e27156a4c6de2dcef2baf6d76) ) /* palette green component */
+	ROM_LOAD( "pr-7343.ic8",  0x0200, 0x0100, CRC(371c44a6) SHA1(ac37458d1feb6566b09a795b20c21953d4ab109d) ) /* palette blue component */
 
 	ROM_REGION( 0x0100, "proms", 0 )
 	ROM_LOAD( "pr-5317.28",     0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) )
@@ -4452,9 +4475,9 @@ ROM_START( wboysys2a )
 	ROM_LOAD( "epr7577.86",  0x08000, 0x8000, CRC(58b3705e) SHA1(1a8ff3f1765a3b21145bd1a6c85441f806f7b17d) )
 
 	ROM_REGION( 0x0300, "palette", 0 )
-	ROM_LOAD( "pr-7345.20",      0x0000, 0x0100, CRC(8eee0f72) SHA1(b5694c120f604a5f7cc95618a71ab16a1a6151ed) ) /* palette red component */
-	ROM_LOAD( "pr-7344.14",      0x0100, 0x0100, CRC(3e7babd7) SHA1(d4f8790db4dce75e27156a4c6de2dcef2baf6d76) ) /* palette green component */
-	ROM_LOAD( "pr-7343.8",      0x0200, 0x0100, CRC(371c44a6) SHA1(ac37458d1feb6566b09a795b20c21953d4ab109d) ) /* palette blue component */
+	ROM_LOAD( "pr-7345.20", 0x0000, 0x0100, CRC(8eee0f72) SHA1(b5694c120f604a5f7cc95618a71ab16a1a6151ed) ) /* palette red component */
+	ROM_LOAD( "pr-7344.14", 0x0100, 0x0100, CRC(3e7babd7) SHA1(d4f8790db4dce75e27156a4c6de2dcef2baf6d76) ) /* palette green component */
+	ROM_LOAD( "pr-7343.8",  0x0200, 0x0100, CRC(371c44a6) SHA1(ac37458d1feb6566b09a795b20c21953d4ab109d) ) /* palette blue component */
 
 	ROM_REGION( 0x0100, "proms", 0 )
 	ROM_LOAD( "pr-5317.28",     0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) )
@@ -4487,8 +4510,7 @@ ROM_START( wbdeluxe )
 	ROM_LOAD( "epr-7488.05",    0xc000, 0x4000, CRC(007c2f1b) SHA1(c2f1376144a49d20cb35384648e06d06978474c1) ) /* epr-7488.2 */
 
 	ROM_REGION( 0x0100, "proms", 0 )
-	ROM_LOAD( "pr-5317.76",     0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) )
-																/* pr-5317.106 */
+	ROM_LOAD( "pr-5317.76",     0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) ) /* pr-5317.106 */
 ROM_END
 
 
@@ -4612,33 +4634,33 @@ ROM_START( brain )
 ROM_END
 
 
-ROM_START( tokisens )
+ROM_START( tokisens ) /* Sega game ID#  834-6409 - should use a Sega MC-8123, 317-0040 */
 	ROM_REGION( 0x20000, "maincpu", 0 )
-	ROM_LOAD( "epr10961.90",  0x00000, 0x8000, CRC(1466b61d) SHA1(99f93813834d3a7c9f6228076d400f74d9b6dea9) )
-	ROM_LOAD( "epr10962.91",  0x10000, 0x8000, CRC(a8479f91) SHA1(0700746fb481fd2bd22ae82c9881aa61222a6379) )
-	ROM_LOAD( "epr10963.92",  0x18000, 0x8000, CRC(b7193b39) SHA1(d40fb8591b1ff83f3d56b955ac11a07496a0adbb) )
+	ROM_LOAD( "epr-10961.90",  0x00000, 0x8000, CRC(1466b61d) SHA1(99f93813834d3a7c9f6228076d400f74d9b6dea9) ) /* Possible bootleg or hacked?  Should be MC-8123, 317-0040 encrypted */
+	ROM_LOAD( "epr-10962.91",  0x10000, 0x8000, CRC(a8479f91) SHA1(0700746fb481fd2bd22ae82c9881aa61222a6379) )
+	ROM_LOAD( "epr-10963.92",  0x18000, 0x8000, CRC(b7193b39) SHA1(d40fb8591b1ff83f3d56b955ac11a07496a0adbb) )
 
 	ROM_REGION( 0x10000, "soundcpu", 0 )
-	ROM_LOAD( "epr10967.126", 0x0000, 0x8000, CRC(97966bf2) SHA1(b5a3d36afbb3d6e2e2e2c121609a30dc080ccf13) )
+	ROM_LOAD( "epr-10967.126", 0x0000, 0x8000, CRC(97966bf2) SHA1(b5a3d36afbb3d6e2e2e2c121609a30dc080ccf13) )
 
 	ROM_REGION( 0x18000, "tiles", 0 )
-	ROM_LOAD( "epr10964.4",   0x00000, 0x8000, CRC(9013b85c) SHA1(c27322245052ffc9d840fe683ed35965c61bf9e8) )
-	ROM_LOAD( "epr10965.5",   0x08000, 0x8000, CRC(e4755cc6) SHA1(33370d556a70e19edce5e0c7fa8b11453ccbe91b) )
-	ROM_LOAD( "epr10966.6",   0x10000, 0x8000, CRC(5bbfbdcc) SHA1(e7e679da874a79dfdda0be58d1352c192635296d) )
+	ROM_LOAD( "epr-10964.4",   0x00000, 0x8000, CRC(9013b85c) SHA1(c27322245052ffc9d840fe683ed35965c61bf9e8) )
+	ROM_LOAD( "epr-10965.5",   0x08000, 0x8000, CRC(e4755cc6) SHA1(33370d556a70e19edce5e0c7fa8b11453ccbe91b) )
+	ROM_LOAD( "epr-10966.6",   0x10000, 0x8000, CRC(5bbfbdcc) SHA1(e7e679da874a79dfdda0be58d1352c192635296d) )
 
 	ROM_REGION( 0x20000, "sprites", 0 )
-	ROM_LOAD( "epr10958.87",  0x00000, 0x8000, CRC(fc2bcbd7) SHA1(6b9007f2057e4c860ecae4ba5db4e02b8aaae8fd) )
-	ROM_LOAD( "epr10957.86",  0x08000, 0x8000, CRC(4ec56860) SHA1(9fd6ba8a68b4cb98183e8ac8643656c251f1c72d) )
-	ROM_LOAD( "epr10960.89",  0x10000, 0x8000, CRC(880e0d44) SHA1(2b2dc144807d1d048ffe81bfd33a77ccf618dd3e) )
-	ROM_LOAD( "epr10959.88",  0x18000, 0x8000, CRC(4deda48f) SHA1(12db2a69286f22cd8243be6faa9a075fafec1dfd) )
+	ROM_LOAD( "epr-10958.87",  0x00000, 0x8000, CRC(fc2bcbd7) SHA1(6b9007f2057e4c860ecae4ba5db4e02b8aaae8fd) )
+	ROM_LOAD( "epr-10957.86",  0x08000, 0x8000, CRC(4ec56860) SHA1(9fd6ba8a68b4cb98183e8ac8643656c251f1c72d) )
+	ROM_LOAD( "epr-10960.89",  0x10000, 0x8000, CRC(880e0d44) SHA1(2b2dc144807d1d048ffe81bfd33a77ccf618dd3e) )
+	ROM_LOAD( "epr-10959.88",  0x18000, 0x8000, CRC(4deda48f) SHA1(12db2a69286f22cd8243be6faa9a075fafec1dfd) )
 
 	ROM_REGION( 0x0300, "palette", 0 )
-	ROM_LOAD( "bprom.20",      0x0000, 0x0100, CRC(8eee0f72) SHA1(b5694c120f604a5f7cc95618a71ab16a1a6151ed) ) /* palette red component */
-	ROM_LOAD( "bprom.14",      0x0100, 0x0100, CRC(3e7babd7) SHA1(d4f8790db4dce75e27156a4c6de2dcef2baf6d76) ) /* palette green component */
-	ROM_LOAD( "bprom.8",       0x0200, 0x0100, CRC(371c44a6) SHA1(ac37458d1feb6566b09a795b20c21953d4ab109d) ) /* palette blue component */
+	ROM_LOAD( "pri10956.ic20", 0x0000, 0x0100, CRC(8eee0f72) SHA1(b5694c120f604a5f7cc95618a71ab16a1a6151ed) ) /* MMI 63S141AN - palette red component */
+	ROM_LOAD( "pri10955.ic14", 0x0100, 0x0100, CRC(3e7babd7) SHA1(d4f8790db4dce75e27156a4c6de2dcef2baf6d76) ) /* MMI 63S141AN - palette green component */
+	ROM_LOAD( "pri10954.ic8",  0x0200, 0x0100, CRC(371c44a6) SHA1(ac37458d1feb6566b09a795b20c21953d4ab109d) ) /* MMI 63S141AN - palette blue component */
 
 	ROM_REGION( 0x0100, "proms", 0 )
-	ROM_LOAD( "bprom.28",      0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) )
+	ROM_LOAD( "pr-5317.ic28",      0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) )
 ROM_END
 
 
@@ -5491,6 +5513,7 @@ GAME( 1984, mrvikingj,  mrviking, sys1ppisx_315_5041,mrvikingj, system1_state, i
 GAME( 1984, swat,       0,        sys1ppix_315_5048, swat,      system1_state, init_bank00,       ROT270, "Coreland / Sega", "SWAT (315-5048)", MACHINE_SUPPORTS_SAVE )
 GAME( 1984, flickyo,    flicky,   sys1ppix_315_5051, flicky,    system1_state, init_bank00,       ROT0,   "Sega", "Flicky (64k Version, 315-5051, set 1)", MACHINE_SUPPORTS_SAVE )
 GAME( 1984, flickys1,   flicky,   sys1ppix_315_5051, flickys1,  system1_state, init_bank00,       ROT0,   "Sega", "Flicky (64k Version, 315-5051, set 2)", MACHINE_SUPPORTS_SAVE )
+GAME( 1984, flickyup,   flicky,   sys1ppix_315_5051, flicky,    system1_state, init_bank00,       ROT0,   "Sega", "Flicky (64k Version, on Up'n Down boardset)", MACHINE_SUPPORTS_SAVE )
 GAME( 1984, wmatch,     0,        sys1ppisx_315_5064,wmatch,    system1_state, init_bank00,       ROT270, "Sega", "Water Match (315-5064)", MACHINE_SUPPORTS_SAVE )
 GAME( 1984, bullfgt,    0,        sys1ppix_315_5065, bullfgt,   system1_state, init_bank00,       ROT0,   "Coreland / Sega", "Bullfight (315-5065)", MACHINE_SUPPORTS_SAVE )
 GAME( 1985, nprinces,   seganinj, sys1ppix_315_5051, seganinj,  system1_state, init_bank00,       ROT0,   "bootleg?", "Ninja Princess (315-5051, 64k Ver. bootleg?)", MACHINE_SUPPORTS_SAVE )

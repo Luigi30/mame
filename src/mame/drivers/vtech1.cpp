@@ -77,9 +77,16 @@ public:
 	{
 	}
 
+	void laser310(machine_config &config);
+	void laser200(machine_config &config);
+	void laser310h(machine_config &config);
+	void laser110(machine_config &config);
+	void laser210(machine_config &config);
+
 	void init_vtech1();
 	void init_vtech1h();
 
+private:
 	DECLARE_READ8_MEMBER(vtech1_lightpen_r);
 	DECLARE_READ8_MEMBER(vtech1_keyboard_r);
 	DECLARE_WRITE8_MEMBER(vtech1_latch_w);
@@ -89,17 +96,12 @@ public:
 
 	DECLARE_SNAPSHOT_LOAD_MEMBER( vtech1 );
 
-	void laser310(machine_config &config);
-	void laser200(machine_config &config);
-	void laser310h(machine_config &config);
-	void laser110(machine_config &config);
-	void laser210(machine_config &config);
 	void laser110_mem(address_map &map);
 	void laser210_mem(address_map &map);
 	void laser310_mem(address_map &map);
 	void vtech1_io(address_map &map);
 	void vtech1_shrg_io(address_map &map);
-private:
+
 	static const uint8_t VZ_BASIC = 0xf0;
 	static const uint8_t VZ_MCODE = 0xf1;
 
@@ -306,7 +308,7 @@ void vtech1_state::init_vtech1h()
 void vtech1_state::laser110_mem(address_map &map)
 {
 	map(0x0000, 0x3fff).rom(); // basic rom
-	map(0x6800, 0x6fff).rw(this, FUNC(vtech1_state::vtech1_keyboard_r), FUNC(vtech1_state::vtech1_latch_w));
+	map(0x6800, 0x6fff).rw(FUNC(vtech1_state::vtech1_keyboard_r), FUNC(vtech1_state::vtech1_latch_w));
 	map(0x7000, 0x77ff).ram().share("videoram"); // 6847
 	map(0x7800, 0x7fff).ram(); // 2k user ram
 }
@@ -314,7 +316,7 @@ void vtech1_state::laser110_mem(address_map &map)
 void vtech1_state::laser210_mem(address_map &map)
 {
 	map(0x0000, 0x3fff).rom(); // basic rom
-	map(0x6800, 0x6fff).rw(this, FUNC(vtech1_state::vtech1_keyboard_r), FUNC(vtech1_state::vtech1_latch_w));
+	map(0x6800, 0x6fff).rw(FUNC(vtech1_state::vtech1_keyboard_r), FUNC(vtech1_state::vtech1_latch_w));
 	map(0x7000, 0x77ff).ram().share("videoram"); // 6847
 	map(0x7800, 0x8fff).ram(); // 6k user ram
 }
@@ -322,7 +324,7 @@ void vtech1_state::laser210_mem(address_map &map)
 void vtech1_state::laser310_mem(address_map &map)
 {
 	map(0x0000, 0x3fff).rom(); // basic rom
-	map(0x6800, 0x6fff).rw(this, FUNC(vtech1_state::vtech1_keyboard_r), FUNC(vtech1_state::vtech1_latch_w));
+	map(0x6800, 0x6fff).rw(FUNC(vtech1_state::vtech1_keyboard_r), FUNC(vtech1_state::vtech1_latch_w));
 	map(0x7000, 0x77ff).ram().share("videoram"); // 6847
 	map(0x7800, 0xb7ff).ram(); // 16k user ram
 }
@@ -330,13 +332,13 @@ void vtech1_state::laser310_mem(address_map &map)
 void vtech1_state::vtech1_io(address_map &map)
 {
 	map.global_mask(0xff);
-	map(0x40, 0x4f).r(this, FUNC(vtech1_state::vtech1_lightpen_r));
+	map(0x40, 0x4f).r(FUNC(vtech1_state::vtech1_lightpen_r));
 }
 
 void vtech1_state::vtech1_shrg_io(address_map &map)
 {
 	vtech1_io(map);
-	map(0xd0, 0xdf).w(this, FUNC(vtech1_state::vtech1_video_bank_w));
+	map(0xd0, 0xdf).w(FUNC(vtech1_state::vtech1_video_bank_w));
 }
 
 
@@ -444,11 +446,11 @@ MACHINE_CONFIG_START(vtech1_state::laser110)
 	// video hardware
 	MCFG_SCREEN_MC6847_PAL_ADD("screen", "mc6847")
 
-	MCFG_DEVICE_ADD("mc6847", MC6847_PAL, XTAL(4'433'619))
-	MCFG_MC6847_FSYNC_CALLBACK(INPUTLINE("maincpu", 0)) MCFG_DEVCB_INVERT
-	MCFG_MC6847_INPUT_CALLBACK(READ8(*this, vtech1_state, mc6847_videoram_r))
-	MCFG_MC6847_BW(true)
-	MCFG_MC6847_FIXED_MODE(mc6847_pal_device::MODE_GM1)
+	MC6847_PAL(config, m_mc6847, XTAL(4'433'619));
+	m_mc6847->fsync_wr_callback().set_inputline(m_maincpu, 0).invert();
+	m_mc6847->input_callback().set(FUNC(vtech1_state::mc6847_videoram_r));
+	m_mc6847->set_black_and_white(true);
+	m_mc6847->set_get_fixed_mode(mc6847_pal_device::MODE_GM1);
 	// GM2 = GND, GM0 = GND, INTEXT = GND
 	// other lines not connected
 
@@ -474,16 +476,16 @@ MACHINE_CONFIG_START(vtech1_state::laser110)
 	MCFG_SOFTWARE_LIST_ADD("cass_list", "vz_cass")
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_START(vtech1_state::laser200)
+void vtech1_state::laser200(machine_config &config)
+{
 	laser110(config);
-	MCFG_DEVICE_REMOVE("mc6847")
-	MCFG_DEVICE_ADD("mc6847", MC6847_PAL, XTAL(4'433'619))
-	MCFG_MC6847_FSYNC_CALLBACK(INPUTLINE("maincpu", 0)) MCFG_DEVCB_INVERT
-	MCFG_MC6847_INPUT_CALLBACK(READ8(*this, vtech1_state, mc6847_videoram_r))
-	MCFG_MC6847_FIXED_MODE(mc6847_pal_device::MODE_GM1)
+	MC6847_PAL(config.replace(), m_mc6847, XTAL(4'433'619));
+	m_mc6847->fsync_wr_callback().set_inputline(m_maincpu, 0).invert();
+	m_mc6847->input_callback().set(FUNC(vtech1_state::mc6847_videoram_r));
+	m_mc6847->set_get_fixed_mode(mc6847_pal_device::MODE_GM1);
 	// GM2 = GND, GM0 = GND, INTEXT = GND
 	// other lines not connected
-MACHINE_CONFIG_END
+}
 
 MACHINE_CONFIG_START(vtech1_state::laser210)
 	laser200(config);
@@ -503,11 +505,10 @@ MACHINE_CONFIG_START(vtech1_state::laser310h)
 	MCFG_DEVICE_MODIFY("maincpu")
 	MCFG_DEVICE_IO_MAP(vtech1_shrg_io)
 
-	MCFG_DEVICE_REMOVE("mc6847")
-	MCFG_DEVICE_ADD("mc6847", MC6847_PAL, XTAL(4'433'619))
-	MCFG_MC6847_FSYNC_CALLBACK(INPUTLINE("maincpu", 0)) MCFG_DEVCB_INVERT
-	MCFG_MC6847_INPUT_CALLBACK(READ8(*this, vtech1_state, mc6847_videoram_r))
-	MCFG_MC6847_FIXED_MODE(mc6847_pal_device::MODE_GM1)
+	MC6847_PAL(config.replace(), m_mc6847, XTAL(4'433'619));
+	m_mc6847->fsync_wr_callback().set_inputline(m_maincpu, 0).invert();
+	m_mc6847->input_callback().set(FUNC(vtech1_state::mc6847_videoram_r));
+	m_mc6847->set_get_fixed_mode(mc6847_pal_device::MODE_GM1);
 	// INTEXT = GND
 	// other lines not connected
 MACHINE_CONFIG_END

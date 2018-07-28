@@ -239,7 +239,7 @@ void taitoh_state::syvalion_map(address_map &map)
 {
 	map(0x000000, 0x07ffff).rom();
 	map(0x100000, 0x10ffff).mirror(0x010000).ram().share("m68000_mainram");
-	map(0x200001, 0x200001).r(this, FUNC(taitoh_state::syvalion_input_bypass_r)).w(m_tc0040ioc, FUNC(tc0040ioc_device::portreg_w)).umask16(0x00ff);
+	map(0x200001, 0x200001).r(FUNC(taitoh_state::syvalion_input_bypass_r)).w(m_tc0040ioc, FUNC(tc0040ioc_device::portreg_w)).umask16(0x00ff);
 	map(0x200003, 0x200003).rw(m_tc0040ioc, FUNC(tc0040ioc_device::port_r), FUNC(tc0040ioc_device::port_w));
 	map(0x300000, 0x300001).nopr();
 	map(0x300001, 0x300001).w("tc0140syt", FUNC(tc0140syt_device::master_port_w));
@@ -298,7 +298,7 @@ void taitoh_state::sound_map(address_map &map)
 	map(0xea00, 0xea00).nopr();
 	map(0xee00, 0xee00).nopw();        /* ? */
 	map(0xf000, 0xf000).nopw();        /* ? */
-	map(0xf200, 0xf200).w(this, FUNC(taitoh_state::sound_bankswitch_w));
+	map(0xf200, 0xf200).w(FUNC(taitoh_state::sound_bankswitch_w));
 }
 
 
@@ -657,13 +657,13 @@ MACHINE_CONFIG_START(taitoh_state::syvalion)
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(600))
 
-	MCFG_DEVICE_ADD("tc0040ioc", TC0040IOC, 0)
-	MCFG_TC0040IOC_READ_0_CB(IOPORT("DSWA"))
-	MCFG_TC0040IOC_READ_1_CB(IOPORT("DSWB"))
-	MCFG_TC0040IOC_READ_2_CB(IOPORT("IN0"))
-	MCFG_TC0040IOC_READ_3_CB(IOPORT("IN1"))
-	MCFG_TC0040IOC_WRITE_4_CB(WRITE8(*this, taitoh_state, coin_control_w))
-	MCFG_TC0040IOC_READ_7_CB(IOPORT("IN2"))
+	TC0040IOC(config, m_tc0040ioc, 0);
+	m_tc0040ioc->read_0_callback().set_ioport("DSWA");
+	m_tc0040ioc->read_1_callback().set_ioport("DSWB");
+	m_tc0040ioc->read_2_callback().set_ioport("IN0");
+	m_tc0040ioc->read_3_callback().set_ioport("IN1");
+	m_tc0040ioc->write_4_callback().set(FUNC(taitoh_state::coin_control_w));
+	m_tc0040ioc->read_7_callback().set_ioport("IN2");
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
@@ -713,13 +713,13 @@ MACHINE_CONFIG_START(taitoh_state::recordbr)
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(600))
 
-	MCFG_DEVICE_ADD("tc0040ioc", TC0040IOC, 0)
-	MCFG_TC0040IOC_READ_0_CB(IOPORT("DSWA"))
-	MCFG_TC0040IOC_READ_1_CB(IOPORT("DSWB"))
-	MCFG_TC0040IOC_READ_2_CB(IOPORT("IN0"))
-	MCFG_TC0040IOC_READ_3_CB(IOPORT("IN1"))
-	MCFG_TC0040IOC_WRITE_4_CB(WRITE8(*this, taitoh_state, coin_control_w))
-	MCFG_TC0040IOC_READ_7_CB(IOPORT("IN2"))
+	TC0040IOC(config, m_tc0040ioc, 0);
+	m_tc0040ioc->read_0_callback().set_ioport("DSWA");
+	m_tc0040ioc->read_1_callback().set_ioport("DSWB");
+	m_tc0040ioc->read_2_callback().set_ioport("IN0");
+	m_tc0040ioc->read_3_callback().set_ioport("IN1");
+	m_tc0040ioc->write_4_callback().set(FUNC(taitoh_state::coin_control_w));
+	m_tc0040ioc->read_7_callback().set_ioport("IN2");
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
@@ -778,13 +778,13 @@ MACHINE_CONFIG_START(taitoh_state::dleague)
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(600))
 
-	MCFG_DEVICE_ADD("tc0220ioc", TC0220IOC, 0)
-	MCFG_TC0220IOC_READ_0_CB(IOPORT("DSWA"))
-	MCFG_TC0220IOC_READ_1_CB(IOPORT("DSWB"))
-	MCFG_TC0220IOC_READ_2_CB(IOPORT("IN0"))
-	MCFG_TC0220IOC_READ_3_CB(IOPORT("IN1"))
-	MCFG_TC0220IOC_WRITE_4_CB(WRITE8(*this, taitoh_state, coin_control_w))
-	MCFG_TC0220IOC_READ_7_CB(IOPORT("IN2"))
+	tc0220ioc_device &tc0220ioc(TC0220IOC(config, "tc0220ioc", 0));
+	tc0220ioc.read_0_callback().set_ioport("DSWA");
+	tc0220ioc.read_1_callback().set_ioport("DSWB");
+	tc0220ioc.read_2_callback().set_ioport("IN0");
+	tc0220ioc.read_3_callback().set_ioport("IN1");
+	tc0220ioc.write_4_callback().set(FUNC(taitoh_state::coin_control_w));
+	tc0220ioc.read_7_callback().set_ioport("IN2");
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)

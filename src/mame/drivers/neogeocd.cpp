@@ -372,7 +372,7 @@ WRITE16_MEMBER(ngcd_state::neocd_control_w)
 		//  printf("blah %02x\n", byteValue);
 			if (byteValue == 0x00)
 			{
-				machine().device("ymsnd")->reset();
+				m_ym->reset();
 				m_audiocpu->set_input_line(INPUT_LINE_RESET, ASSERT_LINE);
 			}
 			else m_audiocpu->set_input_line(INPUT_LINE_RESET, CLEAR_LINE);
@@ -847,8 +847,8 @@ void ngcd_state::machine_start()
 	// initialize the memcard data structure
 	// NeoCD doesn't have memcard slots, rather, it has a larger internal memory which works the same
 	m_meminternal_data = make_unique_clear<uint8_t[]>(0x2000);
-	machine().device<nvram_device>("saveram")->set_base(m_meminternal_data.get(), 0x2000);
-	save_pointer(NAME(m_meminternal_data.get()), 0x2000);
+	subdevice<nvram_device>("saveram")->set_base(m_meminternal_data.get(), 0x2000);
+	save_pointer(NAME(m_meminternal_data), 0x2000);
 
 	m_tempcdc->reset_cd();
 }
@@ -889,15 +889,15 @@ void ngcd_state::neocd_main_map(address_map &map)
 	aes_base_main_map(map);
 
 	map(0x000000, 0x1fffff).ram().region("maincpu", 0x00000);
-	map(0x000000, 0x00007f).r(this, FUNC(ngcd_state::banked_vectors_r)); // writes will fall through to area above
+	map(0x000000, 0x00007f).r(FUNC(ngcd_state::banked_vectors_r)); // writes will fall through to area above
 
-	map(0x800000, 0x803fff).rw(this, FUNC(ngcd_state::neocd_memcard_r), FUNC(ngcd_state::neocd_memcard_w));
+	map(0x800000, 0x803fff).rw(FUNC(ngcd_state::neocd_memcard_r), FUNC(ngcd_state::neocd_memcard_w));
 	map(0xc00000, 0xc7ffff).mirror(0x080000).rom().region("mainbios", 0);
-	map(0xd00000, 0xdfffff).r(this, FUNC(ngcd_state::unmapped_r));
-	map(0xe00000, 0xefffff).rw(this, FUNC(ngcd_state::neocd_transfer_r), FUNC(ngcd_state::neocd_transfer_w));
-	map(0xf00000, 0xfeffff).r(this, FUNC(ngcd_state::unmapped_r));
-	map(0xff0000, 0xff01ff).rw(this, FUNC(ngcd_state::neocd_control_r), FUNC(ngcd_state::neocd_control_w)); // CDROM / DMA
-	map(0xff0200, 0xffffff).r(this, FUNC(ngcd_state::unmapped_r));
+	map(0xd00000, 0xdfffff).r(FUNC(ngcd_state::unmapped_r));
+	map(0xe00000, 0xefffff).rw(FUNC(ngcd_state::neocd_transfer_r), FUNC(ngcd_state::neocd_transfer_w));
+	map(0xf00000, 0xfeffff).r(FUNC(ngcd_state::unmapped_r));
+	map(0xff0000, 0xff01ff).rw(FUNC(ngcd_state::neocd_control_r), FUNC(ngcd_state::neocd_control_w)); // CDROM / DMA
+	map(0xff0200, 0xffffff).r(FUNC(ngcd_state::unmapped_r));
 }
 
 
@@ -918,7 +918,7 @@ void ngcd_state::neocd_audio_io_map(address_map &map)
 {
 	map(0x00, 0x00).mirror(0xff00).rw(m_soundlatch, FUNC(generic_latch_8_device::read), FUNC(generic_latch_8_device::clear_w));
 	map(0x04, 0x07).mirror(0xff00).rw(m_ym, FUNC(ym2610_device::read), FUNC(ym2610_device::write));
-	map(0x08, 0x08).mirror(0xff00).select(0x0010).w(this, FUNC(ngcd_state::audio_cpu_enable_nmi_w));
+	map(0x08, 0x08).mirror(0xff00).select(0x0010).w(FUNC(ngcd_state::audio_cpu_enable_nmi_w));
 	// banking reads are actually NOP on NeoCD? but some games still access them
 //  AM_RANGE(0x08, 0x0b) AM_MIRROR(0x00f0) AM_SELECT(0xff00) AM_READ(audio_cpu_bank_select_r)
 	map(0x0c, 0x0c).mirror(0xff00).w(m_soundlatch2, FUNC(generic_latch_8_device::write));
@@ -1041,8 +1041,7 @@ MACHINE_CONFIG_START(ngcd_state::neocd)
 	MCFG_DEVICE_PROGRAM_MAP(neocd_audio_map)
 	MCFG_DEVICE_IO_MAP(neocd_audio_io_map)
 
-	MCFG_DEVICE_MODIFY("systemlatch")
-	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(LOGGER("NeoCD: write to regular vector change address?")) // what IS going on with "neocdz doubledr" and why do games write here if it's hooked up to nothing?
+	subdevice<hc259_device>("systemlatch")->q_out_cb<1>().set_log("NeoCD: write to regular vector change address?"); // what IS going on with "neocdz doubledr" and why do games write here if it's hooked up to nothing?
 
 	MCFG_SCREEN_MODIFY("screen")
 	MCFG_SCREEN_UPDATE_DRIVER(ngcd_state, screen_update_neocd)

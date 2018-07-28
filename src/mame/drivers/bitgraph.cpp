@@ -55,6 +55,7 @@
 #include "machine/ram.h"
 #include "sound/ay8910.h"
 
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -69,8 +70,6 @@
 #define RS232_K_TAG "rs232kbd"
 #define RS232_D_TAG "rs232debug"
 #define RS232_M_TAG "rs232mouse"
-#define COM8116_A_TAG "com8116_a"
-#define COM8116_B_TAG "com8116_b"
 #define ADLC_TAG "adlc"
 #define PIA_TAG "pia"
 #define PSG_TAG "psg"
@@ -100,8 +99,8 @@ public:
 		, m_acia2(*this, ACIA2_TAG)
 		, m_acia3(*this, ACIA3_TAG)
 		, m_adlc(*this, ADLC_TAG)
-		, m_dbrga(*this, COM8116_A_TAG)
-		, m_dbrgb(*this, COM8116_B_TAG)
+		, m_dbrga(*this, "com8116_a")
+		, m_dbrgb(*this, "com8116_b")
 		, m_pia(*this, PIA_TAG)
 		, m_psg(*this, PSG_TAG)
 		, m_earom(*this, EAROM_TAG)
@@ -182,9 +181,9 @@ void bitgraph_state::bitgrapha_mem(address_map &map)
 	map(0x010013, 0x010013).rw(m_acia2, FUNC(acia6850_device::status_r), FUNC(acia6850_device::control_w));
 	map(0x010019, 0x010019).rw(m_acia3, FUNC(acia6850_device::data_r), FUNC(acia6850_device::data_w));   // POINTER
 	map(0x01001b, 0x01001b).rw(m_acia3, FUNC(acia6850_device::status_r), FUNC(acia6850_device::control_w));
-	map(0x010020, 0x010027).rw(this, FUNC(bitgraph_state::adlc_r), FUNC(bitgraph_state::adlc_w)).umask16(0xff00);
-	map(0x010028, 0x01002f).rw(this, FUNC(bitgraph_state::pia_r), FUNC(bitgraph_state::pia_w)).umask16(0xff00);    // EAROM, PSG
-	map(0x010030, 0x010031).w(this, FUNC(bitgraph_state::baud_write));
+	map(0x010020, 0x010027).rw(FUNC(bitgraph_state::adlc_r), FUNC(bitgraph_state::adlc_w)).umask16(0xff00);
+	map(0x010028, 0x01002f).rw(FUNC(bitgraph_state::pia_r), FUNC(bitgraph_state::pia_w)).umask16(0xff00);    // EAROM, PSG
+	map(0x010030, 0x010031).w(FUNC(bitgraph_state::baud_write));
 	map(0x3e0000, 0x3fffff).ram();
 }
 
@@ -198,12 +197,12 @@ void bitgraph_state::bitgraphb_mem(address_map &map)
 	map(0x01000b, 0x01000b).rw(m_acia1, FUNC(acia6850_device::status_r), FUNC(acia6850_device::control_w));
 	map(0x010011, 0x010011).rw(m_acia2, FUNC(acia6850_device::data_r), FUNC(acia6850_device::data_w));   // DEBUGGER
 	map(0x010013, 0x010013).rw(m_acia2, FUNC(acia6850_device::status_r), FUNC(acia6850_device::control_w));
-	map(0x01001b, 0x01001b).w(this, FUNC(bitgraph_state::misccr_write));
-	map(0x010020, 0x010027).rw(this, FUNC(bitgraph_state::adlc_r), FUNC(bitgraph_state::adlc_w)).umask16(0xff00);
-	map(0x010028, 0x01002f).rw(this, FUNC(bitgraph_state::pia_r), FUNC(bitgraph_state::pia_w)).umask16(0xff00);    // EAROM, PSG
-	map(0x010030, 0x010031).w(this, FUNC(bitgraph_state::baud_write));
+	map(0x01001b, 0x01001b).w(FUNC(bitgraph_state::misccr_write));
+	map(0x010020, 0x010027).rw(FUNC(bitgraph_state::adlc_r), FUNC(bitgraph_state::adlc_w)).umask16(0xff00);
+	map(0x010028, 0x01002f).rw(FUNC(bitgraph_state::pia_r), FUNC(bitgraph_state::pia_w)).umask16(0xff00);    // EAROM, PSG
+	map(0x010030, 0x010031).w(FUNC(bitgraph_state::baud_write));
 //  AM_RANGE(0x010030, 0x010037) AM_READ8(ppu_read, 0x00ff)
-	map(0x010038, 0x01003f).w(this, FUNC(bitgraph_state::ppu_write)).umask16(0x00ff);
+	map(0x010038, 0x01003f).w(FUNC(bitgraph_state::ppu_write)).umask16(0x00ff);
 	map(0x380000, 0x3fffff).ram();
 }
 
@@ -337,10 +336,10 @@ WRITE_LINE_MEMBER(bitgraph_state::system_clock_write)
 WRITE16_MEMBER(bitgraph_state::baud_write)
 {
 	DBG_LOG(1,"Baud", ("%04X\n", data));
-	m_dbrgb->str_w(data & 15);      // 2 DBG
-	m_dbrga->stt_w((data >> 4) & 15);   // 1 KBD
-	m_dbrgb->stt_w((data >> 8) & 15);   // 3 PNT
-	m_dbrga->str_w((data >> 12) & 15);  // 0 HOST
+	m_dbrgb->write_str(data & 15);      // 2 DBG
+	m_dbrga->write_stt((data >> 4) & 15);   // 1 KBD
+	m_dbrgb->write_stt((data >> 8) & 15);   // 3 PNT
+	m_dbrga->write_str((data >> 12) & 15);  // 0 HOST
 }
 
 WRITE_LINE_MEMBER(bitgraph_state::com8116_a_fr_w)
@@ -435,7 +434,7 @@ WRITE8_MEMBER(bitgraph_state::ppu_write)
 #ifdef UNUSED_FUNCTION
 void bitgraph_state::ppu_io(address_map &map)
 {
-//  map(0x00, 0x00).r(this, FUNC(bitgraph_state::ppu_irq));
+//  map(0x00, 0x00).r(FUNC(bitgraph_state::ppu_irq));
 }
 #endif
 
@@ -535,13 +534,13 @@ MACHINE_CONFIG_START(bitgraph_state::bg_motherboard)
 	MCFG_RS232_CTS_HANDLER(WRITELINE(ACIA2_TAG, acia6850_device, write_cts))
 
 	// XXX actual part may be something else
-	MCFG_DEVICE_ADD(COM8116_A_TAG, COM8116, XTAL(5'068'800))
-	MCFG_COM8116_FR_HANDLER(WRITELINE(*this, bitgraph_state, com8116_a_fr_w))
-	MCFG_COM8116_FT_HANDLER(WRITELINE(*this, bitgraph_state, com8116_a_ft_w))
+	COM8116(config, m_dbrga, 5.0688_MHz_XTAL);
+	m_dbrga->fr_handler().set(FUNC(bitgraph_state::com8116_a_fr_w));
+	m_dbrga->ft_handler().set(FUNC(bitgraph_state::com8116_a_ft_w));
 
-	MCFG_DEVICE_ADD(COM8116_B_TAG, COM8116, XTAL(5'068'800))
-	MCFG_COM8116_FR_HANDLER(WRITELINE(*this, bitgraph_state, com8116_b_fr_w))
-	MCFG_COM8116_FT_HANDLER(WRITELINE(*this, bitgraph_state, com8116_b_ft_w))
+	COM8116(config, m_dbrgb, 5.0688_MHz_XTAL);
+	m_dbrgb->fr_handler().set(FUNC(bitgraph_state::com8116_b_fr_w));
+	m_dbrgb->ft_handler().set(FUNC(bitgraph_state::com8116_b_ft_w));
 
 	MCFG_DEVICE_ADD(PIA_TAG, PIA6821, 0)
 	MCFG_PIA_READCA1_HANDLER(READLINE(*this, bitgraph_state, pia_ca1_r))

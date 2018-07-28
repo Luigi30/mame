@@ -84,6 +84,7 @@ www.andys-arcade.com
 #include "machine/i8255.h"
 #include "machine/timer.h"
 #include "sound/ay8910.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -93,8 +94,8 @@ www.andys-arcade.com
 class imolagp_state : public driver_device
 {
 public:
-	imolagp_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
+	imolagp_state(const machine_config &mconfig, device_type type, const char *tag) :
+		driver_device(mconfig, type, tag),
 		m_maincpu(*this, "maincpu"),
 		m_slavecpu(*this, "slave"),
 		m_steer_pot_timer(*this, "pot"),
@@ -102,6 +103,11 @@ public:
 		m_digits(*this, "digit%u%u", 0U, 0U)
 	{ }
 
+	void imolagp(machine_config &config);
+
+	DECLARE_CUSTOM_INPUT_MEMBER(imolagp_steerlatch_r);
+
+private:
 	required_device<cpu_device> m_maincpu;
 	required_device<cpu_device> m_slavecpu;
 	required_device<timer_device> m_steer_pot_timer;
@@ -125,7 +131,6 @@ public:
 	DECLARE_READ8_MEMBER(imola_draw_mode_r);
 	DECLARE_WRITE8_MEMBER(vreg_control_w);
 	DECLARE_WRITE8_MEMBER(vreg_data_w);
-	DECLARE_CUSTOM_INPUT_MEMBER(imolagp_steerlatch_r);
 	DECLARE_WRITE_LINE_MEMBER(vblank_irq);
 	TIMER_DEVICE_CALLBACK_MEMBER(imolagp_pot_callback);
 
@@ -134,7 +139,6 @@ public:
 	virtual void video_start() override;
 	DECLARE_PALETTE_INIT(imolagp);
 	uint32_t screen_update_imolagp(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect);
-	void imolagp(machine_config &config);
 	void imolagp_master_io(address_map &map);
 	void imolagp_master_map(address_map &map);
 	void imolagp_slave_io(address_map &map);
@@ -344,14 +348,14 @@ void imolagp_state::imolagp_master_map(address_map &map)
 	map(0x0000, 0x1fff).rom();
 	map(0x2000, 0x23ff).ram();
 	map(0x2800, 0x2803).rw("ppi8255", FUNC(i8255_device::read), FUNC(i8255_device::write));
-	map(0x3000, 0x3000).w(this, FUNC(imolagp_state::vreg_control_w));
+	map(0x3000, 0x3000).w(FUNC(imolagp_state::vreg_control_w));
 	map(0x37f0, 0x37f0).w("aysnd", FUNC(ay8910_device::address_w));
 //  AM_RANGE(0x37f7, 0x37f7) AM_NOP
-	map(0x3800, 0x3800).rw(this, FUNC(imolagp_state::vreg_data_r), FUNC(imolagp_state::vreg_data_w));
+	map(0x3800, 0x3800).rw(FUNC(imolagp_state::vreg_data_r), FUNC(imolagp_state::vreg_data_w));
 	map(0x3810, 0x3810).w("aysnd", FUNC(ay8910_device::data_w));
 	map(0x4000, 0x4000).portr("DSWA");
-	map(0x47ff, 0x4800).w(this, FUNC(imolagp_state::transmit_data_w));
-	map(0x5000, 0x50ff).w(this, FUNC(imolagp_state::imola_led_board_w));
+	map(0x47ff, 0x4800).w(FUNC(imolagp_state::transmit_data_w));
+	map(0x5000, 0x50ff).w(FUNC(imolagp_state::imola_led_board_w));
 	map(0x5800, 0x5800).portr("DSWA"); // assume mirror
 	map(0x6000, 0x6000).portr("DSWB");
 }
@@ -359,7 +363,7 @@ void imolagp_state::imolagp_master_map(address_map &map)
 void imolagp_state::imolagp_master_io(address_map &map)
 {
 	map.global_mask(0xff);
-	map(0x00, 0x00).r(this, FUNC(imolagp_state::trigger_slave_nmi_r));
+	map(0x00, 0x00).r(FUNC(imolagp_state::trigger_slave_nmi_r));
 }
 
 
@@ -367,14 +371,14 @@ void imolagp_state::imolagp_slave_map(address_map &map)
 {
 	map(0x0000, 0x3fff).rom();
 	map(0x4000, 0x43ff).ram();
-	map(0x9fff, 0xa000).r(this, FUNC(imolagp_state::receive_data_r));
-	map(0xc000, 0xffff).w(this, FUNC(imolagp_state::screenram_w));
+	map(0x9fff, 0xa000).r(FUNC(imolagp_state::receive_data_r));
+	map(0xc000, 0xffff).w(FUNC(imolagp_state::screenram_w));
 }
 
 void imolagp_state::imolagp_slave_io(address_map &map)
 {
 	map.global_mask(0xff);
-	map(0x00, 0xff).r(this, FUNC(imolagp_state::imola_draw_mode_r));
+	map(0x00, 0xff).r(FUNC(imolagp_state::imola_draw_mode_r));
 }
 
 
@@ -520,12 +524,12 @@ MACHINE_CONFIG_START(imolagp_state::imolagp)
 
 	MCFG_QUANTUM_PERFECT_CPU("maincpu")
 
-	MCFG_DEVICE_ADD("ppi8255", I8255A, 0)
+	i8255_device &ppi(I8255A(config, "ppi8255", 0));
 	// mode $91 - ports A & C-lower as input, ports B & C-upper as output
-	MCFG_I8255_IN_PORTA_CB(IOPORT("IN0"))
-	MCFG_I8255_IN_PORTB_CB(LOGGER("PPI8255 - unmapped read port B"))
-	MCFG_I8255_OUT_PORTB_CB(LOGGER("PPI8255 - unmapped write port B"))
-	MCFG_I8255_IN_PORTC_CB(IOPORT("IN1"))
+	ppi.in_pa_callback().set_ioport("IN0");
+	ppi.in_pb_callback().set_log("PPI8255 - unmapped read port B");
+	ppi.out_pb_callback().set_log("PPI8255 - unmapped write port B");
+	ppi.in_pc_callback().set_ioport("IN1");
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)

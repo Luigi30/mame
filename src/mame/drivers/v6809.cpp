@@ -59,6 +59,7 @@ ToDo:
 #include "machine/wd_fdc.h"
 #include "sound/spkrdev.h"
 #include "video/mc6845.h"
+#include "emupal.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -81,6 +82,9 @@ public:
 	{
 	}
 
+	void v6809(machine_config &config);
+
+private:
 	DECLARE_WRITE_LINE_MEMBER(speaker_en_w);
 	DECLARE_WRITE_LINE_MEMBER(speaker_w);
 	DECLARE_READ8_MEMBER(pb_r);
@@ -93,9 +97,8 @@ public:
 	MC6845_UPDATE_ROW(crtc_update_row);
 	MC6845_ON_UPDATE_ADDR_CHANGED(crtc_update_addr);
 
-	void v6809(machine_config &config);
 	void v6809_mem(address_map &map);
-private:
+
 	uint16_t m_video_address;
 	bool m_speaker_en;
 	uint8_t m_video_index;
@@ -117,9 +120,9 @@ void v6809_state::v6809_mem(address_map &map)
 {
 	map.unmap_value_high();
 	map(0x0000, 0xefff).ram();
-	map(0xf000, 0xf000).mirror(0xfe).r(m_crtc, FUNC(mc6845_device::status_r)).w(this, FUNC(v6809_state::v6809_address_w));
-	map(0xf001, 0xf001).mirror(0xfe).r(m_crtc, FUNC(mc6845_device::register_r)).w(this, FUNC(v6809_state::v6809_register_w));
-	map(0xf200, 0xf200).mirror(0xff).w(this, FUNC(v6809_state::videoram_w));
+	map(0xf000, 0xf000).mirror(0xfe).r(m_crtc, FUNC(mc6845_device::status_r)).w(FUNC(v6809_state::v6809_address_w));
+	map(0xf001, 0xf001).mirror(0xfe).r(m_crtc, FUNC(mc6845_device::register_r)).w(FUNC(v6809_state::v6809_register_w));
+	map(0xf200, 0xf200).mirror(0xff).w(FUNC(v6809_state::videoram_w));
 	map(0xf500, 0xf501).mirror(0x36).rw("acia0", FUNC(acia6850_device::read), FUNC(acia6850_device::write)); // modem
 	map(0xf508, 0xf509).mirror(0x36).rw("acia1", FUNC(acia6850_device::read), FUNC(acia6850_device::write)); // printer
 	map(0xf600, 0xf603).mirror(0x3c).rw(m_fdc, FUNC(mb8876_device::read), FUNC(mb8876_device::write));
@@ -328,15 +331,15 @@ MACHINE_CONFIG_START(v6809_state::v6809)
 	MCFG_PTM6840_O2_CB(WRITELINE(*this, v6809_state, speaker_en_w))
 	MCFG_PTM6840_IRQ_CB(INPUTLINE("maincpu", M6809_IRQ_LINE))
 
-	MCFG_DEVICE_ADD("acia0", ACIA6850, 0)
+	ACIA6850(config, "acia0", 0);
 
-	MCFG_DEVICE_ADD("acia1", ACIA6850, 0)
+	ACIA6850(config, "acia1", 0);
 
-	MCFG_DEVICE_ADD("acia_clock", CLOCK, 153600)
-	MCFG_CLOCK_SIGNAL_HANDLER(WRITELINE("acia0", acia6850_device, write_txc))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("acia0", acia6850_device, write_rxc))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("acia1", acia6850_device, write_txc))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("acia1", acia6850_device, write_rxc))
+	clock_device &acia_clock(CLOCK(config, "acia_clock", 153600));
+	acia_clock.signal_handler().set("acia0", FUNC(acia6850_device::write_txc));
+	acia_clock.signal_handler().append("acia0", FUNC(acia6850_device::write_rxc));
+	acia_clock.signal_handler().append("acia1", FUNC(acia6850_device::write_txc));
+	acia_clock.signal_handler().append("acia1", FUNC(acia6850_device::write_rxc));
 
 	MCFG_DEVICE_ADD("rtc", MM58274C, 0)
 // this is all guess

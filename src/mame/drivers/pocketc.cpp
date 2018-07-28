@@ -89,7 +89,7 @@ void pc1401_state::pc1401_mem(address_map &map)
 {
 	map(0x0000, 0x1fff).rom();
 	map(0x3800, 0x47ff).ram();
-	map(0x6000, 0x67ff).rw(this, FUNC(pc1401_state::pc1401_lcd_read), FUNC(pc1401_state::pc1401_lcd_write)).mirror(0x1000);
+	map(0x6000, 0x67ff).rw(FUNC(pc1401_state::pc1401_lcd_read), FUNC(pc1401_state::pc1401_lcd_write)).mirror(0x1000);
 	map(0x8000, 0xffff).rom();
 }
 
@@ -97,7 +97,7 @@ void pc1401_state::pc1402_mem(address_map &map)
 {
 	map(0x0000, 0x1fff).rom();
 	map(0x2000, 0x47ff).ram();
-	map(0x6000, 0x67ff).rw(this, FUNC(pc1401_state::pc1401_lcd_read), FUNC(pc1401_state::pc1401_lcd_write)).mirror(0x1000);
+	map(0x6000, 0x67ff).rw(FUNC(pc1401_state::pc1401_lcd_read), FUNC(pc1401_state::pc1401_lcd_write)).mirror(0x1000);
 	map(0x8000, 0xffff).rom();
 }
 
@@ -106,7 +106,7 @@ void pc1251_state::pc1250_mem(address_map &map)
 	map(0x0000, 0x1fff).rom();
 	map(0x4000, 0x7fff).rom();
 	map(0xc000, 0xc7ff).ram(); // 2KB RAM
-	map(0xf800, 0xf8ff).rw(this, FUNC(pc1251_state::pc1251_lcd_read), FUNC(pc1251_state::pc1251_lcd_write));
+	map(0xf800, 0xf8ff).rw(FUNC(pc1251_state::pc1251_lcd_read), FUNC(pc1251_state::pc1251_lcd_write));
 }
 
 void pc1251_state::pc1251_mem(address_map &map)
@@ -114,7 +114,7 @@ void pc1251_state::pc1251_mem(address_map &map)
 	map(0x0000, 0x1fff).rom();
 	map(0x4000, 0x7fff).rom();
 	map(0xb800, 0xc7ff).ram(); // 4KB RAM
-	map(0xf800, 0xf8ff).rw(this, FUNC(pc1251_state::pc1251_lcd_read), FUNC(pc1251_state::pc1251_lcd_write));
+	map(0xf800, 0xf8ff).rw(FUNC(pc1251_state::pc1251_lcd_read), FUNC(pc1251_state::pc1251_lcd_write));
 }
 
 void pc1251_state::pc1255_mem(address_map &map)
@@ -122,13 +122,13 @@ void pc1251_state::pc1255_mem(address_map &map)
 	map(0x0000, 0x1fff).rom();
 	map(0x4000, 0x7fff).rom();
 	map(0xa000, 0xc7ff).ram(); // 10KB RAM
-	map(0xf800, 0xf8ff).rw(this, FUNC(pc1251_state::pc1251_lcd_read), FUNC(pc1251_state::pc1251_lcd_write));
+	map(0xf800, 0xf8ff).rw(FUNC(pc1251_state::pc1251_lcd_read), FUNC(pc1251_state::pc1251_lcd_write));
 }
 
 void pc1251_state::pc1260_mem(address_map &map)
 {
 	map(0x0000, 0x1fff).rom();
-	map(0x2000, 0x20ff).rw(this, FUNC(pc1251_state::pc1251_lcd_read), FUNC(pc1251_state::pc1251_lcd_write));
+	map(0x2000, 0x20ff).rw(FUNC(pc1251_state::pc1251_lcd_read), FUNC(pc1251_state::pc1251_lcd_write));
 	//map( 0x2800, 0x28ff) AM_READWRITE(pc1251_lcd_read, pc1251_lcd_write)
 	map(0x5800, 0x67ff).ram(); // 4KB RAM
 	map(0x8000, 0xffff).rom();
@@ -137,7 +137,7 @@ void pc1251_state::pc1260_mem(address_map &map)
 void pc1251_state::pc1261_mem(address_map &map)
 {
 	map(0x0000, 0x1fff).rom();
-	map(0x2000, 0x20ff).rw(this, FUNC(pc1251_state::pc1251_lcd_read), FUNC(pc1251_state::pc1251_lcd_write));
+	map(0x2000, 0x20ff).rw(FUNC(pc1251_state::pc1251_lcd_read), FUNC(pc1251_state::pc1251_lcd_write));
 	//map( 0x2800, 0x28ff) AM_READWRITE(pc1251_lcd_read, pc1251_lcd_write)
 	map(0x4000, 0x67ff).ram(); // 10KB RAM
 	map(0x8000, 0xffff).rom();
@@ -147,15 +147,15 @@ void pc1251_state::pc1261_mem(address_map &map)
 void pc1350_state::pc1350_mem(address_map &map)
 {
 	map(0x0000, 0x1fff).rom();
-	map(0x7000, 0x7eff).rw(this, FUNC(pc1350_state::pc1350_lcd_read), FUNC(pc1350_state::pc1350_lcd_write));
+	map(0x7000, 0x7eff).rw(FUNC(pc1350_state::pc1350_lcd_read), FUNC(pc1350_state::pc1350_lcd_write));
 	map(0x8000, 0xffff).rom();
 }
 
 void pc1403_state::pc1403_mem(address_map &map)
 {
 	map(0x0000, 0x1fff).rom();
-	map(0x3000, 0x30bf).rw(this, FUNC(pc1403_state::pc1403_lcd_read), FUNC(pc1403_state::pc1403_lcd_write));
-	map(0x3800, 0x3fff).rw(this, FUNC(pc1403_state::pc1403_asic_read), FUNC(pc1403_state::pc1403_asic_write));
+	map(0x3000, 0x30bf).rw(FUNC(pc1403_state::pc1403_lcd_read), FUNC(pc1403_state::pc1403_lcd_write));
+	map(0x3800, 0x3fff).rw(FUNC(pc1403_state::pc1403_asic_read), FUNC(pc1403_state::pc1403_asic_write));
 	map(0x4000, 0x7fff).bankr("bank1");
 	map(0xe000, 0xffff).ram();
 }
@@ -163,8 +163,8 @@ void pc1403_state::pc1403_mem(address_map &map)
 void pc1403_state::pc1403h_mem(address_map &map)
 {
 	map(0x0000, 0x1fff).rom();
-	map(0x3000, 0x30bf).rw(this, FUNC(pc1403_state::pc1403_lcd_read), FUNC(pc1403_state::pc1403_lcd_write));
-	map(0x3800, 0x3fff).rw(this, FUNC(pc1403_state::pc1403_asic_read), FUNC(pc1403_state::pc1403_asic_write));
+	map(0x3000, 0x30bf).rw(FUNC(pc1403_state::pc1403_lcd_read), FUNC(pc1403_state::pc1403_lcd_write));
+	map(0x3800, 0x3fff).rw(FUNC(pc1403_state::pc1403_asic_read), FUNC(pc1403_state::pc1403_asic_write));
 	map(0x4000, 0x7fff).bankr("bank1");
 	map(0x8000, 0xffff).ram();
 }
@@ -757,7 +757,7 @@ MACHINE_CONFIG_START(pc1401_state::pc1401)
 	MCFG_DEVICE_PROGRAM_MAP(pc1401_mem)
 	MCFG_SC61860_READ_RESET_HANDLER(READLINE(*this, pc1401_state,pc1401_reset))
 	MCFG_SC61860_READ_BRK_HANDLER(READLINE(*this, pc1401_state,pc1401_brk))
-	MCFG_SC61860_READ_X_HANDLER(NOOP)
+	MCFG_SC61860_READ_X_HANDLER(CONSTANT(0))
 	MCFG_SC61860_READ_A_HANDLER(READ8(*this, pc1401_state,pc1401_ina))
 	MCFG_SC61860_WRITE_A_HANDLER(WRITE8(*this, pc1401_state,pc1401_outa))
 	MCFG_SC61860_READ_B_HANDLER(READ8(*this, pc1401_state,pc1401_inb))
@@ -778,9 +778,9 @@ MACHINE_CONFIG_START(pc1251_state::pc1250)
 	pocketc(config);
 	MCFG_DEVICE_ADD("maincpu", SC61860, 192000)        /* 7.8336 MHz */
 	MCFG_DEVICE_PROGRAM_MAP( pc1250_mem)
-	MCFG_SC61860_READ_RESET_HANDLER(NOOP)
+	MCFG_SC61860_READ_RESET_HANDLER(CONSTANT(0))
 	MCFG_SC61860_READ_BRK_HANDLER(READLINE(*this, pc1251_state,pc1251_brk))
-	MCFG_SC61860_READ_X_HANDLER(NOOP)
+	MCFG_SC61860_READ_X_HANDLER(CONSTANT(0))
 	MCFG_SC61860_READ_A_HANDLER(READ8(*this, pc1251_state,pc1251_ina))
 	MCFG_SC61860_WRITE_A_HANDLER(WRITE8(*this, pc1251_state,pc1251_outa))
 	MCFG_SC61860_READ_B_HANDLER(READ8(*this, pc1251_state,pc1251_inb))
@@ -825,9 +825,9 @@ MACHINE_CONFIG_START(pc1350_state::pc1350)
 	pocketc(config);
 	MCFG_DEVICE_ADD("maincpu", SC61860, 192000)        /* 7.8336 MHz */
 	MCFG_DEVICE_PROGRAM_MAP( pc1350_mem)
-	MCFG_SC61860_READ_RESET_HANDLER(NOOP)
+	MCFG_SC61860_READ_RESET_HANDLER(CONSTANT(0))
 	MCFG_SC61860_READ_BRK_HANDLER(READLINE(*this, pc1350_state,pc1350_brk))
-	MCFG_SC61860_READ_X_HANDLER(NOOP)
+	MCFG_SC61860_READ_X_HANDLER(CONSTANT(0))
 	MCFG_SC61860_READ_A_HANDLER(READ8(*this, pc1350_state,pc1350_ina))
 	MCFG_SC61860_WRITE_A_HANDLER(WRITE8(*this, pc1350_state,pc1350_outa))
 	MCFG_SC61860_READ_B_HANDLER(READ8(*this, pc1350_state,pc1350_inb))
@@ -854,12 +854,12 @@ MACHINE_CONFIG_START(pc1403_state::pc1403)
 	pocketc(config);
 	MCFG_DEVICE_ADD( "maincpu", SC61860, 256000 )
 	MCFG_DEVICE_PROGRAM_MAP( pc1403_mem)
-	MCFG_SC61860_READ_RESET_HANDLER(NOOP)
+	MCFG_SC61860_READ_RESET_HANDLER(CONSTANT(0))
 	MCFG_SC61860_READ_BRK_HANDLER(READLINE(*this, pc1403_state,pc1403_brk))
-	MCFG_SC61860_READ_X_HANDLER(NOOP)
+	MCFG_SC61860_READ_X_HANDLER(CONSTANT(0))
 	MCFG_SC61860_READ_A_HANDLER(READ8(*this, pc1403_state,pc1403_ina))
 	MCFG_SC61860_WRITE_A_HANDLER(WRITE8(*this, pc1403_state,pc1403_outa))
-	MCFG_SC61860_READ_B_HANDLER(NOOP)
+	MCFG_SC61860_READ_B_HANDLER(CONSTANT(0))
 	MCFG_SC61860_WRITE_B_HANDLER(NOOP)
 	MCFG_SC61860_WRITE_C_HANDLER(WRITE8(*this, pc1403_state,pc1403_outc))
 

@@ -44,6 +44,7 @@
 #include "machine/vt100_kbd.h"
 #include "video/i8275.h"
 
+#include "emupal.h"
 #include "screen.h"
 
 #define LOG_GENERAL (1U <<  0)
@@ -72,7 +73,7 @@ public:
 		, m_crtc1(*this, "i8275_1")
 		, m_crtc2(*this, "i8275_2")
 		, m_p_chargen(*this, "chargen")
-		{ }
+	{ }
 
 	void ms6102(machine_config &config);
 	void ms6102_io(address_map &map);
@@ -139,10 +140,10 @@ void ms6102_state::ms6102_io(address_map &map)
 	map(0x10, 0x18).rw(m_dma8257, FUNC(i8257_device::read), FUNC(i8257_device::write));
 	map(0x20, 0x23).rw("pit8253", FUNC(pit8253_device::read), FUNC(pit8253_device::write));
 	map(0x30, 0x30).mirror(0x0f).rw("589wa1", FUNC(ay31015_device::receive), FUNC(ay31015_device::transmit));
-	map(0x40, 0x41).rw(this, FUNC(ms6102_state::crtc_r), FUNC(ms6102_state::crtc_w));
+	map(0x40, 0x41).rw(FUNC(ms6102_state::crtc_r), FUNC(ms6102_state::crtc_w));
 	map(0x50, 0x5f).noprw(); // video disable?
-	map(0x60, 0x6f).w(this, FUNC(ms6102_state::pic_w));
-	map(0x70, 0x7f).r(this, FUNC(ms6102_state::misc_status_r));
+	map(0x60, 0x6f).w(FUNC(ms6102_state::pic_w));
+	map(0x70, 0x7f).r(FUNC(ms6102_state::misc_status_r));
 }
 
 static const gfx_layout ms6102_charlayout =
@@ -349,16 +350,15 @@ MACHINE_CONFIG_START(ms6102_state::ms6102)
 	MCFG_RIPPLE_COUNTER_STAGES(2)
 	MCFG_RIPPLE_COUNTER_COUNT_OUT_CB(WRITE8(*this, ms6102_state, kbd_uart_clock_w))
 
-	MCFG_DEVICE_ADD("keyboard", MS7002, 0)
-	MCFG_VT100_KEYBOARD_SIGNAL_OUT_CALLBACK(WRITELINE("589wa1", ay31015_device, write_si))
+	MS7002(config, m_keyboard, 0).signal_out_callback().set(m_kbd_uart, FUNC(ay31015_device::write_si));
 
 	// serial connection to host
-	MCFG_DEVICE_ADD("i8251", I8251, 0)
-	MCFG_I8251_TXD_HANDLER(WRITELINE("rs232", rs232_port_device, write_txd))
-	MCFG_I8251_RXRDY_HANDLER(WRITELINE(*this, ms6102_state, irq<3>))
+	I8251(config, m_i8251, 0);
+	m_i8251->txd_handler().set(m_rs232, FUNC(rs232_port_device::write_txd));
+	m_i8251->rxrdy_handler().set(FUNC(ms6102_state::irq<3>));
 
-	MCFG_DEVICE_ADD("rs232", RS232_PORT, default_rs232_devices, "null_modem")
-	MCFG_RS232_RXD_HANDLER(WRITELINE("i8251", i8251_device, write_rxd))
+	RS232_PORT(config, m_rs232, default_rs232_devices, "null_modem");
+	m_rs232->rxd_handler().set(m_i8251, FUNC(i8251_device::write_rxd));
 
 	MCFG_DEVICE_ADD("pit8253", PIT8253, 0)
 	MCFG_PIT8253_CLK0(XTAL(16'400'000) / 9)

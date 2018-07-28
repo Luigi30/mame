@@ -446,7 +446,7 @@ void device_execute_interface::interface_post_reset()
 	if (m_vblank_interrupt_screen != nullptr)
 	{
 		// get the screen that will trigger the VBLANK
-		screen_device *screen = device().siblingdevice<screen_device>(m_vblank_interrupt_screen);
+		screen_device * screen = device().siblingdevice<screen_device>(m_vblank_interrupt_screen);
 
 		assert(screen != nullptr);
 		screen->register_vblank_callback(vblank_state_delegate(&device_execute_interface::on_vblank, this));
@@ -522,7 +522,9 @@ int device_execute_interface::standard_irq_callback(int irqline)
 		vector = m_driver_irq(device(), irqline);
 
 	// notify the debugger
-	debugger_interrupt_hook(irqline);
+	if (device().machine().debug_flags & DEBUG_FLAG_ENABLED)
+		device().debug()->interrupt_hook(irqline);
+
 	return vector;
 }
 

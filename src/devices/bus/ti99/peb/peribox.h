@@ -58,10 +58,6 @@ public:
 	// Part of configuration
 	void set_prefix(int prefix) { m_address_prefix = prefix; }
 
-	// Genmod support
-	DECLARE_INPUT_CHANGED_MEMBER( genmod_changed );
-	void set_genmod(bool set);
-
 protected:
 	peribox_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
 
@@ -102,6 +98,9 @@ protected:
 
 	// Configured as a slot device (of the ioport)
 	bool    m_ioport_connected;
+
+	// Used for Genmod
+	bool    m_genmod;
 };
 
 /************************************************************************
@@ -139,10 +138,23 @@ protected:
 class peribox_gen_device : public peribox_device
 {
 public:
+	peribox_gen_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
 	peribox_gen_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 protected:
 	virtual void device_add_mconfig(machine_config &config) override;
+};
+
+/*
+    Variation for Geneve with Genmod
+*/
+class peribox_genmod_device : public peribox_gen_device
+{
+public:
+	peribox_genmod_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
+protected:
+	void device_add_mconfig(machine_config &config) override;
 };
 
 /*****************************************************************************
@@ -238,16 +250,16 @@ private:
 	MCFG_DEVICE_SLOT_INTERFACE(_slot_intf, _default, false)
 
 #define MCFG_PERIBOX_INTA_HANDLER( _inta ) \
-	devcb = &downcast<bus::ti99::peb::peribox_device &>(*device).set_inta_callback(DEVCB_##_inta);
+	downcast<bus::ti99::peb::peribox_device &>(*device).set_inta_callback(DEVCB_##_inta);
 
 #define MCFG_PERIBOX_INTB_HANDLER( _intb ) \
-	devcb = &downcast<bus::ti99::peb::peribox_device &>(*device).set_intb_callback(DEVCB_##_intb);
+	downcast<bus::ti99::peb::peribox_device &>(*device).set_intb_callback(DEVCB_##_intb);
 
 #define MCFG_PERIBOX_READY_HANDLER( _ready ) \
-	devcb = &downcast<bus::ti99::peb::peribox_device &>(*device).set_ready_callback(DEVCB_##_ready);
+	downcast<bus::ti99::peb::peribox_device &>(*device).set_ready_callback(DEVCB_##_ready);
 
 #define MCFG_PERIBOX_LCP_HANDLER( _lcp ) \
-	devcb = &downcast<bus::ti99::peb::peribox_device &>(*device).set_lcp_callback(DEVCB_##_lcp);
+	downcast<bus::ti99::peb::peribox_device &>(*device).set_lcp_callback(DEVCB_##_lcp);
 
 } } } // end namespace bus::ti99::peb
 
@@ -256,5 +268,6 @@ DECLARE_DEVICE_TYPE_NS(TI99_PERIBOX_EV,   bus::ti99::peb, peribox_ev_device)
 DECLARE_DEVICE_TYPE_NS(TI99_PERIBOX_SLOT, bus::ti99::peb, peribox_slot_device)
 DECLARE_DEVICE_TYPE_NS(TI99_PERIBOX_SG,   bus::ti99::peb, peribox_sg_device)
 DECLARE_DEVICE_TYPE_NS(TI99_PERIBOX_GEN,  bus::ti99::peb, peribox_gen_device)
+DECLARE_DEVICE_TYPE_NS(TI99_PERIBOX_GENMOD,  bus::ti99::peb, peribox_genmod_device)
 
 #endif // MAME_BUS_TI99_PEB_PERIBOX_H

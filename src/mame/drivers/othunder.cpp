@@ -429,10 +429,10 @@ void othunder_state::othunder_map(address_map &map)
 	map(0x100000, 0x100007).rw(m_tc0110pcr, FUNC(tc0110pcr_device::word_r), FUNC(tc0110pcr_device::step1_rbswap_word_w));   /* palette */
 	map(0x200000, 0x20ffff).rw(m_tc0100scn, FUNC(tc0100scn_device::word_r), FUNC(tc0100scn_device::word_w));    /* tilemaps */
 	map(0x220000, 0x22000f).rw(m_tc0100scn, FUNC(tc0100scn_device::ctrl_word_r), FUNC(tc0100scn_device::ctrl_word_w));
-	map(0x300000, 0x300003).rw(this, FUNC(othunder_state::sound_r), FUNC(othunder_state::sound_w));
+	map(0x300000, 0x300003).rw(FUNC(othunder_state::sound_r), FUNC(othunder_state::sound_w));
 	map(0x400000, 0x4005ff).ram().share("spriteram");
 	map(0x500000, 0x500007).rw("adc", FUNC(adc0808_device::data_r), FUNC(adc0808_device::address_offset_start_w)).umask16(0x00ff);
-	map(0x600000, 0x600003).w(this, FUNC(othunder_state::irq_ack_w));
+	map(0x600000, 0x600003).w(FUNC(othunder_state::irq_ack_w));
 }
 
 
@@ -446,12 +446,12 @@ void othunder_state::z80_sound_map(address_map &map)
 	map(0xe000, 0xe003).rw("ymsnd", FUNC(ym2610_device::read), FUNC(ym2610_device::write));
 	map(0xe200, 0xe200).nopr().w(m_tc0140syt, FUNC(tc0140syt_device::slave_port_w));
 	map(0xe201, 0xe201).rw(m_tc0140syt, FUNC(tc0140syt_device::slave_comm_r), FUNC(tc0140syt_device::slave_comm_w));
-	map(0xe400, 0xe403).w(this, FUNC(othunder_state::tc0310fam_w)); /* pan */
+	map(0xe400, 0xe403).w(FUNC(othunder_state::tc0310fam_w)); /* pan */
 	map(0xe600, 0xe600).nopw(); /* ? */
 	map(0xea00, 0xea00).portr("ROTARY");  /* rotary input */
 	map(0xee00, 0xee00).nopw(); /* ? */
 	map(0xf000, 0xf000).nopw(); /* ? */
-	map(0xf200, 0xf200).w(this, FUNC(othunder_state::sound_bankswitch_w));
+	map(0xf200, 0xf200).w(FUNC(othunder_state::sound_bankswitch_w));
 }
 
 
@@ -613,7 +613,7 @@ MACHINE_CONFIG_START(othunder_state::othunder)
 	MCFG_DEVICE_ADD("audiocpu", Z80, 16_MHz_XTAL/2/2)
 	MCFG_DEVICE_PROGRAM_MAP(z80_sound_map)
 
-	MCFG_EEPROM_SERIAL_93C46_ADD("eeprom")
+	MCFG_DEVICE_ADD("eeprom", EEPROM_SERIAL_93C46_16BIT)
 
 	MCFG_DEVICE_ADD("adc", ADC0808, 16_MHz_XTAL/2/2/8)
 	MCFG_ADC0808_EOC_CB(WRITELINE(*this, othunder_state, adc_eoc_w))
@@ -622,14 +622,14 @@ MACHINE_CONFIG_START(othunder_state::othunder)
 	MCFG_ADC0808_IN2_CB(IOPORT("P2X"))
 	MCFG_ADC0808_IN3_CB(IOPORT("P2Y"))
 
-	MCFG_DEVICE_ADD("tc0220ioc", TC0220IOC, 0)
-	MCFG_TC0220IOC_READ_0_CB(IOPORT("DSWA"))
-	MCFG_TC0220IOC_READ_1_CB(IOPORT("DSWB"))
-	MCFG_TC0220IOC_READ_2_CB(IOPORT("IN0"))
-	MCFG_TC0220IOC_READ_3_CB(READLINE("eeprom", eeprom_serial_93cxx_device, do_read)) MCFG_DEVCB_BIT(7)
-	MCFG_TC0220IOC_WRITE_3_CB(WRITE8(*this, othunder_state, eeprom_w))
-	MCFG_TC0220IOC_WRITE_4_CB(WRITE8(*this, othunder_state, coins_w))
-	MCFG_TC0220IOC_READ_7_CB(IOPORT("IN2"))
+	TC0220IOC(config, m_tc0220ioc, 0);
+	m_tc0220ioc->read_0_callback().set_ioport("DSWA");
+	m_tc0220ioc->read_1_callback().set_ioport("DSWB");
+	m_tc0220ioc->read_2_callback().set_ioport("IN0");
+	m_tc0220ioc->read_3_callback().set(m_eeprom, FUNC(eeprom_serial_93cxx_device::do_read)).lshift(7);
+	m_tc0220ioc->write_3_callback().set(FUNC(othunder_state::eeprom_w));
+	m_tc0220ioc->write_4_callback().set(FUNC(othunder_state::coins_w));
+	m_tc0220ioc->read_7_callback().set_ioport("IN2");
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)
@@ -651,8 +651,7 @@ MACHINE_CONFIG_START(othunder_state::othunder)
 	MCFG_TC0100SCN_GFXDECODE("gfxdecode")
 	MCFG_TC0100SCN_PALETTE("palette")
 
-	MCFG_TC0110PCR_ADD("tc0110pcr")
-	MCFG_TC0110PCR_PALETTE("palette")
+	MCFG_DEVICE_ADD("tc0110pcr", TC0110PCR, 0, "palette")
 
 	/* sound hardware */
 	SPEAKER(config, "speaker").front_center();

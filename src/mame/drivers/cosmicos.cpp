@@ -181,19 +181,19 @@ WRITE8_MEMBER( cosmicos_state::display_w )
 
 void cosmicos_state::cosmicos_mem(address_map &map)
 {
-	map(0x0000, 0xffff).rw(this, FUNC(cosmicos_state::read), FUNC(cosmicos_state::write));
+	map(0x0000, 0xffff).rw(FUNC(cosmicos_state::read), FUNC(cosmicos_state::write));
 }
 
 void cosmicos_state::cosmicos_io(address_map &map)
 {
 //  AM_RANGE(0x00, 0x00)
-	map(0x01, 0x01).r(this, FUNC(cosmicos_state::video_on_r));
-	map(0x02, 0x02).rw(this, FUNC(cosmicos_state::video_off_r), FUNC(cosmicos_state::audio_latch_w));
+	map(0x01, 0x01).r(FUNC(cosmicos_state::video_on_r));
+	map(0x02, 0x02).rw(FUNC(cosmicos_state::video_off_r), FUNC(cosmicos_state::audio_latch_w));
 //  AM_RANGE(0x03, 0x03)
 //  AM_RANGE(0x04, 0x04)
-	map(0x05, 0x05).rw(this, FUNC(cosmicos_state::hex_keyboard_r), FUNC(cosmicos_state::hex_keylatch_w));
-	map(0x06, 0x06).rw(this, FUNC(cosmicos_state::reset_counter_r), FUNC(cosmicos_state::segment_w));
-	map(0x07, 0x07).rw(this, FUNC(cosmicos_state::data_r), FUNC(cosmicos_state::display_w));
+	map(0x05, 0x05).rw(FUNC(cosmicos_state::hex_keyboard_r), FUNC(cosmicos_state::hex_keylatch_w));
+	map(0x06, 0x06).rw(FUNC(cosmicos_state::reset_counter_r), FUNC(cosmicos_state::segment_w));
+	map(0x07, 0x07).rw(FUNC(cosmicos_state::data_r), FUNC(cosmicos_state::display_w));
 }
 
 /* Input Ports */
@@ -522,7 +522,7 @@ MACHINE_CONFIG_START(cosmicos_state::cosmicos)
 	MCFG_COSMAC_SC_CALLBACK(WRITE8(*this, cosmicos_state, sc_w))
 
 	/* video hardware */
-	MCFG_DEFAULT_LAYOUT( layout_cosmicos )
+	config.set_default_layout(layout_cosmicos);
 	MCFG_DEVICE_ADD(DM9368_TAG, DM9368, 0)
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("digit", cosmicos_state, digit_tick, attotime::from_hz(100))
 	MCFG_TIMER_DRIVER_ADD_PERIODIC("interrupt", cosmicos_state, int_tick, attotime::from_hz(1000))
@@ -536,7 +536,7 @@ MACHINE_CONFIG_START(cosmicos_state::cosmicos)
 	MCFG_DEVICE_ADD("speaker", SPEAKER_SOUND)
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 
-	MCFG_CDP1864_ADD(CDP1864_TAG, SCREEN_TAG, XTAL(1'750'000), GND, INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_INT), WRITELINE(*this, cosmicos_state, dmaout_w), WRITELINE(*this, cosmicos_state, efx_w), NOOP, VCC, VCC, VCC)
+	MCFG_CDP1864_ADD(CDP1864_TAG, SCREEN_TAG, XTAL(1'750'000), CONSTANT(0), INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_INT), WRITELINE(*this, cosmicos_state, dmaout_w), WRITELINE(*this, cosmicos_state, efx_w), NOOP, CONSTANT(1), CONSTANT(1), CONSTANT(1))
 	MCFG_CDP1864_CHROMINANCE(RES_K(2), 0, 0, 0) // R2
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 

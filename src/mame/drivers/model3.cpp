@@ -1332,7 +1332,7 @@ void model3_state::model3_init(int step)
 
 	// copy the 68k vector table into RAM
 	memcpy(m_soundram, memregion("audiocpu")->base()+0x80000, 16);
-	machine().device("audiocpu")->reset();
+	m_audiocpu->reset();
 
 	m_m3_step = step; // step = BCD hardware rev.  0x10 for 1.0, 0x15 for 1.5, 0x20 for 2.0, etc.
 	tap_reset();
@@ -1764,21 +1764,21 @@ void model3_state::model3_10_mem(address_map &map)
 {
 	map(0x00000000, 0x007fffff).ram().share("work_ram");    /* work RAM */
 
-	map(0x84000000, 0x8400003f).r(this, FUNC(model3_state::real3d_status_r));
-	map(0x88000000, 0x88000007).w(this, FUNC(model3_state::real3d_cmd_w));
-	map(0x8e000000, 0x8e0fffff).w(this, FUNC(model3_state::real3d_display_list_w));
-	map(0x98000000, 0x980fffff).w(this, FUNC(model3_state::real3d_polygon_ram_w));
+	map(0x84000000, 0x8400003f).r(FUNC(model3_state::real3d_status_r));
+	map(0x88000000, 0x88000007).w(FUNC(model3_state::real3d_cmd_w));
+	map(0x8e000000, 0x8e0fffff).w(FUNC(model3_state::real3d_display_list_w));
+	map(0x98000000, 0x980fffff).w(FUNC(model3_state::real3d_polygon_ram_w));
 
-	map(0xf0040000, 0xf004003f).mirror(0x0e000000).rw(this, FUNC(model3_state::model3_ctrl_r), FUNC(model3_state::model3_ctrl_w));
-	map(0xf0080000, 0xf008ffff).mirror(0x0e000000).rw(this, FUNC(model3_state::model3_sound_r), FUNC(model3_state::model3_sound_w));
+	map(0xf0040000, 0xf004003f).mirror(0x0e000000).rw(FUNC(model3_state::model3_ctrl_r), FUNC(model3_state::model3_ctrl_w));
+	map(0xf0080000, 0xf008ffff).mirror(0x0e000000).rw(FUNC(model3_state::model3_sound_r), FUNC(model3_state::model3_sound_w));
 	map(0xf00c0000, 0xf00dffff).mirror(0x0e000000).ram().share("backup");    /* backup SRAM */
-	map(0xf0100000, 0xf010003f).mirror(0x0e000000).rw(this, FUNC(model3_state::model3_sys_r), FUNC(model3_state::model3_sys_w));
-	map(0xf0140000, 0xf014003f).mirror(0x0e000000).rw(this, FUNC(model3_state::model3_rtc_r), FUNC(model3_state::model3_rtc_w));
+	map(0xf0100000, 0xf010003f).mirror(0x0e000000).rw(FUNC(model3_state::model3_sys_r), FUNC(model3_state::model3_sys_w));
+	map(0xf0140000, 0xf014003f).mirror(0x0e000000).rw(FUNC(model3_state::model3_rtc_r), FUNC(model3_state::model3_rtc_w));
 
-	map(0xf1000000, 0xf10f7fff).rw(this, FUNC(model3_state::model3_char_r), FUNC(model3_state::model3_char_w));    /* character RAM */
-	map(0xf10f8000, 0xf10fffff).rw(this, FUNC(model3_state::model3_tile_r), FUNC(model3_state::model3_tile_w));    /* tilemaps */
-	map(0xf1100000, 0xf111ffff).rw(this, FUNC(model3_state::model3_palette_r), FUNC(model3_state::model3_palette_w)).share("paletteram64"); /* palette */
-	map(0xf1180000, 0xf11800ff).rw(this, FUNC(model3_state::model3_vid_reg_r), FUNC(model3_state::model3_vid_reg_w));
+	map(0xf1000000, 0xf10f7fff).rw(FUNC(model3_state::model3_char_r), FUNC(model3_state::model3_char_w));    /* character RAM */
+	map(0xf10f8000, 0xf10fffff).rw(FUNC(model3_state::model3_tile_r), FUNC(model3_state::model3_tile_w));    /* tilemaps */
+	map(0xf1100000, 0xf111ffff).rw(FUNC(model3_state::model3_palette_r), FUNC(model3_state::model3_palette_w)).share("paletteram64"); /* palette */
+	map(0xf1180000, 0xf11800ff).rw(FUNC(model3_state::model3_vid_reg_r), FUNC(model3_state::model3_vid_reg_w));
 
 	map(0xff800000, 0xffffffff).rom().region("user1", 0);
 }
@@ -5703,7 +5703,7 @@ void model3_state::model3_snd(address_map &map)
 	map(0x100000, 0x100fff).rw(m_scsp1, FUNC(scsp_device::read), FUNC(scsp_device::write));
 	map(0x200000, 0x27ffff).ram().region("scsp2", 0);
 	map(0x300000, 0x300fff).rw("scsp2", FUNC(scsp_device::read), FUNC(scsp_device::write));
-	map(0x400000, 0x400001).w(this, FUNC(model3_state::model3snd_ctrl));
+	map(0x400000, 0x400001).w(FUNC(model3_state::model3snd_ctrl));
 	map(0x600000, 0x67ffff).rom().region("audiocpu", 0x80000);
 	map(0x800000, 0x9fffff).rom().region("samples", 0);
 	map(0xa00000, 0xdfffff).bankr("bank4");
@@ -5759,7 +5759,7 @@ MACHINE_CONFIG_START(model3_state::model3_10)
 	MCFG_MACHINE_START_OVERRIDE(model3_state,model3_10)
 	MCFG_MACHINE_RESET_OVERRIDE(model3_state,model3_10)
 
-	MCFG_EEPROM_SERIAL_93C46_ADD("eeprom")
+	MCFG_DEVICE_ADD("eeprom", EEPROM_SERIAL_93C46_16BIT)
 	MCFG_NVRAM_ADD_1FILL("backup")
 	MCFG_DEVICE_ADD("rtc", RTC72421, XTAL(32'768)) // internal oscillator
 
@@ -5806,7 +5806,7 @@ MACHINE_CONFIG_START(model3_state::model3_15)
 	MCFG_MACHINE_START_OVERRIDE(model3_state,model3_15)
 	MCFG_MACHINE_RESET_OVERRIDE(model3_state,model3_15)
 
-	MCFG_EEPROM_SERIAL_93C46_ADD("eeprom")
+	MCFG_DEVICE_ADD("eeprom", EEPROM_SERIAL_93C46_16BIT)
 	MCFG_NVRAM_ADD_1FILL("backup")
 	MCFG_DEVICE_ADD("rtc", RTC72421, XTAL(32'768)) // internal oscillator
 
@@ -5843,19 +5843,21 @@ MACHINE_CONFIG_START(model3_state::model3_15)
 	MCFG_M3COMM_ADD("comm_board")
 MACHINE_CONFIG_END
 
-MACHINE_CONFIG_START(model3_state::scud)
+void model3_state::scud(machine_config &config)
+{
 	model3_15(config);
-	MCFG_DSBZ80_ADD(DSBZ80_TAG)
-	MCFG_SOUND_ROUTE(0, "lspeaker", 1.0)
-	MCFG_SOUND_ROUTE(1, "rspeaker", 1.0)
 
-	MCFG_DEVICE_ADD("uart", I8251, 8000000) // uPD71051
-	MCFG_I8251_TXD_HANDLER(WRITELINE(DSBZ80_TAG, dsbz80_device, write_txd))
+	DSBZ80(config, m_dsbz80, 0);
+	m_dsbz80->add_route(0, "lspeaker", 1.0);
+	m_dsbz80->add_route(1, "rspeaker", 1.0);
 
-	MCFG_CLOCK_ADD("uart_clock", 500000) // 16 times 31.25MHz (standard Sega/MIDI sound data rate)
-	MCFG_CLOCK_SIGNAL_HANDLER(WRITELINE("uart", i8251_device, write_txc))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("uart", i8251_device, write_rxc))
-MACHINE_CONFIG_END
+	I8251(config, m_uart, 8000000); // uPD71051
+	m_uart->txd_handler().set(m_dsbz80, FUNC(dsbz80_device::write_txd));
+
+	clock_device &uart_clock(CLOCK(config, "uart_clock", 500000)); // 16 times 31.25MHz (standard Sega/MIDI sound data rate)
+	uart_clock.signal_handler().set(m_uart, FUNC(i8251_device::write_txc));
+	uart_clock.signal_handler().append(m_uart, FUNC(i8251_device::write_rxc));
+}
 
 MACHINE_CONFIG_START(model3_state::model3_20)
 	MCFG_DEVICE_ADD("maincpu", PPC603R, 166000000)
@@ -5869,7 +5871,7 @@ MACHINE_CONFIG_START(model3_state::model3_20)
 	MCFG_MACHINE_START_OVERRIDE(model3_state, model3_20)
 	MCFG_MACHINE_RESET_OVERRIDE(model3_state, model3_20)
 
-	MCFG_EEPROM_SERIAL_93C46_ADD("eeprom")
+	MCFG_DEVICE_ADD("eeprom", EEPROM_SERIAL_93C46_16BIT)
 	MCFG_NVRAM_ADD_1FILL("backup")
 	MCFG_DEVICE_ADD("rtc", RTC72421, XTAL(32'768)) // internal oscillator
 
@@ -5934,7 +5936,7 @@ MACHINE_CONFIG_START(model3_state::model3_21)
 	MCFG_MACHINE_START_OVERRIDE(model3_state, model3_21)
 	MCFG_MACHINE_RESET_OVERRIDE(model3_state, model3_21)
 
-	MCFG_EEPROM_SERIAL_93C46_ADD("eeprom")
+	MCFG_DEVICE_ADD("eeprom", EEPROM_SERIAL_93C46_16BIT)
 	MCFG_NVRAM_ADD_1FILL("backup")
 	MCFG_DEVICE_ADD("rtc", RTC72421, XTAL(32'768)) // internal oscillator
 

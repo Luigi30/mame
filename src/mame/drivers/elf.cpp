@@ -84,8 +84,8 @@ void elf2_state::elf2_mem(address_map &map)
 void elf2_state::elf2_io(address_map &map)
 {
 	map.unmap_value_high();
-	map(0x01, 0x01).r(this, FUNC(elf2_state::dispon_r));
-	map(0x04, 0x04).rw(this, FUNC(elf2_state::data_r), FUNC(elf2_state::data_w));
+	map(0x01, 0x01).r(FUNC(elf2_state::dispon_r));
+	map(0x04, 0x04).rw(FUNC(elf2_state::data_r), FUNC(elf2_state::data_w));
 }
 
 /* Input Ports */
@@ -249,7 +249,7 @@ MACHINE_CONFIG_START(elf2_state::elf2)
 	MCFG_COSMAC_SC_CALLBACK(WRITE8(*this, elf2_state, sc_w))
 
 	/* video hardware */
-	MCFG_DEFAULT_LAYOUT(layout_elf2)
+	config.set_default_layout(layout_elf2);
 
 	MCFG_DEVICE_ADD(CDP1861_TAG, CDP1861, XTAL(3'579'545)/2)
 	MCFG_CDP1861_IRQ_CALLBACK(INPUTLINE(CDP1802_TAG, COSMAC_INPUT_LINE_INT))

@@ -150,15 +150,15 @@ void pdc_device::pdc_mem(address_map &map)
 
 void pdc_device::pdc_io(address_map &map)
 {
-	map(0x00, 0x07).rw(this, FUNC(pdc_device::p0_7_r), FUNC(pdc_device::p0_7_w)).mirror(0xFF00);
-	map(0x21, 0x2F).rw(this, FUNC(pdc_device::fdd_68k_r), FUNC(pdc_device::fdd_68k_w)).mirror(0xFF00);
-	map(0x38, 0x38).r(this, FUNC(pdc_device::p38_r)).mirror(0xFF00); // Possibly UPD765 interrupt
-	map(0x39, 0x39).r(this, FUNC(pdc_device::p39_r)).mirror(0xFF00); // HDD related
+	map(0x00, 0x07).rw(FUNC(pdc_device::p0_7_r), FUNC(pdc_device::p0_7_w)).mirror(0xFF00);
+	map(0x21, 0x2F).rw(FUNC(pdc_device::fdd_68k_r), FUNC(pdc_device::fdd_68k_w)).mirror(0xFF00);
+	map(0x38, 0x38).r(FUNC(pdc_device::p38_r)).mirror(0xFF00); // Possibly UPD765 interrupt
+	map(0x39, 0x39).r(FUNC(pdc_device::p39_r)).mirror(0xFF00); // HDD related
 	map(0x3c, 0x3c).portr("SW2").mirror(0xFF00); /* FDC Dipswitch */
 	map(0x3d, 0x3d).portr("SW1").mirror(0xFF00); /* HDC Dipswitch */
 	map(0x40, 0x41).rw(HDC_TAG, FUNC(hdc9224_device::read), FUNC(hdc9224_device::write)).mirror(0xFF00);
 	map(0x42, 0x43).m(FDC_TAG, FUNC(upd765a_device::map)).mirror(0xFF00);
-	map(0x50, 0x5f).w(this, FUNC(pdc_device::p50_5f_w)).mirror(0xFF00);
+	map(0x50, 0x5f).w(FUNC(pdc_device::p50_5f_w)).mirror(0xFF00);
 	map(0x60, 0x6f).rw(FDCDMA_TAG, FUNC(am9517a_device::read), FUNC(am9517a_device::write)).mirror(0xFF00);
 }
 
@@ -273,15 +273,15 @@ MACHINE_CONFIG_START(pdc_device::device_add_mconfig)
 	/* DMA Controller - Intel P8237A-5 */
 	/* Channel 0: uPD765a Floppy Disk Controller */
 	/* Channel 1: M68K main system memory */
-	MCFG_DEVICE_ADD(FDCDMA_TAG, AM9517A, XTAL(10'000'000) / 2)
-	MCFG_I8237_OUT_HREQ_CB(WRITELINE(*this, pdc_device, i8237_hreq_w))
-	MCFG_I8237_OUT_EOP_CB(WRITELINE(*this, pdc_device, i8237_eop_w))
-	MCFG_I8237_IN_MEMR_CB(READ8(*this, pdc_device, i8237_dma_mem_r))
-	MCFG_I8237_OUT_MEMW_CB(WRITE8(*this, pdc_device, i8237_dma_mem_w))
-	MCFG_I8237_IN_IOR_0_CB(READ8(*this, pdc_device, i8237_fdc_dma_r))
-	MCFG_I8237_OUT_IOW_0_CB(WRITE8(*this, pdc_device, i8237_fdc_dma_w))
-	MCFG_I8237_IN_IOR_1_CB(READ8(*this, pdc_device, m68k_dma_r))
-	MCFG_I8237_OUT_IOW_1_CB(WRITE8(*this, pdc_device, m68k_dma_w))
+	AM9517A(config, m_dma8237, 10_MHz_XTAL / 2);
+	m_dma8237->out_hreq_callback().set(FUNC(pdc_device::i8237_hreq_w));
+	m_dma8237->out_eop_callback().set(FUNC(pdc_device::i8237_eop_w));
+	m_dma8237->in_memr_callback().set(FUNC(pdc_device::i8237_dma_mem_r));
+	m_dma8237->out_memw_callback().set(FUNC(pdc_device::i8237_dma_mem_w));
+	m_dma8237->in_ior_callback<0>().set(FUNC(pdc_device::i8237_fdc_dma_r));
+	m_dma8237->out_iow_callback<0>().set(FUNC(pdc_device::i8237_fdc_dma_w));
+	m_dma8237->in_ior_callback<1>().set(FUNC(pdc_device::m68k_dma_r));
+	m_dma8237->out_iow_callback<1>().set(FUNC(pdc_device::m68k_dma_w));
 
 	/* Hard Disk Controller - HDC9224 */
 	MCFG_DEVICE_ADD(HDC_TAG, HDC9224, 0)

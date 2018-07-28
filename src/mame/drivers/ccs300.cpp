@@ -63,7 +63,7 @@ void ccs300_state::ccs300_io(address_map &map)
 	map(0x18, 0x1b).rw("ctc", FUNC(z80ctc_device::read), FUNC(z80ctc_device::write));  // init bytes seem to be for a CTC
 	map(0x30, 0x33); // fdc?
 	map(0x34, 0x34); // motor control?
-	map(0x40, 0x40).w(this, FUNC(ccs300_state::port40_w));
+	map(0x40, 0x40).w(FUNC(ccs300_state::port40_w));
 	map(0xf0, 0xf0); // unknown, long sequence of init bytes
 	map(0xf2, 0xf2); // dip or jumper?
 }
@@ -105,13 +105,12 @@ void ccs300_state::init_ccs300()
 	membank("bankw0")->configure_entry(0, &main[0x0000]);
 }
 
-// bit 7 needs to be stripped off, we do this by choosing 7 bits and even parity
 static DEVICE_INPUT_DEFAULTS_START( terminal )
 	DEVICE_INPUT_DEFAULTS( "RS232_RXBAUD", 0xff, RS232_BAUD_9600 )
 	DEVICE_INPUT_DEFAULTS( "RS232_TXBAUD", 0xff, RS232_BAUD_9600 )
 	DEVICE_INPUT_DEFAULTS( "RS232_STARTBITS", 0xff, RS232_STARTBITS_1 )
 	DEVICE_INPUT_DEFAULTS( "RS232_DATABITS", 0xff, RS232_DATABITS_7 )
-	DEVICE_INPUT_DEFAULTS( "RS232_PARITY", 0xff, RS232_PARITY_EVEN )
+	DEVICE_INPUT_DEFAULTS( "RS232_PARITY", 0xff, RS232_PARITY_NONE )
 	DEVICE_INPUT_DEFAULTS( "RS232_STOPBITS", 0xff, RS232_STOPBITS_2 )
 DEVICE_INPUT_DEFAULTS_END
 
@@ -125,9 +124,9 @@ MACHINE_CONFIG_START(ccs300_state::ccs300)
 	MCFG_MACHINE_RESET_OVERRIDE(ccs300_state, ccs300)
 
 	/* video hardware */
-	MCFG_DEVICE_ADD("uart_clock", CLOCK, 153600)
-	MCFG_CLOCK_SIGNAL_HANDLER(WRITELINE("sio", z80sio_device, txca_w))
-	MCFG_DEVCB_CHAIN_OUTPUT(WRITELINE("sio", z80sio_device, rxca_w))
+	clock_device &uart_clock(CLOCK(config, "uart_clock", 153'600));
+	uart_clock.signal_handler().set("sio", FUNC(z80sio_device::txca_w));
+	uart_clock.signal_handler().append("sio", FUNC(z80sio_device::rxca_w));
 
 	/* Devices */
 	MCFG_DEVICE_ADD("sio", Z80SIO, XTAL(4'000'000))

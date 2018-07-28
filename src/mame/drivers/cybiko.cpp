@@ -22,7 +22,6 @@ ToDo:
 #include "includes/cybiko.h"
 
 #include "bus/rs232/rs232.h"
-#include "rendlay.h"
 #include "screen.h"
 #include "speaker.h"
 
@@ -64,7 +63,7 @@ ToDo:
 void cybiko_state::cybikov1_mem(address_map &map)
 {
 	map(0x000000, 0x007fff).rom();
-	map(0x600000, 0x600001).rw(this, FUNC(cybiko_state::cybiko_lcd_r), FUNC(cybiko_state::cybiko_lcd_w));
+	map(0x600000, 0x600001).rw(FUNC(cybiko_state::cybiko_lcd_r), FUNC(cybiko_state::cybiko_lcd_w));
 //  AM_RANGE( 0xe00000, 0xe07fff ) AM_READ( cybikov1_key_r )
 }
 
@@ -106,18 +105,18 @@ void cybiko_state::cybikov2_mem(address_map &map)
 {
 	map(0x000000, 0x007fff).rom();
 	map(0x100000, 0x13ffff).r("flash2", FUNC(sst_39vf020_device::read)).mirror(0x0c0000);
-	map(0x600000, 0x600001).rw(this, FUNC(cybiko_state::cybiko_lcd_r), FUNC(cybiko_state::cybiko_lcd_w)).mirror(0x1ffffe);
-	map(0xe00000, 0xffdbff).r(this, FUNC(cybiko_state::cybikov2_key_r));
+	map(0x600000, 0x600001).rw(FUNC(cybiko_state::cybiko_lcd_r), FUNC(cybiko_state::cybiko_lcd_w)).mirror(0x1ffffe);
+	map(0xe00000, 0xffdbff).r(FUNC(cybiko_state::cybikov2_key_r));
 }
 
 // 2048 kbyte ram + 512 kbyte memory mapped flash
 void cybiko_state::cybikoxt_mem(address_map &map)
 {
 	map(0x000000, 0x007fff).rom().mirror(0x038000);
-	map(0x100000, 0x100001).rw(this, FUNC(cybiko_state::cybiko_lcd_r), FUNC(cybiko_state::cybiko_lcd_w));
-	map(0x200000, 0x200003).w(this, FUNC(cybiko_state::cybiko_usb_w));
+	map(0x100000, 0x100001).rw(FUNC(cybiko_state::cybiko_lcd_r), FUNC(cybiko_state::cybiko_lcd_w));
+	map(0x200000, 0x200003).w(FUNC(cybiko_state::cybiko_usb_w));
 	map(0x600000, 0x67ffff).r("flashxt", FUNC(sst_39vf400a_device::read)).mirror(0x180000);
-	map(0xe00000, 0xefffff).r(this, FUNC(cybiko_state::cybikoxt_key_r));
+	map(0xe00000, 0xefffff).r(FUNC(cybiko_state::cybikoxt_key_r));
 }
 
 WRITE16_MEMBER(cybiko_state::serflash_w)
@@ -187,25 +186,25 @@ READ16_MEMBER(cybiko_state::port0_r)
 
 void cybiko_state::cybikov1_io(address_map &map)
 {
-	map(h8_device::PORT_3, h8_device::PORT_3).w(this, FUNC(cybiko_state::serflash_w));
-	map(h8_device::PORT_F, h8_device::PORT_F).rw(this, FUNC(cybiko_state::clock_r), FUNC(cybiko_state::clock_w));
-	map(h8_device::ADC_1, h8_device::ADC_1).r(this, FUNC(cybiko_state::adc1_r));
-	map(h8_device::ADC_2, h8_device::ADC_2).r(this, FUNC(cybiko_state::adc2_r));
+	map(h8_device::PORT_3, h8_device::PORT_3).w(FUNC(cybiko_state::serflash_w));
+	map(h8_device::PORT_F, h8_device::PORT_F).rw(FUNC(cybiko_state::clock_r), FUNC(cybiko_state::clock_w));
+	map(h8_device::ADC_1, h8_device::ADC_1).r(FUNC(cybiko_state::adc1_r));
+	map(h8_device::ADC_2, h8_device::ADC_2).r(FUNC(cybiko_state::adc2_r));
 }
 
 void cybiko_state::cybikov2_io(address_map &map)
 {
-	map(h8_device::PORT_1, h8_device::PORT_1).r(this, FUNC(cybiko_state::port0_r));
-	map(h8_device::PORT_3, h8_device::PORT_3).w(this, FUNC(cybiko_state::serflash_w));
-	map(h8_device::PORT_F, h8_device::PORT_F).rw(this, FUNC(cybiko_state::clock_r), FUNC(cybiko_state::clock_w));
-	map(h8_device::ADC_1, h8_device::ADC_1).r(this, FUNC(cybiko_state::adc1_r));
-	map(h8_device::ADC_2, h8_device::ADC_2).r(this, FUNC(cybiko_state::adc2_r));
+	map(h8_device::PORT_1, h8_device::PORT_1).r(FUNC(cybiko_state::port0_r));
+	map(h8_device::PORT_3, h8_device::PORT_3).w(FUNC(cybiko_state::serflash_w));
+	map(h8_device::PORT_F, h8_device::PORT_F).rw(FUNC(cybiko_state::clock_r), FUNC(cybiko_state::clock_w));
+	map(h8_device::ADC_1, h8_device::ADC_1).r(FUNC(cybiko_state::adc1_r));
+	map(h8_device::ADC_2, h8_device::ADC_2).r(FUNC(cybiko_state::adc2_r));
 }
 
 void cybiko_state::cybikoxt_io(address_map &map)
 {
-	map(h8_device::PORT_A, h8_device::PORT_A).r(this, FUNC(cybiko_state::xtpower_r));
-	map(h8_device::PORT_F, h8_device::PORT_F).rw(this, FUNC(cybiko_state::xtclock_r), FUNC(cybiko_state::xtclock_w));
+	map(h8_device::PORT_A, h8_device::PORT_A).r(FUNC(cybiko_state::xtpower_r));
+	map(h8_device::PORT_F, h8_device::PORT_F).rw(FUNC(cybiko_state::xtclock_r), FUNC(cybiko_state::xtclock_w));
 }
 
 /////////////////
@@ -401,7 +400,7 @@ MACHINE_CONFIG_START(cybiko_state::cybikov1)
 	MCFG_H8_SCI_CLK_CALLBACK(WRITELINE("flash1", at45db041_device, sck_w))
 
 	// screen
-	MCFG_SCREEN_ADD("screen", RASTER)
+	MCFG_SCREEN_ADD("screen", LCD)
 	MCFG_SCREEN_REFRESH_RATE( 60 )
 	MCFG_SCREEN_SIZE( hd66421_device::WIDTH, hd66421_device::HEIGHT )
 	MCFG_SCREEN_VISIBLE_AREA( 0, hd66421_device::WIDTH - 1, 0, hd66421_device::HEIGHT - 1 )
@@ -409,7 +408,6 @@ MACHINE_CONFIG_START(cybiko_state::cybikov1)
 	MCFG_SCREEN_PALETTE("hd66421:palette")
 	// video
 	MCFG_HD66421_ADD("hd66421")
-	MCFG_DEFAULT_LAYOUT(layout_lcd)
 	// sound
 	SPEAKER(config, "mono").front_center();
 	MCFG_DEVICE_ADD("speaker", SPEAKER_SOUND)

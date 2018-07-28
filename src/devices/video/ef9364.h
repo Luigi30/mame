@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include "emupal.h"
+
 #define MCFG_EF9364_PALETTE(_palette_tag) \
 	downcast<ef9364_device &>(*device).set_palette_tag(_palette_tag);
 
@@ -20,7 +22,7 @@
 	downcast<ef9364_device &>(*device).set_nb_of_pages(_pages_number);
 
 #define MCFG_EF9364_IRQ_HANDLER(_devcb) \
-	devcb = &downcast<ef9364_device &>(*device).set_irq_handler(DEVCB_##_devcb);
+	downcast<ef9364_device &>(*device).set_irq_handler(DEVCB_##_devcb);
 
 //**************************************************************************
 //  TYPE DEFINITIONS

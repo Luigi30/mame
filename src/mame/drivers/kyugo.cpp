@@ -43,14 +43,14 @@
 void kyugo_state::kyugo_main_map(address_map &map)
 {
 	map(0x0000, 0x7fff).rom();
-	map(0x8000, 0x87ff).ram().w(this, FUNC(kyugo_state::bgvideoram_w)).share("bgvideoram");
-	map(0x8800, 0x8fff).ram().w(this, FUNC(kyugo_state::bgattribram_w)).share("bgattribram");
-	map(0x9000, 0x97ff).ram().w(this, FUNC(kyugo_state::fgvideoram_w)).share("fgvideoram");
-	map(0x9800, 0x9fff).ram().r(this, FUNC(kyugo_state::spriteram_2_r)).share("spriteram_2");
+	map(0x8000, 0x87ff).ram().w(FUNC(kyugo_state::bgvideoram_w)).share("bgvideoram");
+	map(0x8800, 0x8fff).ram().w(FUNC(kyugo_state::bgattribram_w)).share("bgattribram");
+	map(0x9000, 0x97ff).ram().w(FUNC(kyugo_state::fgvideoram_w)).share("fgvideoram");
+	map(0x9800, 0x9fff).ram().r(FUNC(kyugo_state::spriteram_2_r)).share("spriteram_2");
 	map(0xa000, 0xa7ff).ram().share("spriteram_1");
-	map(0xa800, 0xa800).w(this, FUNC(kyugo_state::scroll_x_lo_w));
-	map(0xb000, 0xb000).w(this, FUNC(kyugo_state::gfxctrl_w));
-	map(0xb800, 0xb800).w(this, FUNC(kyugo_state::scroll_y_w));
+	map(0xa800, 0xa800).w(FUNC(kyugo_state::scroll_x_lo_w));
+	map(0xb000, 0xb000).w(FUNC(kyugo_state::gfxctrl_w));
+	map(0xb800, 0xb800).w(FUNC(kyugo_state::scroll_y_w));
 	map(0xf000, 0xf7ff).ram().share("shared_ram");
 }
 
@@ -165,7 +165,7 @@ void kyugo_state::repulse_sub_portmap(address_map &map)
 	map(0x00, 0x01).w("ay1", FUNC(ay8910_device::address_data_w));
 	map(0x02, 0x02).r("ay1", FUNC(ay8910_device::data_r));
 	map(0x40, 0x41).w("ay2", FUNC(ay8910_device::address_data_w));
-	map(0xc0, 0xc1).w(this, FUNC(kyugo_state::coin_counter_w));
+	map(0xc0, 0xc1).w(FUNC(kyugo_state::coin_counter_w));
 }
 
 
@@ -175,7 +175,7 @@ void kyugo_state::flashgala_sub_portmap(address_map &map)
 	map(0x40, 0x41).w("ay1", FUNC(ay8910_device::address_data_w));
 	map(0x42, 0x42).r("ay1", FUNC(ay8910_device::data_r));
 	map(0x80, 0x81).w("ay2", FUNC(ay8910_device::address_data_w));
-	map(0xc0, 0xc1).w(this, FUNC(kyugo_state::coin_counter_w));
+	map(0xc0, 0xc1).w(FUNC(kyugo_state::coin_counter_w));
 }
 
 
@@ -185,7 +185,7 @@ void kyugo_state::srdmissn_sub_portmap(address_map &map)
 	map(0x80, 0x81).w("ay1", FUNC(ay8910_device::address_data_w));
 	map(0x82, 0x82).r("ay1", FUNC(ay8910_device::data_r));
 	map(0x84, 0x85).w("ay2", FUNC(ay8910_device::address_data_w));
-	map(0x90, 0x91).w(this, FUNC(kyugo_state::coin_counter_w));
+	map(0x90, 0x91).w(FUNC(kyugo_state::coin_counter_w));
 }
 
 
@@ -534,10 +534,10 @@ MACHINE_CONFIG_START(kyugo_state::kyugo_base)
 
 	MCFG_QUANTUM_TIME(attotime::from_hz(6000))
 
-	MCFG_DEVICE_ADD("mainlatch", LS259, 0)
-	MCFG_ADDRESSABLE_LATCH_Q0_OUT_CB(WRITELINE(*this, kyugo_state, nmi_mask_w))
-	MCFG_ADDRESSABLE_LATCH_Q1_OUT_CB(WRITELINE(*this, kyugo_state, flipscreen_w))
-	MCFG_ADDRESSABLE_LATCH_Q2_OUT_CB(INPUTLINE("sub", INPUT_LINE_RESET)) MCFG_DEVCB_INVERT
+	ls259_device &mainlatch(LS259(config, "mainlatch"));
+	mainlatch.q_out_cb<0>().set(FUNC(kyugo_state::nmi_mask_w));
+	mainlatch.q_out_cb<1>().set(FUNC(kyugo_state::flipscreen_w));
+	mainlatch.q_out_cb<2>().set_inputline(m_subcpu, INPUT_LINE_RESET).invert();
 
 	/* video hardware */
 	MCFG_SCREEN_ADD("screen", RASTER)

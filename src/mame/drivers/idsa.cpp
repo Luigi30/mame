@@ -46,6 +46,10 @@ public:
 		, m_ppi(*this, "ppi%u", 1)
 		{ }
 
+	void bsktbllp(machine_config &config);
+	void idsa(machine_config &config);
+
+private:
 	DECLARE_WRITE_LINE_MEMBER(clock_w);
 	DECLARE_READ8_MEMBER(portb0_r);
 	DECLARE_WRITE8_MEMBER(port80_w);
@@ -63,11 +67,9 @@ public:
 	DECLARE_WRITE8_MEMBER(ay2_a_w);
 	DECLARE_WRITE8_MEMBER(ay2_b_w);
 
-	void bsktbllp(machine_config &config);
-	void idsa(machine_config &config);
 	void maincpu_io_map(address_map &map);
 	void maincpu_map(address_map &map);
-private:
+
 	virtual void machine_reset() override;
 
 	uint16_t m_irqcnt;
@@ -96,9 +98,9 @@ void idsa_state::maincpu_io_map(address_map &map)
 	map(0x50, 0x5f).portr("X5");
 	map(0x60, 0x6f).portr("X6");
 	map(0x70, 0x7f).portr("X7");
-	map(0x80, 0x8f).w(this, FUNC(idsa_state::port80_w));
-	map(0x90, 0x9f).w(this, FUNC(idsa_state::port90_w));
-	map(0xb0, 0xb3).r(this, FUNC(idsa_state::portb0_r));
+	map(0x80, 0x8f).w(FUNC(idsa_state::port80_w));
+	map(0x90, 0x9f).w(FUNC(idsa_state::port90_w));
+	map(0xb0, 0xb3).r(FUNC(idsa_state::portb0_r));
 	map(0xbd, 0xbd).portr("X8");
 	map(0xd0, 0xdf).w(m_speech, FUNC(sp0256_device::ald_w));
 	map(0xe0, 0xef).rw("aysnd1", FUNC(ay8910_device::data_r), FUNC(ay8910_device::address_data_w));
@@ -346,8 +348,8 @@ MACHINE_CONFIG_START(idsa_state::idsa)
 	genpin_audio(config);
 	SPEAKER(config, "lspeaker").front_left();
 	SPEAKER(config, "rspeaker").front_right();
-	MCFG_DEVICE_ADD("speech", SP0256, 3120000) // unknown variant
-	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "lspeaker", 1.5)
+	SP0256(config, m_speech, 3120000); // unknown variant
+	m_speech->add_route(ALL_OUTPUTS, "lspeaker", 1.5);
 
 	MCFG_DEVICE_ADD("aysnd1", AY8910, 2000000) // 2Mhz according to pinmame, schematic omits the clock line
 	MCFG_SOUND_ROUTE(ALL_OUTPUTS, "lspeaker", 0.75)
