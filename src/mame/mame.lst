@@ -10493,6 +10493,9 @@ ccmk1                           // Chess Champion MK I
 cmpchess
 cncchess
 
+@source:compmahj.cpp
+compmahj			// 1987 Nintendo Computer Mahjong
+
 @source:compucolor.cpp
 compclr2                        //
 
@@ -35808,6 +35811,7 @@ jpark                           // 1994.?? Jurassic Park (World)
 jparkj                          // 1994.02 Jurassic Park (Japan) - Deluxe with moving cabinet, Rev A
 jparkja                         // 1994.02 Jurassic Park (Japan) - Deluxe with moving cabinet
 jparkjc                         // 1994.02 Jurassic Park (Japan) - Cabinet conversion kit
+kokoroj                         // 1992.?? Soreike! Kokoroji (Japan)
 kokoroj2                        // 1993.12 Soreike! Kokoroji 2 (Japan)
 orunners                        // 1993.?? Outrunners (World)
 orunnersj                       // 1993.05 Outrunners (Japan)
@@ -37110,6 +37114,7 @@ tvtchspd
 lexizeus                        // Lexibook
 lexiseal                        //
 discpal
+vgcaplet
 
 @source:spg2xx_mysprtch.cpp
 mysprtch
