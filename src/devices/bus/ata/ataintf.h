@@ -142,6 +142,11 @@ public:
 	DECLARE_READ16_MEMBER(cs1_r) { return read_cs1(offset, mem_mask); }
 	DECLARE_WRITE16_MEMBER(cs0_w) { write_cs0(offset, data, mem_mask); }
 	DECLARE_WRITE16_MEMBER(cs1_w) { write_cs1(offset, data, mem_mask); }
+
+	DECLARE_READ8_MEMBER(cs0_8b_r) { return (uint8_t)read_cs0(offset, 0x00FF); }
+	DECLARE_READ8_MEMBER(cs1_8b_r) { return (uint8_t)read_cs1(offset, 0x00FF); }
+	DECLARE_WRITE8_MEMBER(cs0_8b_w) { write_cs0(offset, data, 0x00FF); }
+	DECLARE_WRITE8_MEMBER(cs1_8b_w) { write_cs1(offset, data, 0x00FF); }
 };
 
 DECLARE_DEVICE_TYPE(ATA_INTERFACE, ata_interface_device)

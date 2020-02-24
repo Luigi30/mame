@@ -80,8 +80,9 @@
 #define LOG_RTS     (1U <<  11)
 #define LOG_BRG     (1U <<  12)
 
-//#define VERBOSE  (LOG_CMD | LOG_SETUP | LOG_SYNC | LOG_BIT | LOG_TX )
-//#define LOG_OUTPUT_STREAM std::cout
+// #define VERBOSE  (LOG_CMD | LOG_SETUP | LOG_SYNC | LOG_BIT | LOG_TX )
+#define LOG_OUTPUT_STREAM std::cout
+#define VERBOSE  (LOG_CMD | LOG_SETUP)
 
 #include "logmacro.h"
 

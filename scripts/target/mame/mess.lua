@@ -1243,6 +1243,7 @@ function linkProjects_mame_mess(_target, _subtarget)
 		"quantel",
 		"qume",
 		"radio",
+		"rc2014",
 		"rca",
 		"regnecentralen",
 		"ritam",
@@ -3168,6 +3169,11 @@ files {
 	MAME_DIR .. "src/mame/drivers/radio86.cpp",
 	MAME_DIR .. "src/mame/includes/radio86.h",
 	MAME_DIR .. "src/mame/machine/radio86.cpp",
+}
+
+createMESSProjects(_target, _subtarget, "rc2014")
+files {
+	MAME_DIR .. "src/mame/drivers/rc2014.cpp",
 }
 
 createMESSProjects(_target, _subtarget, "rca")

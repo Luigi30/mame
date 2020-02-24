@@ -41769,3 +41769,6 @@ vgmplay
 @source:ldplayer.cpp
 simldv1000                      // Pioneer LD-V1000
 simpr8210                       // Pioneer PR-8210
+
+@source:rc2014.cpp
+rc2014                          // RC2014
