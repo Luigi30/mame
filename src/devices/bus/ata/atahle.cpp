@@ -3,8 +3,8 @@
 #include "emu.h"
 #include "atahle.h"
 
-#define VERBOSE                     0
-#define PRINTF_IDE_COMMANDS         0
+#define VERBOSE                     1
+#define PRINTF_IDE_COMMANDS         1
 
 #define LOG(x)  do { if (VERBOSE) logerror x; } while (0)
 #define LOGPRINT(x) do { if (VERBOSE) logerror x; if (PRINTF_IDE_COMMANDS) osd_printf_debug x; } while (0)
@@ -893,6 +893,7 @@ void ata_hle_device::write_cs0(offs_t offset, uint16_t data, uint16_t mem_mask)
 				else if (device_selected() || m_command == IDE_COMMAND_DIAGNOSTIC)
 				{
 					m_command = data;
+					logerror( "%s: %s dev %d write_cs0 %04x %04x %04x received command %02x\n", machine().describe_context(), tag(), dev(), offset, data, mem_mask, m_command);
 
 					/* implicitly clear interrupts & dmarq here */
 					set_irq(CLEAR_LINE);
@@ -906,6 +907,11 @@ void ata_hle_device::write_cs0(offs_t offset, uint16_t data, uint16_t mem_mask)
 
 					process_command();
 				}
+				else
+				{
+					logerror( "%s: %s dev %d write_cs0 %04x %04x %04x command %02x ignored, device not selected\n", machine().describe_context(), tag(), dev(), offset, data, mem_mask, m_command);
+				}
+				
 				break;
 
 			default:

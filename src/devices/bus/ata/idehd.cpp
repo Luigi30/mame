@@ -7,8 +7,8 @@
     DEBUGGING
 ***************************************************************************/
 
-#define VERBOSE                     0
-#define PRINTF_IDE_COMMANDS         0
+#define VERBOSE                     1
+#define PRINTF_IDE_COMMANDS         1
 #define PRINTF_IDE_PASSWORD         0
 
 #define LOGPRINT(x) do { if (VERBOSE) logerror x; if (PRINTF_IDE_COMMANDS) osd_printf_debug x; } while (0)
