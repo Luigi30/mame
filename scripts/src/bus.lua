@@ -1805,6 +1805,19 @@ if (BUSES["POFO"]~=null) then
 	}
 end
 
+---------------------------------------------------
+--
+--@src/devices/bus/rc2014/rc2014.h,BUSES["RC2014"] = true
+---------------------------------------------------
+
+if (BUSES["RC2014"]~=null) then
+	files {
+		MAME_DIR .. "src/devices/bus/rc2014/rc2014.cpp",
+		MAME_DIR .. "src/devices/bus/rc2014/rc2014.h",
+		MAME_DIR .. "src/devices/bus/rc2014/cf.cpp",
+		MAME_DIR .. "src/devices/bus/rc2014/cf.h",
+	}
+end
 
 ---------------------------------------------------
 --
