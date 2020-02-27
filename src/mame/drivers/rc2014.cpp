@@ -27,8 +27,6 @@ public:
 		: driver_device(mconfig, type, tag)
 		, m_maincpu(*this, "maincpu")
 		, m_rc2014(*this, BUS_TAG)
-		
-		, m_tms34010
 	{ }
 
 	void rc2014(machine_config &config);
