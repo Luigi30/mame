@@ -1816,6 +1816,10 @@ if (BUSES["RC2014"]~=null) then
 		MAME_DIR .. "src/devices/bus/rc2014/rc2014.h",
 		MAME_DIR .. "src/devices/bus/rc2014/cf.cpp",
 		MAME_DIR .. "src/devices/bus/rc2014/cf.h",
+		MAME_DIR .. "src/devices/bus/rc2014/dual_serial.cpp",
+		MAME_DIR .. "src/devices/bus/rc2014/dual_serial.h",
+		MAME_DIR .. "src/devices/bus/rc2014/vdp_video.cpp",
+		MAME_DIR .. "src/devices/bus/rc2014/vdp_video.h",
 	}
 end
 

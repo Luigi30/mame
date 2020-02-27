@@ -118,15 +118,17 @@ class rc2014_slot_device : public device_t, public device_single_card_slot_inter
 {
 public:
 	// construction/destruction
-	template <typename T>
-	rc2014_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&opts, char const *dflt)
-		: rc2014_slot_device(mconfig, tag, owner, DERIVED_CLOCK(1, 1))
-	{
-		option_reset();
-		opts(*this);
-		set_default_option(dflt);
-		set_fixed(false);
-	}
+    template <typename T, typename U, typename V>
+    rc2014_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&bus, U &&cpu, V &&opts, char const *dflt)
+        : rc2014_slot_device(mconfig, tag, owner, DERIVED_CLOCK(1, 1))
+    {
+        option_reset();
+        opts(*this);
+        set_default_option(dflt);
+        set_fixed(false);
+        set_bus(std::forward<T>(bus));
+        set_cpu_tag(std::forward<U>(cpu));
+    }
 	rc2014_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	template <typename T> void set_bus(T &&tag) { m_bus.set_tag(std::forward<T>(tag)); }
