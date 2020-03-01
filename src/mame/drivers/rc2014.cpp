@@ -12,6 +12,7 @@
 #include "bus/rc2014/cf.h"
 #include "bus/rc2014/dual_serial.h"
 #include "bus/rc2014/vdp_video.h"
+#include "bus/rc2014/tms_video.h"
 
 #include "video/tms9928a.h"
 
@@ -72,6 +73,9 @@ static void rc2014_rc2014_devices(device_slot_interface &device)
 	device.option_add("cf", RC2014_CF);
 	device.option_add("dual_serial", RC2014_DUAL_SERIAL);
 	device.option_add("vdp_video", RC2014_VDP_VIDEO);
+
+	// experimental don't commit this
+	device.option_add("tms_video", RC2014_TMS_VIDEO);
 }
 
 void rc2014_state::rc2014(machine_config &config)
