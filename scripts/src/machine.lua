@@ -705,6 +705,18 @@ end
 
 ---------------------------------------------------
 --
+--@src/devices/machine/am79c30.h,MACHINES["AM79C30"] = true
+---------------------------------------------------
+
+if (MACHINES["AM79C30"]~=null) then
+	files {
+		MAME_DIR .. "src/devices/machine/am79c30.cpp",
+		MAME_DIR .. "src/devices/machine/am79c30.h",
+	}
+end
+
+---------------------------------------------------
+--
 --@src/devices/machine/am79c90.h,MACHINES["AM79C90"] = true
 ---------------------------------------------------
 
@@ -3320,18 +3332,6 @@ if (MACHINES["Z80CTC"]~=null) then
 	files {
 		MAME_DIR .. "src/devices/machine/z80ctc.cpp",
 		MAME_DIR .. "src/devices/machine/z80ctc.h",
-	}
-end
-
----------------------------------------------------
---
---@src/devices/machine/z80dart.h,MACHINES["Z80DART"] = true
----------------------------------------------------
-
-if (MACHINES["Z80DART"]~=null) then
-	files {
-		MAME_DIR .. "src/devices/machine/z80dart.cpp",
-		MAME_DIR .. "src/devices/machine/z80dart.h",
 	}
 end
 
