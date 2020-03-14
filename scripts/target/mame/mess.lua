@@ -431,7 +431,7 @@ MACHINES["8530SCC"] = true
 MACHINES["AAKARTDEV"] = true
 MACHINES["ACIA6850"] = true
 MACHINES["ACORN_VIDC"] = true
---MACHINES["ADC0804"] = true
+MACHINES["ADC0804"] = true
 MACHINES["ADC0808"] = true
 MACHINES["ADC083X"] = true
 MACHINES["ADC1038"] = true
@@ -546,7 +546,6 @@ MACHINES["MB89352"] = true
 MACHINES["MB89371"] = true
 MACHINES["MC14411"] = true
 MACHINES["MC146818"] = true
-MACHINES["MC2661"] = true
 MACHINES["MC6843"] = true
 MACHINES["MC6844"] = true
 MACHINES["MC6846"] = true
@@ -626,6 +625,7 @@ MACHINES["SATURN"] = true
 MACHINES["SCC68070"] = true
 --MACHINES["SCSI"] = true
 MACHINES["SCC2698B"] = true
+MACHINES["SCN_PCI"] = true
 MACHINES["SCUDSP"] = true
 MACHINES["SECFLASH"] = true
 MACHINES["SEIBU_COP"] = true
@@ -989,6 +989,7 @@ FORMATS["HECT_TAP"] = true
 FORMATS["HTI_TAP"] = true
 FORMATS["HPI_DSK"] = true
 FORMATS["HP_IPC_DSK"] = true
+FORMATS["IBMXDF_DSK"] = true
 FORMATS["IMG_DSK"] = true
 FORMATS["IQ151_DSK"] = true
 FORMATS["ITT3030_DSK"] = true
@@ -1183,9 +1184,11 @@ function linkProjects_mame_mess(_target, _subtarget)
 		"intv",
 		"isc",
 		"jazz",
+		"kawai",
 		"kaypro",
 		"koei",
 		"kontron",
+		"korg",
 		"kurzweil",
 		"kyocera",
 		"leapfrog",
@@ -2605,6 +2608,13 @@ files {
 	MAME_DIR .. "src/mame/machine/mct_adr.h",
 }
 
+createMESSProjects(_target, _subtarget, "kawai")
+files {
+	MAME_DIR .. "src/mame/drivers/kawai_k1.cpp",
+	MAME_DIR .. "src/mame/drivers/kawai_k4.cpp",
+	MAME_DIR .. "src/mame/drivers/kawai_k5.cpp",
+}
+
 createMESSProjects(_target, _subtarget, "kaypro")
 files {
 	MAME_DIR .. "src/mame/drivers/kaypro.cpp",
@@ -2623,6 +2633,15 @@ files {
 createMESSProjects(_target, _subtarget, "kontron")
 files {
 	MAME_DIR .. "src/mame/drivers/kdt6.cpp",
+}
+
+createMESSProjects(_target, _subtarget, "korg")
+files {
+	MAME_DIR .. "src/mame/drivers/korgds8.cpp",
+	MAME_DIR .. "src/mame/drivers/korgdss1.cpp",
+	MAME_DIR .. "src/mame/drivers/korgm1.cpp",
+	MAME_DIR .. "src/mame/drivers/poly800.cpp",
+	MAME_DIR .. "src/mame/drivers/polysix.cpp",
 }
 
 createMESSProjects(_target, _subtarget, "kurzweil")
@@ -3225,14 +3244,17 @@ files {
 
 createMESSProjects(_target, _subtarget, "roland")
 files {
+	MAME_DIR .. "src/mame/drivers/alphajuno.cpp",
 	MAME_DIR .. "src/mame/drivers/roland_cm32p.cpp",
+	MAME_DIR .. "src/mame/drivers/roland_d10.cpp",
 	MAME_DIR .. "src/mame/drivers/roland_d50.cpp",
-	MAME_DIR .. "src/mame/drivers/roland_d110.cpp",
+	MAME_DIR .. "src/mame/drivers/roland_jx3p.cpp",
 	MAME_DIR .. "src/mame/drivers/roland_mt32.cpp",
 	MAME_DIR .. "src/mame/drivers/roland_r8.cpp",
 	MAME_DIR .. "src/mame/drivers/roland_sc55.cpp",
 	MAME_DIR .. "src/mame/drivers/tb303.cpp",
 	MAME_DIR .. "src/mame/drivers/tr606.cpp",
+	MAME_DIR .. "src/mame/machine/pg200.cpp",
 }
 
 createMESSProjects(_target, _subtarget, "rolm")
@@ -3830,6 +3852,8 @@ files {
 	MAME_DIR .. "src/mame/drivers/tvgame.cpp",
 	MAME_DIR .. "src/mame/drivers/spg110.cpp",
 	MAME_DIR .. "src/mame/drivers/spg2xx.cpp",
+	MAME_DIR .. "src/mame/drivers/spg2xx_skannerztv.cpp",
+	MAME_DIR .. "src/mame/drivers/spg2xx_digimake.cpp",
 	MAME_DIR .. "src/mame/drivers/spg2xx_jakks.cpp",
 	MAME_DIR .. "src/mame/drivers/spg2xx_jakks_gkr.cpp",
 	MAME_DIR .. "src/mame/drivers/spg2xx_jakks_tvtouch.cpp",
@@ -4221,7 +4245,6 @@ files {
 	MAME_DIR .. "src/mame/drivers/jade.cpp",
 	MAME_DIR .. "src/mame/drivers/jonos.cpp",
 	MAME_DIR .. "src/mame/drivers/juku.cpp",
-	MAME_DIR .. "src/mame/drivers/korgm1.cpp",
 	MAME_DIR .. "src/mame/drivers/krokha.cpp",
 	MAME_DIR .. "src/mame/drivers/kron.cpp",
 	MAME_DIR .. "src/mame/drivers/lee1214.cpp",
@@ -4284,7 +4307,6 @@ files {
 	MAME_DIR .. "src/mame/drivers/plan80.cpp",
 	MAME_DIR .. "src/mame/drivers/pm68k.cpp",
 	MAME_DIR .. "src/mame/drivers/pockchal.cpp",
-	MAME_DIR .. "src/mame/drivers/polysix.cpp",
 	MAME_DIR .. "src/mame/drivers/powerstack.cpp",
 	MAME_DIR .. "src/mame/drivers/proteus3.cpp",
 	MAME_DIR .. "src/mame/drivers/pt68k4.cpp",
