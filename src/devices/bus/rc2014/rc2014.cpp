@@ -9,7 +9,6 @@
 #include "emu.h"
 #include "rc2014.h"
 
-
 //**************************************************************************
 //  DEVICE DEFINITIONS
 //**************************************************************************
@@ -17,14 +16,12 @@
 DEFINE_DEVICE_TYPE(RC2014_BUS,  rc2014_bus_device,  "rc2014_bus",  "RC2014 bus")
 DEFINE_DEVICE_TYPE(RC2014_SLOT, rc2014_slot_device, "rc2014_slot", "RC2014 slot")
 
-
-
 //**************************************************************************
 //  LIVE DEVICE
 //**************************************************************************
 
 //-------------------------------------------------
-//  device_s100_card_interface - constructor
+//  device_rc2014_card_interface - constructor
 //-------------------------------------------------
 
 device_rc2014_card_interface::device_rc2014_card_interface(const machine_config &mconfig, device_t &device) :
@@ -42,13 +39,13 @@ void device_rc2014_card_interface::interface_pre_start()
 
 
 //-------------------------------------------------
-//  s100_slot_device - constructor
+//  rc2014_slot_device - constructor
 //-------------------------------------------------
 rc2014_slot_device::rc2014_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
 	device_t(mconfig, RC2014_SLOT, tag, owner, clock),
 	device_single_card_slot_interface<device_rc2014_card_interface>(mconfig, *this),
 	m_bus(*this, DEVICE_SELF_OWNER),
-	m_cpu(*this, finder_base::DUMMY_TAG)
+	m_cpu(*this, "finder_base::DUMMY_TAG")
 {
 }
 
@@ -65,24 +62,35 @@ void rc2014_slot_device::device_start()
 
 
 //-------------------------------------------------
-//  s100_bus_device - constructor
+//  rc2014_bus_device - constructor
 //-------------------------------------------------
 
 rc2014_bus_device::rc2014_bus_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
-	device_t(mconfig, RC2014_BUS, tag, owner, clock),
-	m_write_irq(*this),
-	m_write_m1(*this),
-	m_write_mreq(*this),
-	m_write_ireq(*this),
-	m_write_wr(*this),
-	m_write_rd(*this),
-	m_write_usr1(*this),
-	m_write_usr2(*this),
-	m_write_usr3(*this),
-	m_write_usr4(*this)
+	device_t(mconfig, RC2014_BUS, tag, owner, clock)
+	// m_write_m1(*this),
+	// m_write_mreq(*this),
+	// m_write_ireq(*this),
+	// m_write_wr(*this),
+	// m_write_rd(*this),
+	// m_write_usr1(*this),
+	// m_write_usr2(*this),
+	// m_write_usr3(*this),
+	// m_write_usr4(*this)
 {
 }
 
+void rc2014_bus_device::device_resolve_objects()
+{
+}
+
+WRITE_LINE_MEMBER( rc2014_slot_device::irq_w )
+{
+	m_cpu->set_input_line(INPUT_LINE_IRQ0, state);
+}
+WRITE_LINE_MEMBER( rc2014_slot_device::nmi_w )
+{
+	m_cpu->set_input_line(INPUT_LINE_NMI, state);
+}
 
 //-------------------------------------------------
 //  device_start - device-specific startup
@@ -90,8 +98,6 @@ rc2014_bus_device::rc2014_bus_device(const machine_config &mconfig, const char *
 
 void rc2014_bus_device::device_start()
 {
-	// resolve callbacks
-	m_write_irq.resolve_safe();
 
 }
 

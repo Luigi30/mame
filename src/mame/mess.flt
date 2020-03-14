@@ -39,6 +39,7 @@ alcat7100.cpp
 alesis.cpp
 alesis_qs.cpp
 alfaskop41xx.cpp
+alphajuno.cpp
 alphasma.cpp
 alphatpc16.cpp
 alphatpx.cpp
@@ -433,11 +434,16 @@ jupiter.cpp
 k1003.cpp
 k28.cpp
 k8915.cpp
+kawai_k1.cpp
+kawai_k4.cpp
+kawai_k5.cpp
 kaypro.cpp
 kc.cpp
 kdt6.cpp
 kim1.cpp
 konin.cpp
+korgds8.cpp
+korgdss1.cpp
 korgm1.cpp
 kramermc.cpp
 krokha.cpp
@@ -687,7 +693,9 @@ poisk1.cpp
 pokemini.cpp
 poly.cpp
 poly88.cpp
+poly800.cpp
 poly880.cpp
+polysix.cpp
 powerstack.cpp
 pp.cpp
 pp01.cpp
@@ -742,8 +750,9 @@ riscpc.cpp
 rm380z.cpp
 rmnimbus.cpp
 roland_cm32p.cpp
-roland_d110.cpp
+roland_d10.cpp
 roland_d50.cpp
+roland_jx3p.cpp
 roland_mt32.cpp
 roland_r8.cpp
 roland_sc55.cpp
@@ -816,6 +825,7 @@ spg110.cpp
 spg29x.cpp
 spg29x_lexibook_jg7425.cpp
 spg2xx.cpp
+spg2xx_digimake.cpp
 spg2xx_dreamlife.cpp
 spg2xx_ican.cpp
 spg2xx_jakks.cpp
@@ -825,6 +835,7 @@ spg2xx_lexibook.cpp
 spg2xx_mysprtch.cpp
 spg2xx_pdc.cpp
 spg2xx_playvision.cpp
+spg2xx_skannerztv.cpp
 spg2xx_senario.cpp
 spg2xx_senario_poker.cpp
 spg2xx_shredmjr.cpp
@@ -861,6 +872,7 @@ swtpc8212.cpp
 swyft.cpp
 sym1.cpp
 symbolics.cpp
+synthex.cpp
 sys2900.cpp
 sys9002.cpp
 systec.cpp
