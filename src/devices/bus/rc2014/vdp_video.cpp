@@ -38,6 +38,9 @@ private:
 	// object finder
 	required_device<tms9918a_device> m_vdp;
 	rc2014_slot_device *m_slot;
+
+	DECLARE_WRITE_LINE_MEMBER( irq_w );
+	DECLARE_WRITE_LINE_MEMBER( nmi_w );
 };
 
 DEFINE_DEVICE_TYPE_PRIVATE(RC2014_VDP_VIDEO, device_rc2014_card_interface, vdp_video_device, "vdp_video", "TMS9918A Video Card")
@@ -132,15 +135,28 @@ void vdp_video_device::device_reset()
 	space.install_readwrite_handler(io_base+0x18, io_base+0x18, read8smo_delegate(*m_vdp, FUNC(tms9918a_device::vram_read)), write8smo_delegate(*m_vdp, FUNC(tms9918a_device::vram_write)));
 	space.install_readwrite_handler(io_base+0x19, io_base+0x19, read8smo_delegate(*m_vdp, FUNC(tms9918a_device::register_read)), write8smo_delegate(*m_vdp, FUNC(tms9918a_device::register_write)));
 
-	if(ioport("JP4")->read() == 0)
-	{
-		m_vdp->int_callback().set_inputline(cpu, INPUT_LINE_NMI);
-	}
-	else
-	{
-		m_vdp->int_callback().set_inputline(cpu, INPUT_LINE_IRQ0);
-	}
+	// if(ioport("JP4")->read() == 0)
+	// {
+	// 	m_vdp->int_callback().set(FUNC(vdp_video_device::irq_w));
+	// }
+	// else
+	// {
+	// 	m_vdp->int_callback().set(FUNC(vdp_video_device::nmi_w));
+	// }
 }
+
+WRITE_LINE_MEMBER( vdp_video_device::irq_w )
+{
+	m_slot = dynamic_cast<rc2014_slot_device *>(owner());
+	m_slot->irq_w(state);
+}
+
+WRITE_LINE_MEMBER( vdp_video_device::nmi_w )
+{
+	m_slot = dynamic_cast<rc2014_slot_device *>(owner());
+	m_slot->nmi_w(state);
+}
+
 
 void vdp_video_device::device_add_mconfig(machine_config &config)
 {
@@ -150,5 +166,5 @@ void vdp_video_device::device_add_mconfig(machine_config &config)
 	TMS9918A(config, m_vdp, 10.738635_MHz_XTAL);
 	m_vdp->set_screen(SCREEN_TAG);
 	m_vdp->set_vram_size(0x4000);
-
+	m_vdp->int_callback().set(FUNC(vdp_video_device::irq_w));
 }

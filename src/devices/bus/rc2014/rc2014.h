@@ -35,6 +35,7 @@ public:
 
 	// // interrupts
 	virtual void rc2014_int_w(int state) { }
+	virtual void rc2014_nmi_w(int state) { }
 
 	// // memory access
 	virtual uint8_t rc2014_rd_r(offs_t offset) { return 0xff; }
@@ -70,8 +71,6 @@ public:
 	rc2014_bus_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	~rc2014_bus_device() { m_device_list.detach_all(); }
 
-	auto irq() { return m_write_irq.bind(); }
-
 	void add_card(device_rc2014_card_interface *card);
 
 	uint8_t rd_r(offs_t offset);
@@ -80,33 +79,35 @@ public:
 	uint8_t io_r(offs_t offset);
 	void io_w(offs_t offset, uint8_t data);
 
-	DECLARE_WRITE_LINE_MEMBER( irq_w ) { m_write_irq(state); }
-	DECLARE_WRITE_LINE_MEMBER( m1_w ) { m_write_m1(state); }
-	DECLARE_WRITE_LINE_MEMBER( mreq_w ) { m_write_mreq(state); }
-	DECLARE_WRITE_LINE_MEMBER( ireq_w ) { m_write_ireq(state); }
-	DECLARE_WRITE_LINE_MEMBER( wr_w ) { m_write_wr(state); }
-	DECLARE_WRITE_LINE_MEMBER( rd_w ) { m_write_rd(state); }
-	DECLARE_WRITE_LINE_MEMBER( usr1_w ) { m_write_usr1(state); }
-	DECLARE_WRITE_LINE_MEMBER( usr2_w ) { m_write_usr2(state); }
-	DECLARE_WRITE_LINE_MEMBER( usr3_w ) { m_write_usr3(state); }
-	DECLARE_WRITE_LINE_MEMBER( usr4_w ) { m_write_usr4(state); }
+	// DECLARE_WRITE_LINE_MEMBER( m1_w ) 	{ m_write_m1(state); }
+	// DECLARE_WRITE_LINE_MEMBER( mreq_w ) { m_write_mreq(state); }
+	// DECLARE_WRITE_LINE_MEMBER( ireq_w ) { m_write_ireq(state); }
+	// DECLARE_WRITE_LINE_MEMBER( wr_w ) 	{ m_write_wr(state); }
+	// DECLARE_WRITE_LINE_MEMBER( rd_w ) 	{ m_write_rd(state); }
+	// DECLARE_WRITE_LINE_MEMBER( usr1_w ) { m_write_usr1(state); }
+	// DECLARE_WRITE_LINE_MEMBER( usr2_w ) { m_write_usr2(state); }
+	// DECLARE_WRITE_LINE_MEMBER( usr3_w ) { m_write_usr3(state); }
+	// DECLARE_WRITE_LINE_MEMBER( usr4_w ) { m_write_usr4(state); }
 
 protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
+	virtual void device_resolve_objects() override;
+
 private:
-	devcb_write_line   	m_write_irq;
-	devcb_write_line	m_write_m1;
-	devcb_write_line	m_write_mreq;
-	devcb_write_line	m_write_ireq;
-	devcb_write_line	m_write_wr;
-	devcb_write_line	m_write_rd;
-	devcb_write_line	m_write_usr1;
-	devcb_write_line	m_write_usr2;
-	devcb_write_line	m_write_usr3;
-	devcb_write_line	m_write_usr4;
+	// devcb_write_line m_out_irq_cb;
+	// devcb_write_line m_out_nmi_cb;
+	// devcb_write_line	m_write_m1;
+	// devcb_write_line	m_write_mreq;
+	// devcb_write_line	m_write_ireq;
+	// devcb_write_line	m_write_wr;
+	// devcb_write_line	m_write_rd;
+	// devcb_write_line	m_write_usr1;
+	// devcb_write_line	m_write_usr2;
+	// devcb_write_line	m_write_usr3;
+	// devcb_write_line	m_write_usr4;
 
 	simple_list<device_rc2014_card_interface> m_device_list;
 };
@@ -136,6 +137,9 @@ public:
 	template <class Object> void set_cpu_tag(Object &&tag) { m_cpu.set_tag(std::forward<Object>(tag)); }
 	cpu_device &cpu() const { return *m_cpu; }
 
+	DECLARE_WRITE_LINE_MEMBER( nmi_w );
+	DECLARE_WRITE_LINE_MEMBER( irq_w );
+
 protected:
 	// device-level overrides
 	virtual void device_start() override;
@@ -144,7 +148,6 @@ private:
 	required_device<rc2014_bus_device> m_bus;
 	required_device<cpu_device> m_cpu;
 };
-
 
 
 // device type definition
