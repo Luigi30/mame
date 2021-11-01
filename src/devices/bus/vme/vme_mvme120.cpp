@@ -387,7 +387,7 @@ WRITE_LINE_MEMBER( vme_mvme120_device::vme_bus_error_changed )
 	
 	// Connected to both CPU /BERR and GPIO 2 of the MFP.
 	//m_mfp->i2_w(state);
-	//m_maincpu->set_input_line(M68K_LINE_BUSERROR, state);
+	m_maincpu->set_input_line(M68K_LINE_BUSERROR, state);
 }
 
 

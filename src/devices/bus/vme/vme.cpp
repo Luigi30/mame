@@ -313,8 +313,6 @@ void vme_device::install_ub_handler(offs_t start, offs_t end, read8_delegate rha
 
 uint16_t vme_device::bus_error_r(address_space &space, offs_t address, uint16_t mem_mask)
 {
-	LOG("triggering VME bus error\n");
-	
 	berr_w(ASSERT_LINE);
 	berr_w(CLEAR_LINE);
 	return 0;
@@ -322,8 +320,6 @@ uint16_t vme_device::bus_error_r(address_space &space, offs_t address, uint16_t 
 
 void vme_device::bus_error_w(address_space &space, offs_t address, uint16_t data, uint16_t mem_mask)
 {
-	LOG("triggering VME bus error\n");
-	
 	berr_w(ASSERT_LINE);
 	berr_w(CLEAR_LINE);
 }

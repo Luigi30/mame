@@ -58,6 +58,9 @@
 //void vme_slot1(device_slot_interface &device); // Disabled until we know how to combine a board driver and a slot device.
 void vme_slots(device_slot_interface &device);
 
+/*****************
+ * The VME slot device.
+ *****************/
 class device_vme_card_interface; // This interface is standardized
 class vme_device;
 
@@ -125,8 +128,10 @@ protected:
 	
 };
 
+/*****************
+ * The VME device.
+ *****************/
 DECLARE_DEVICE_TYPE(VME, vme_device)
-
 
 class vme_card_interface;
 
@@ -227,8 +232,10 @@ protected:
 	devcb_write_line    m_out_berr_cb;
 };
 
-
-
+/*****************
+ * The VME card interface.
+ *****************/
+ 
 // device type definition
 DECLARE_DEVICE_TYPE(VME_SLOT, vme_slot_device)
 
@@ -248,9 +255,6 @@ public:
 	virtual uint16_t read16(vme_device::vme_amod_t vme_address_mode, offs_t offset);
 	virtual void write16(vme_device::vme_amod_t vme_address_mode, offs_t offset, uint16_t data);
 
-	void raise_bus_error();
-	void lower_bus_error();
-
 protected:
 	device_vme_card_interface(const machine_config &mconfig, device_t &device);
 
@@ -264,16 +268,5 @@ protected:
 private:
 	device_vme_card_interface *m_next;
 };
-
-inline void device_vme_card_interface::raise_bus_error()
-{
-	m_vme->berr_w(ASSERT_LINE);
-}
-
-inline void device_vme_card_interface::lower_bus_error()
-{
-	m_vme->berr_w(CLEAR_LINE);
-}
-
 
 #endif // MAME_BUS_VME_VME_H
