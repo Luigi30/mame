@@ -73,11 +73,12 @@
 #include "bus/vme/vme_mvme350.h"
 #include "bus/vme/vme_fcisio.h"
 #include "bus/vme/vme_fcscsi.h"
+#include "bus/vme/vme_rg750.h"
 
 #define LOG_GENERAL 0x01
 #define LOG_SETUP   0x02
 
-//#define VERBOSE (LOG_SETUP | LOG_GENERAL)
+#define VERBOSE (LOG_SETUP | LOG_GENERAL)
 
 #define LOG_OUTPUT_FUNC printf // logerror is not available here
 
@@ -144,7 +145,7 @@ void vme_slot_device::device_resolve_objects()
 //-------------------------------------------------
 uint8_t vme_slot_device::read8(offs_t offset)
 {
-	uint16_t result = 0x00;
+	uint8_t result = 0x00;
 	LOG("%s %s\n", tag(), FUNCNAME);
 	//  printf("%s %s\n", tag(), FUNCNAME);
 	//  if (m_card)     result = m_card->read8(offset);
@@ -160,6 +161,29 @@ void vme_slot_device::write8(offs_t offset, uint8_t data)
 	//  printf("%s %s\n", tag(), FUNCNAME);
 	//  if (m_card)     m_card->write8(offset, data);
 }
+
+//-------------------------------------------------
+//  P1 D16 read
+//-------------------------------------------------
+uint16_t vme_slot_device::read16(offs_t offset)
+{
+	uint16_t result = 0x00;
+	LOG("%s %s\n", tag(), FUNCNAME);
+	//  printf("%s %s\n", tag(), FUNCNAME);
+	//  if (m_card)     result = m_card->read8(offset);
+	return result;
+}
+
+//-------------------------------------------------
+//  P1 D16 write
+//-------------------------------------------------
+void vme_slot_device::write16(offs_t offset, uint16_t data)
+{
+	LOG("%s %s\n", tag(), FUNCNAME);
+	//  printf("%s %s\n", tag(), FUNCNAME);
+	//  if (m_card)     m_card->write8(offset, data);
+}
+
 
 #if 0 // Disabled until we know how to make a board driver also a slot device
 /* The following two slot collections be combined once we intriduce capabilities for each board */
@@ -178,6 +202,7 @@ void vme_slots(device_slot_interface &device)
 	device.option_add("mvme350", VME_MVME350);
 	device.option_add("fcisio1", VME_FCISIO1);
 	device.option_add("fcscsi1", VME_FCSCSI1);
+	device.option_add("rg750", VME_RG750);
 }
 
 //
@@ -214,6 +239,7 @@ vme_device::vme_device(const machine_config &mconfig, device_type type, const ch
 	, m_a32_config("a32", ENDIANNESS_BIG, 32, 32, 0, address_map_constructor())
 	, m_allocspaces(true)
 	, m_cputag("maincpu")
+	, m_out_berr_cb(*this)
 {
 	LOG("%s %s\n", tag, FUNCNAME);
 }
@@ -255,6 +281,17 @@ void vme_device::add_vme_card(device_vme_card_interface *card)
 	m_device_list.append(*card);
 }
 
+
+//-------------------------------------------------
+//  device_resolve_objects - resolve objects that
+//  may be needed for other devices to set
+//  initial conditions at start time
+//-------------------------------------------------
+void vme_device::device_resolve_objects()
+{
+	m_out_berr_cb.resolve_safe();
+}
+
 #if 0
 /*
  *  Install UB (Utility Bus) handlers for this board
@@ -273,6 +310,25 @@ void vme_device::install_ub_handler(offs_t start, offs_t end, read8_delegate rha
 {
 }
 #endif
+
+uint16_t vme_device::bus_error_r(address_space &space, offs_t address, uint16_t mem_mask)
+{
+	LOG("triggering VME bus error\n");
+	
+	berr_w(ASSERT_LINE);
+	berr_w(CLEAR_LINE);
+	return 0;
+}
+
+void vme_device::bus_error_w(address_space &space, offs_t address, uint16_t data, uint16_t mem_mask)
+{
+	LOG("triggering VME bus error\n");
+	
+	berr_w(ASSERT_LINE);
+	berr_w(CLEAR_LINE);
+}
+
+WRITE_LINE_MEMBER( vme_device::berr_w ) { m_out_berr_cb(state); }
 
 /*
  *  Install DTB (Data Transfer Bus) handlers for this board
@@ -431,6 +487,36 @@ void vme_device::install_device(vme_amod_t amod, offs_t start, offs_t end, read3
 	}
 }
 
+uint8_t	vme_device::read8(vme_amod_t vme_address_mode, offs_t offset)
+{
+	return m_prgspace->read_byte(offset);
+}
+
+void vme_device::write8(vme_amod_t vme_address_mode, offs_t offset, uint8_t data)
+{
+	m_prgspace->write_byte(offset, data);
+}
+
+uint16_t vme_device::read16(vme_amod_t vme_address_mode, offs_t offset)
+{
+	return m_prgspace->read_word(offset);
+}
+
+void vme_device::write16(vme_amod_t vme_address_mode, offs_t offset, uint16_t data)
+{
+	m_prgspace->write_word(offset, data);
+}
+
+uint32_t vme_device::read32(vme_amod_t vme_address_mode, offs_t offset)
+{
+	return m_prgspace->read_dword(offset);
+}
+
+void vme_device::write32(vme_amod_t vme_address_mode, offs_t offset, uint32_t data)
+{
+	m_prgspace->write_dword(offset, data);
+}
+
 //
 // Card interface
 //
@@ -457,16 +543,24 @@ void device_vme_card_interface::interface_post_start()
 }
 
 /* VME D8 accesses */
-uint8_t device_vme_card_interface::read8(offs_t offset)
+uint8_t device_vme_card_interface::read8(vme_device::vme_amod_t vme_address_mode, offs_t offset)
 {
-	uint8_t result = 0x00;
-	LOG("%s %s Offset:%08x\n", m_device->tag(), FUNCNAME, offset);
-	return result;
+	return m_vme->read8(vme_address_mode, offset);
 }
 
-void device_vme_card_interface::write8(offs_t offset, uint8_t data)
+void device_vme_card_interface::write8(vme_device::vme_amod_t vme_address_mode, offs_t offset, uint8_t data)
 {
-	LOG("%s %s Offset:%08x\n", m_device->tag(), FUNCNAME, offset);
+	m_vme->write8(vme_address_mode, offset, data);
+}
+
+uint16_t device_vme_card_interface::read16(vme_device::vme_amod_t vme_address_mode, offs_t offset)
+{
+	return m_vme->read16(vme_address_mode, offset);
+}
+
+void device_vme_card_interface::write16(vme_device::vme_amod_t vme_address_mode, offs_t offset, uint16_t data)
+{
+	m_vme->write16(vme_address_mode, offset, data);
 }
 
 //--------------- P2 connector below--------------------------

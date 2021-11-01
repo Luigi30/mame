@@ -42,6 +42,8 @@ public:
 	// Switch and jumper handlers
 	DECLARE_INPUT_CHANGED_MEMBER(s3_autoboot);
 	DECLARE_INPUT_CHANGED_MEMBER(s3_baudrate);
+	
+	DECLARE_WRITE_LINE_MEMBER( vme_bus_error_changed );
 			
 	uint16_t vme_to_ram_r(address_space &space, offs_t offset, uint16_t mem_mask);
 	void vme_to_ram_w(address_space &space, offs_t address, uint16_t data, uint16_t mem_mask);
@@ -81,10 +83,10 @@ protected:
 	
 	// VMEbus dummy lines
 	void vme_bus_timeout();
-	uint16_t vme_a24_r();
-	void vme_a24_w(uint16_t data);
-	uint16_t vme_a16_r();
-	void vme_a16_w(uint16_t data);
+	uint16_t vme_a24_r(offs_t offset);
+	void vme_a24_w(offs_t offset, uint16_t data);
+	uint16_t vme_a16_r(offs_t offset);
+	void vme_a16_w(offs_t offset, uint16_t data);
 
 	uint16_t rom_shadow_tap(offs_t address, u16 data, u16 mem_mask);
 	

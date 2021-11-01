@@ -2300,6 +2300,8 @@ if (BUSES["VME"]~=null) then
 		MAME_DIR .. "src/devices/bus/vme/vme.h",
 		MAME_DIR .. "src/devices/bus/vme/vme_mzr8300.cpp",
 		MAME_DIR .. "src/devices/bus/vme/vme_mzr8300.h",
+		MAME_DIR .. "src/devices/bus/vme/vme_mvme050.cpp",
+		MAME_DIR .. "src/devices/bus/vme/vme_mvme050.h",
 		MAME_DIR .. "src/devices/bus/vme/vme_mvme120.cpp",
 		MAME_DIR .. "src/devices/bus/vme/vme_mvme120.h",
 		MAME_DIR .. "src/devices/bus/vme/vme_mvme350.cpp",
@@ -2312,6 +2314,8 @@ if (BUSES["VME"]~=null) then
 		MAME_DIR .. "src/devices/bus/vme/vme_fcscsi.h",
 		MAME_DIR .. "src/devices/bus/vme/vme_hcpu30.cpp",
 		MAME_DIR .. "src/devices/bus/vme/vme_hcpu30.h",
+		MAME_DIR .. "src/devices/bus/vme/vme_rg750.cpp",
+		MAME_DIR .. "src/devices/bus/vme/vme_rg750.h",		
 	}
 end
 

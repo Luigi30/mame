@@ -9,6 +9,7 @@
  */
  
 #include "bus/vme/vme_mvme120.h"
+#include "bus/vme/vme_mvme050.h"
 #include "logmacro.h"
 
 namespace {
@@ -34,6 +35,9 @@ INPUT_PORTS_END
 
 static void mvme120_vme_cards(device_slot_interface &device)
 {
+	vme_slots(device);
+	
+	device.option_add("mvme050", VME_MVME050);
 	device.option_add("mvme120", VME_MVME120);
 	device.option_add("mvme121", VME_MVME121);
 	device.option_add("mvme122", VME_MVME122);
@@ -43,8 +47,8 @@ static void mvme120_vme_cards(device_slot_interface &device)
 void sys1121_state::sys1121(machine_config &config)
 {
 	VME(config, "vme", 0);
-	VME_SLOT(config, "slot1", mvme120_vme_cards, "mvme120", 1, "vme");
-	VME_SLOT(config, "slot2", mvme120_vme_cards, nullptr, 2, "vme");
+	VME_SLOT(config, "slot1", mvme120_vme_cards, "mvme050", 1, "vme");
+	VME_SLOT(config, "slot2", mvme120_vme_cards, "mvme120", 2, "vme");
 	VME_SLOT(config, "slot3", mvme120_vme_cards, nullptr, 3, "vme");
 	VME_SLOT(config, "slot4", mvme120_vme_cards, nullptr, 4, "vme");
 	VME_SLOT(config, "slot5", mvme120_vme_cards, nullptr, 5, "vme");

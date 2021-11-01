@@ -218,6 +218,14 @@ void vme_mvme120_device::mvme123_mem(address_map &map)
 void vme_mvme120_device::device_start()
 {
 	LOG("%s\n", FUNCNAME);
+	
+	// Onboard RAM is always visible to VMEbus. (Decoding controlled by U28.)
+	m_vme->install_device(vme_device::A24_SC, 0, 0x1FFFF,
+		read16_delegate(*this, FUNC(vme_mvme120_device::vme_to_ram_r)), 
+		write16_delegate(*this, FUNC(vme_mvme120_device::vme_to_ram_w)), 
+		0xFFFF);
+		
+	m_vme->berr_callback().set(FUNC(vme_mvme120_device::vme_bus_error_changed));
 }
 
 void vme_mvme120_device::device_reset()
@@ -287,26 +295,28 @@ void vme_mvme120_device::vme_bus_timeout()
 }
 
 // Dummy VMEbus access
-uint16_t vme_mvme120_device::vme_a24_r()
+uint16_t vme_mvme120_device::vme_a24_r(offs_t offset)
 {
-	vme_bus_timeout();
-	return 0;
+	return read16(vme_device::A24_SC, offset);
+	//vme_bus_timeout();
 }
 
-void vme_mvme120_device::vme_a24_w(uint16_t data)
+void vme_mvme120_device::vme_a24_w(offs_t offset, uint16_t data)
 {	
-	vme_bus_timeout();
+	write16(vme_device::A24_SC, offset, data);
+	//vme_bus_timeout();
 }
 
-uint16_t vme_mvme120_device::vme_a16_r()
+uint16_t vme_mvme120_device::vme_a16_r(offs_t offset)
 {
-	vme_bus_timeout();
-	return 0;
+	return read16(vme_device::A24_SC, offset);
+	//vme_bus_timeout();
 }
 
-void vme_mvme120_device::vme_a16_w(uint16_t data)
+void vme_mvme120_device::vme_a16_w(offs_t offset, uint16_t data)
 {
-	vme_bus_timeout();
+	write16(vme_device::A24_SC, offset, data);
+	//vme_bus_timeout();
 }
 
 uint8_t vme_mvme120_device::ctrlreg_r(offs_t offset)
@@ -366,19 +376,22 @@ void vme_mvme120_device::device_add_mconfig(machine_config &config)
 	m_rs232->rxd_handler().set("mfp", FUNC(mc68901_device::si_w));
 	m_rs232->set_option_device_input_defaults("terminal", terminal_defaults);
 
-	// Missing: MMU, VMEbus
+	// Missing: MMU
 	
 	VME(config, "vme", 0);
-
-	/*
-	// Onboard RAM is always visible to VMEbus. (Decoding controlled by U28.)
-	m_vme->install_device(vme_device::A24_SC, 0, 0x1FFFF,
-		read16_delegate(*this, FUNC(vme_mvme120_device::vme_to_ram_r)), 
-		write16_delegate(*this, FUNC(vme_mvme120_device::vme_to_ram_w)), 
-		0xFFFF);
-	*/
 }
 
+WRITE_LINE_MEMBER( vme_mvme120_device::vme_bus_error_changed )
+{
+	LOG("%s: VMEbus /BERR\n", FUNCNAME);
+	
+	// Connected to both CPU /BERR and GPIO 2 of the MFP.
+	//m_mfp->i2_w(state);
+	//m_maincpu->set_input_line(M68K_LINE_BUSERROR, state);
+}
+
+
+// MVME120 RAM is always visible to the VMEbus.
 uint16_t vme_mvme120_device::vme_to_ram_r(address_space &space, offs_t address, uint16_t mem_mask)
 {
 	return m_localram[address];

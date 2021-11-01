@@ -102,8 +102,11 @@ public:
 
 	template <typename T> void set_vme_slot(T &&tag, uint32_t slot_nbr) { m_vme.set_tag(std::forward<T>(tag)); m_slot_nbr = slot_nbr; }
 
-	virtual uint8_t read8(offs_t offset);
-	virtual void write8(offs_t offset, uint8_t data);
+	virtual uint8_t 	read8(offs_t offset);
+	virtual void 		write8(offs_t offset, uint8_t data);
+	
+	virtual uint16_t 	read16(offs_t offset);
+	virtual void 		write16(offs_t offset, uint16_t data);
 
 protected:
 	vme_slot_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
@@ -119,6 +122,7 @@ protected:
 	// callbacks
 	devcb_write_line        m_vme_j1_callback;
 	device_vme_card_interface *m_card;
+	
 };
 
 DECLARE_DEVICE_TYPE(VME, vme_device)
@@ -183,6 +187,18 @@ public:
 	//  void install_device(vme_amod_t amod, offs_t start, offs_t end, read8_delegate rhandler, write8_delegate whandler);
 	void install_device(vme_amod_t amod, offs_t start, offs_t end, read16_delegate rhandler, write16_delegate whandler, uint32_t mask);
 	void install_device(vme_amod_t amod, offs_t start, offs_t end, read32_delegate rhandler, write32_delegate whandler, uint32_t mask);
+	
+	uint8_t		read8(vme_amod_t vme_address_mode, offs_t offset);
+	void 		write8(vme_amod_t vme_address_mode, offs_t offset, uint8_t data);
+	uint16_t 	read16(vme_amod_t vme_address_mode, offs_t offset);
+	void 		write16(vme_amod_t vme_address_mode, offs_t offset, uint16_t data);
+	uint32_t 	read32(vme_amod_t vme_address_mode, offs_t offset);
+	void 		write32(vme_amod_t vme_address_mode, offs_t offset, uint32_t data);
+
+
+	auto berr_callback() { return m_out_berr_cb.bind(); }
+
+	DECLARE_WRITE_LINE_MEMBER( berr_w );
 
 protected:
 	vme_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
@@ -190,9 +206,13 @@ protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
+	virtual void device_resolve_objects() override;
 	simple_list<device_vme_card_interface> m_device_list;
 
 	virtual space_config_vector memory_space_config() const override;
+
+	uint16_t bus_error_r(address_space &space, offs_t address, uint16_t mem_mask);
+	void bus_error_w(address_space &space, offs_t address, uint16_t data, uint16_t mem_mask);
 
 	// internal state
 	cpu_device   *m_maincpu;
@@ -203,7 +223,8 @@ protected:
 	bool m_allocspaces;
 
 	const char                 *m_cputag;
-
+	
+	devcb_write_line    m_out_berr_cb;
 };
 
 
@@ -221,8 +242,14 @@ public:
 	// construction/destruction
 	virtual ~device_vme_card_interface();
 
-	virtual uint8_t read8(offs_t offset);
-	virtual void write8(offs_t offset, uint8_t data);
+	virtual uint8_t read8(vme_device::vme_amod_t vme_address_mode, offs_t offset);
+	virtual void write8(vme_device::vme_amod_t vme_address_mode, offs_t offset, uint8_t data);
+	
+	virtual uint16_t read16(vme_device::vme_amod_t vme_address_mode, offs_t offset);
+	virtual void write16(vme_device::vme_amod_t vme_address_mode, offs_t offset, uint16_t data);
+
+	void raise_bus_error();
+	void lower_bus_error();
 
 protected:
 	device_vme_card_interface(const machine_config &mconfig, device_t &device);
@@ -237,5 +264,16 @@ protected:
 private:
 	device_vme_card_interface *m_next;
 };
+
+inline void device_vme_card_interface::raise_bus_error()
+{
+	m_vme->berr_w(ASSERT_LINE);
+}
+
+inline void device_vme_card_interface::lower_bus_error()
+{
+	m_vme->berr_w(CLEAR_LINE);
+}
+
 
 #endif // MAME_BUS_VME_VME_H
