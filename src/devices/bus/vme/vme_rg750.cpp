@@ -1,0 +1,176 @@
+// license:BSD-3-Clause
+// copyright-holders:Katherine Rohl
+/*
+ *	Rastergraf RG-750 VMEbus graphics card
+ *
+ *  Features:
+ *	- TMS34010 CPU
+ *	- 1 or 4MB of DRAM
+ *	- 1MB of VRAM
+ *	- RS-232 mouse and AT keyboard interface
+ *  - SVGA output up to 1024x768
+ *
+ */
+
+#include "emu.h"
+#include "vme_rg750.h"
+
+#define LOG_PRINTF  (1U << 1)
+#define LOG_SETUP 	(1U << 2)
+#define LOG_GENERAL (1U << 3)
+
+#define VERBOSE (LOG_PRINTF | LOG_SETUP | LOG_GENERAL)
+ 
+#include "logmacro.h"
+
+#define LOGPRINTF(...) 	LOGMASKED(LOG_PRINTF, 	__VA_ARGS__)
+#define LOGSETUP(...) 	LOGMASKED(LOG_SETUP, 	__VA_ARGS__)
+#define LOGGENERAL(...) LOGMASKED(LOG_GENERAL, 	__VA_ARGS__)
+
+#define MASTER_XTAL	( 40_MHz_XTAL )
+
+DEFINE_DEVICE_TYPE(VME_RG750,   vme_rg750_card_device,   "rg750",   "Rastergraf RG-750")
+
+static INPUT_PORTS_START(rg750)
+
+INPUT_PORTS_END
+
+ioport_constructor vme_rg750_device::device_input_ports() const
+{
+	return INPUT_PORTS_NAME(rg750);
+}
+
+vme_rg750_device::vme_rg750_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
+	device_t(mconfig, type, tag, owner, clock)
+	, device_vme_card_interface(mconfig, *this)
+	, m_maincpu (*this, "rtc")
+	, m_vdac(*this, "bt478")
+{
+
+}
+
+vme_rg750_card_device::vme_rg750_card_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+		: vme_rg750_card_device(mconfig, VME_RG750, tag, owner, clock)
+{
+
+}
+
+void vme_rg750_device::rg750_mem(address_map &map)
+{
+	map(0x02000000, 0x02ffffff).ram();	// VRAM
+	map(0x03000000, 0x037fffff).ram();	// DRAM
+	
+	//map(0x05000000, 0x0500006f)		// S2691 UART
+	map(0x05400000, 0x0541f000).m(m_vdac, FUNC(bt478_device::map)).umask32(0x000ff000);
+	map(0x05800000, 0x05bfffff).rw(FUNC(vme_rg750_device::ctrlreg_r), FUNC(vme_rg750_device::ctrlreg_w));		// TODO: mirroring
+	map(0x05c00000, 0x05ffffff).rw(FUNC(vme_rg750_device::statusreg_r), FUNC(vme_rg750_device::statusreg_w));	// TODO: mirroring
+	
+}
+
+void vme_rg750_device::device_start()
+{
+	LOG("%s\n", FUNCNAME);
+
+}
+
+void vme_rg750_device::device_reset()
+{
+	LOG("%s\n", FUNCNAME);
+}
+
+/* 
+ *	Control register (per manual)
+ *	D15 - Red LED
+ *	D14 - Debug Enable
+ * 	D13 - ROMDIS
+ *	D12 - VSYNC polarity
+ *	D11 - HSYNC polarity
+ *	D10 - Pixel clock select (0 = internal, 1 = auxiliary)
+ *	D09 - VRAM mapping bit 0
+ *	D08 - Green LED
+ *	D07 - Sync on green (active low)
+ *	D06 - Keyboard serial data
+ *	D05 - Keyboard clock
+ *	D04 - Memory installed (0 = 1MB, 1 = 4MB)
+ *	D03 - Video bit depth (0 = 4bpp, 1 = 8bpp)
+ *	D02 - VRAM mapping bit 1
+ * 	D01 - Pixel clock divisor (0 = divide by 1, 1 = divide by 2)
+ *	D00 - Shift clock enable
+ */
+uint8_t vme_rg750_device::ctrlreg_r(offs_t offset)
+{
+	return m_ctrlreg;
+}
+
+void vme_rg750_device::ctrlreg_w(offs_t offset, uint8_t data)
+{
+	LOG("%s: control register set to $%02X\n", FUNCNAME, data);
+}
+
+/* 	
+ *	Status register (per manual)
+ *	D11 - 0 = Jumper installed at J19 3-4
+ *	D10 - 0 = Jumper installed at J19 1-2
+ *	D09 - Reserved
+ *	D08 - VSYNC
+ *	D07 - HSYNC
+ *	D06 - Keyboard data
+ *	D05 - Keyboard clock
+ *	D04 - CSYNC
+ *	D03 - Config
+ *	D02 - Config
+ * 	D01 - Config
+ *	D00 - Config
+ */
+uint8_t vme_rg750_device::statusreg_r(offs_t offset)
+{
+	return m_statusreg;
+}
+
+void vme_rg750_device::statusreg_w(offs_t offset, uint8_t data)
+{
+	LOG("%s: status register set to $%02X\n", FUNCNAME, data);
+}
+
+/*
+ * Machine configuration
+ */
+
+void vme_rg750_device::device_add_mconfig(machine_config &config)
+{
+	TMS34010(config, m_maincpu, MASTER_XTAL);
+	m_maincpu->set_addrmap(AS_PROGRAM, &vme_rg750_device::rg750_mem);
+	m_maincpu->set_halt_on_reset(false);     /* halt on reset */
+	m_maincpu->set_pixel_clock(25175000); /* pixel clock */
+	//m_maincpu->set_pixels_per_clock(2);      /* pixels per clock */
+	//m_maincpu->set_screen("screen");
+	
+	// TODO: work out the actual video
+	/*
+	SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
+	m_screen->set_raw(25175000, 1280, 212, 1024+212, 901, 34, 864+34);
+	m_screen->set_screen_update(FUNC(kn01_state::screen_update));
+
+	TIMER(config, m_scantimer, 0);
+	m_scantimer->configure_scanline(FUNC(kn01_state::scanline_timer), "screen", 0, 1);
+	*/
+
+	BT478(config, m_vdac, 25175000);
+	
+	VME(config, "vme", 0);
+}
+
+// ROM definitions
+ROM_START (rg750)
+	ROM_REGION16_LE(0x80000, "maincpu", 0)
+	ROM_DEFAULT_BIOS("afgis-v3.11a")
+
+	ROM_SYSTEM_BIOS(0, "afgis-v3.11a", "AFGIS v3.11a 12/14/94")
+	ROMX_LOAD("afgis-v3.11a-u17.bin", 0x0000, 0x40000, CRC(71c67430) SHA1(52872291b160abd11b720a6949c2246bd32c80c4), ROM_SKIP(1) | ROM_BIOS(0))
+	ROMX_LOAD("afgis-v3.11a-u18.bin", 0x0001, 0x40000, CRC(8cd81681) SHA1(0b19f06bef5cf43ccfe2e24bbc8c7067b2eb3cfa), ROM_SKIP(1) | ROM_BIOS(0))
+ROM_END
+
+const tiny_rom_entry *vme_rg750_device::device_rom_region() const
+{
+	return ROM_NAME(rg750);
+}
