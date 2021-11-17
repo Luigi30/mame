@@ -30,7 +30,7 @@ class sys1121_state : public driver_device
 };
 
 // Input ports
-static INPUT_PORTS_START (sys1121)
+static INPUT_PORTS_START(sys1121)
 INPUT_PORTS_END
 
 static void mvme120_vme_cards(device_slot_interface &device)

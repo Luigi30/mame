@@ -22,6 +22,12 @@
 #include "emu.h"
 #include "vme_mvme120.h"
 
+#ifdef _MSC_VER
+#define FUNCNAME __func__
+#else
+#define FUNCNAME __PRETTY_FUNCTION__
+#endif
+
 #define LOG_PRINTF  (1U << 1)
 #define LOG_SETUP 	(1U << 2)
 #define LOG_GENERAL (1U << 3)
@@ -122,9 +128,9 @@ ioport_constructor vme_mvme120_device::device_input_ports() const
 vme_mvme120_device::vme_mvme120_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock, mvme12x_variant board_id) :
 	device_t(mconfig, type, tag, owner, clock)
 	, device_vme_card_interface(mconfig, *this)
-	, m_maincpu (*this, "maincpu")
-	, m_mfp (*this, "mfp")
-	, m_rs232 (*this, "rs232")
+	, m_maincpu(*this, "maincpu")
+	, m_mfp(*this, "mfp")
+	, m_rs232(*this, "rs232")
 	, m_input_s3(*this, "S3")
 	, m_sysrom(*this, "maincpu")
 	, m_localram(*this, "localram")
@@ -247,23 +253,26 @@ void vme_mvme120_device::device_reset()
 
 uint16_t vme_mvme120_device::rom_shadow_tap(offs_t address, u16 data, u16 mem_mask)
 {
-	if ((!machine().side_effects_disabled()) && (m_memory_read_count >= 3))
+	if(!machine().side_effects_disabled())
 	{
-		// delete this tap
-		m_rom_shadow_tap->remove();
+		if(m_memory_read_count >= 3)
+		{
+			// delete this tap
+			m_rom_shadow_tap->remove();
 
-		// reinstall ram over the rom shadow
-		m_maincpu->space(AS_PROGRAM).install_ram(0x000000, 0x000007, m_localram);
-	}
-	
-	m_memory_read_count++;
+			// reinstall ram over the rom shadow
+			m_maincpu->space(AS_PROGRAM).install_ram(0x000000, 0x000007, m_localram);
+		}
+		m_memory_read_count++;
+	}	
+
 	return data;
 }
 
-//
 WRITE_LINE_MEMBER(vme_mvme120_device::watchdog_reset)
 {
-	if (state) {
+	if(state)
+	{
 		LOG("%s: MFP watchdog reset\n", FUNCNAME);
 		machine().schedule_soft_reset();
 	}
@@ -454,7 +463,7 @@ INPUT_CHANGED_MEMBER(vme_mvme120_device::s3_baudrate)
 }
 
 // ROM definitions
-ROM_START (mvme120)
+ROM_START(mvme120)
 	ROM_REGION16_BE(0x20000, "maincpu", 0)
 	ROM_DEFAULT_BIOS("12xbug-v2.0")
 
