@@ -170,6 +170,7 @@ CPUS["UPD78K"] = true
 CPUS["ROMP"] = true
 CPUS["COPS1"] = true
 CPUS["MK1"] = true
+CPUS["M68HC16"] = true
 
 --------------------------------------------------
 -- specify available sound cores; some of these are
@@ -1366,6 +1367,7 @@ function linkProjects_mame_mess(_target, _subtarget)
 		"pitronic",
 		"poly",
 		"poly88",
+		"positron",
 		"psion",
 		"quantel",
 		"qume",
@@ -1849,7 +1851,6 @@ files {
 	MAME_DIR .. "src/mame/machine/macscsi.cpp",
 	MAME_DIR .. "src/mame/machine/macscsi.h",
 	MAME_DIR .. "src/mame/drivers/iphone2g.cpp",
-	MAME_DIR .. "src/mame/drivers/superga2.cpp",
 }
 
 createMESSProjects(_target, _subtarget, "applied")
@@ -3401,6 +3402,11 @@ files {
 	MAME_DIR .. "src/mame/machine/poly88.cpp",
 }
 
+createMESSProjects(_target, _subtarget, "positron")
+files {
+	MAME_DIR .. "src/mame/drivers/positron.cpp",
+}
+
 createMESSProjects(_target, _subtarget, "psion")
 files {
 	MAME_DIR .. "src/mame/drivers/psion.cpp",
@@ -3514,6 +3520,7 @@ files {
 	MAME_DIR .. "src/mame/drivers/roland_tr505.cpp",
 	MAME_DIR .. "src/mame/drivers/roland_tr606.cpp",
 	MAME_DIR .. "src/mame/drivers/roland_tr707.cpp",
+	MAME_DIR .. "src/mame/drivers/roland_tr808.cpp",
 	MAME_DIR .. "src/mame/drivers/roland_tr909.cpp",
 	MAME_DIR .. "src/mame/drivers/roland_u20.cpp",
 	MAME_DIR .. "src/mame/audio/bu3905.cpp",
