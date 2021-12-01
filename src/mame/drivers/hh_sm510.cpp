@@ -115,6 +115,26 @@ The "Mini Classics" keychains are by Nelsonic, not Nintendo.
 Bassmate Computer (BM-501) is on identical hardware as G&W Multi Screen,
 but it's not part of the game series.
 
+****************************************************************************
+
+Regarding Электроника (Elektronika, translated: Electronics): It is not
+actually a company. It was a USSR brand name for consumer electronics,
+produced by factories belonging to the Ministry of Electronic Industry
+(Minelektronprom, МЭП).
+
+The LCD games were produced by: Angstrem, Mikron, Voschod (Russia), Billur
+(Azerbaijan), Kamerton, Evistor (Belarus), Severodonetsk Instrument-Making
+Plant (Ukraine) and more. Their most popular LCD game (Nu, pogodi!), is
+known to be initially produced by Evistor.
+
+Most of the games are marked "bootleg" in MAME, because the ROM contents are
+a 1:1 copy of Nintendo Game & Watch games. Known G&W cloned by Elektronika:
+Fire(FR-27), Octopus, Chef, Egg/Mickey Mouse, Donkey Kong Jr.(CJ-93),
+Spitball Sparky.
+
+The MCUs used were not imported from Sharp, but cloned by USSR, renamed to
+КБ1013ВК1-2 for SM5A and КБ1013ВК4-2 for SM510.
+
 ***************************************************************************/
 
 #include "emu.h"
@@ -1402,6 +1422,7 @@ ROM_END
   ИМ-49  Ночные воришки      Nochnye vorishki     Night Burglars      -
   ИМ-50  Космический полёт   Kosmicheskij poljot  Space Flight        The Model ID is the same as Amusing Arithmetic (not emulated in MAME)
   ИМ-51  Морская атака       Morskaja ataka       -                   -
+  ИМ-53  Атака астероидов    Ataka asteroidov     -                   Graphics are very similar to ИМ-50
 
 ***************************************************************************/
 
@@ -1423,6 +1444,7 @@ public:
 	void nburglar(machine_config &config);
 	void spaceflt(machine_config &config);
 	void morataka(machine_config &config);
+	void atakaast(machine_config &config);
 };
 
 // config
@@ -1514,6 +1536,11 @@ void gnw_mmouse_state::morataka(machine_config &config)
 	kb1013vk12_common(config, 1648, 1080); // R mask option ?
 }
 
+void gnw_mmouse_state::atakaast(machine_config &config)
+{
+	kb1013vk12_common(config, 1620, 1080); // R mask option ?
+}
+
 // roms
 
 ROM_START( gnw_mmouse )
@@ -1602,6 +1629,14 @@ ROM_START( morataka )
 
 	ROM_REGION( 105057, "screen", 0)
 	ROM_LOAD( "morataka.svg", 0, 105057, CRC(c235c56c) SHA1(b6ef74ba7826221683243e23513270d0f0f2cfda) )
+ROM_END
+
+ROM_START( atakaast )
+	ROM_REGION( 0x1000, "maincpu", 0 )
+	ROM_LOAD( "im-53.bin", 0x0000, 0x0740, CRC(cb820c32) SHA1(7e94fc255f32db725d5aa9e196088e490c1a1443) )
+
+	ROM_REGION( 105570, "screen", 0)
+	ROM_LOAD( "atakaast.svg", 0, 105570, CRC(3d79aacc) SHA1(bc25969f4d6fa75b320130c920ac0bdc8fb44cbd) )
 ROM_END
 
 
@@ -9659,6 +9694,7 @@ CONS( 1989, frogling,     gnw_mmouse,  0, frogling,     gnw_mmouse,   gnw_mmouse
 CONS( 19??, nburglar,     gnw_mmouse,  0, nburglar,     gnw_mmouse,   gnw_mmouse_state,   empty_init, "bootleg (Elektronika)", "Night Burglars", MACHINE_SUPPORTS_SAVE | MACHINE_REQUIRES_ARTWORK )
 CONS( 19??, spaceflt,     gnw_mmouse,  0, spaceflt,     gnw_mmouse,   gnw_mmouse_state,   empty_init, "bootleg (Elektronika)", "Space Flight", MACHINE_SUPPORTS_SAVE | MACHINE_REQUIRES_ARTWORK )
 CONS( 19??, morataka,     gnw_mmouse,  0, morataka,     gnw_mmouse,   gnw_mmouse_state,   empty_init, "bootleg (Elektronika)", "Morskaja ataka", MACHINE_SUPPORTS_SAVE | MACHINE_REQUIRES_ARTWORK )
+CONS( 1992, atakaast,     gnw_mmouse,  0, atakaast,     gnw_mmouse,   gnw_mmouse_state,   empty_init, "bootleg (Elektronika)", "Ataka asteroidov", MACHINE_SUPPORTS_SAVE | MACHINE_REQUIRES_ARTWORK )
 CONS( 1981, gnw_fire,     0,           0, gnw_fire,     gnw_fire,     gnw_fire_state,     empty_init, "Nintendo", "Game & Watch: Fire (Wide Screen)", MACHINE_SUPPORTS_SAVE | MACHINE_REQUIRES_ARTWORK )
 CONS( 1989, spacebridge,  gnw_fire,    0, spacebridge,  gnw_fire,     gnw_fire_state,     empty_init, "bootleg (Elektronika)", "Space Bridge", MACHINE_SUPPORTS_SAVE | MACHINE_REQUIRES_ARTWORK )
 CONS( 1982, gnw_tbridge,  0,           0, gnw_tbridge,  gnw_tbridge,  gnw_tbridge_state,  empty_init, "Nintendo", "Game & Watch: Turtle Bridge", MACHINE_SUPPORTS_SAVE | MACHINE_REQUIRES_ARTWORK )

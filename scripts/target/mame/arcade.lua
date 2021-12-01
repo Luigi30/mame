@@ -2586,8 +2586,6 @@ files {
 	MAME_DIR .. "src/mame/drivers/nwk-tr.cpp",
 	MAME_DIR .. "src/mame/drivers/otomedius.cpp",
 	MAME_DIR .. "src/mame/drivers/overdriv.cpp",
-	MAME_DIR .. "src/mame/includes/overdriv.h",
-	MAME_DIR .. "src/mame/video/overdriv.cpp",
 	MAME_DIR .. "src/mame/drivers/pandoras.cpp",
 	MAME_DIR .. "src/mame/includes/pandoras.h",
 	MAME_DIR .. "src/mame/video/pandoras.cpp",
@@ -4638,6 +4636,7 @@ createMAMEProjects(_target, _subtarget, "pinball")
 files {
 	MAME_DIR .. "src/mame/drivers/allied.cpp",
 	MAME_DIR .. "src/mame/drivers/alvg.cpp",
+	MAME_DIR .. "src/mame/drivers/atari_4x4.cpp",
 	MAME_DIR .. "src/mame/drivers/atari_s1.cpp",
 	MAME_DIR .. "src/mame/drivers/atari_s2.cpp",
 	MAME_DIR .. "src/mame/drivers/barni.cpp",
