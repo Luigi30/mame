@@ -32,7 +32,7 @@
 #define LOG_SETUP   (1U << 2)
 #define LOG_GENERAL (1U << 3)
 
-#define VERBOSE (LOG_PRINTF | LOG_SETUP | LOG_GENERAL)
+#define VERBOSE (LOG_PRINTF)
 
 #include "logmacro.h"
 
@@ -62,7 +62,7 @@ static INPUT_PORTS_START(mvme120)
 	PORT_DIPSETTING(   0x01, DEF_STR( On ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( Off ) )
 
-	PORT_DIPNAME(0x02, 0x00, "Baud Rate Select")    PORT_DIPLOCATION("S3:2")    PORT_CHANGED_MEMBER(DEVICE_SELF, vme_mvme120_device, s3_baudrate, 0)
+	PORT_DIPNAME(0x02, 0x02, "Baud Rate Select")    PORT_DIPLOCATION("S3:2")    PORT_CHANGED_MEMBER(DEVICE_SELF, vme_mvme120_device, s3_baudrate, 0)
 	PORT_DIPSETTING(   0x02, "10.0MHz CPU")
 	PORT_DIPSETTING(   0x00, "12.5MHz CPU")
 
@@ -224,6 +224,9 @@ void vme_mvme120_device::mvme123_mem(address_map &map)
 void vme_mvme120_device::device_start()
 {
 	LOG("%s\n", FUNCNAME);
+
+	// hack to bypass failing self-test
+	m_maincpu->space(AS_PROGRAM).install_read_handler(0xF058D8, 0xF058D9, read16smo_delegate(*this, []() { return 0x4E71; }, "hack_r"));
 	
 	// Onboard RAM is always visible to VMEbus. (Decoding controlled by U28.)
 	m_vme->install_device(vme_device::A24_SC, 0, 0x1FFFF,
@@ -236,18 +239,20 @@ void vme_mvme120_device::device_start()
 
 void vme_mvme120_device::device_reset()
 {
-	LOG("%s\n", FUNCNAME);
+	LOGPRINTF("%s\n", FUNCNAME);
 
 	// First 4 machine cycles, ROM is mapped to the reset vector.
 	address_space &program = m_maincpu->space(AS_PROGRAM);
 	program.install_rom(0x000000, 0x000007, m_sysrom);
 	m_memory_read_count = 0;
 
+	LOGPRINTF("%s: installing tap\n", FUNCNAME);
 	m_rom_shadow_tap = program.install_read_tap(0x000000, 0x000007, "rom_shadow_r",[this](offs_t offset, u16 &data, u16 mem_mask)
 	{
 		rom_shadow_tap(offset, data, mem_mask);
 	});
 
+	LOGPRINTF("%s: initializing ctrlreg_w\n", FUNCNAME);
 	ctrlreg_w(0, 0xFF); // /RESET flips the latch bits to $FF
 }
 
@@ -391,10 +396,8 @@ void vme_mvme120_device::device_add_mconfig(machine_config &config)
 
 WRITE_LINE_MEMBER( vme_mvme120_device::vme_bus_error_changed )
 {
-	LOG("%s: VMEbus /BERR\n", FUNCNAME);
-	
 	// Connected to both CPU /BERR and GPIO 2 of the MFP.
-	//m_mfp->i2_w(state);
+	m_mfp->i2_w(state);
 	m_maincpu->set_input_line(M68K_LINE_BUSERROR, state);
 }
 

@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "emu.h"
 #include "cpu/m68000/m68000.h"
 #include "bus/vme/vme.h"
 #include "bus/rs232/rs232.h"

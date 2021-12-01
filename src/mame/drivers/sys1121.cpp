@@ -46,12 +46,12 @@ namespace
 		VME(config, "vme", 0);
 		VME_SLOT(config, "slot1", mvme120_vme_cards, "mvme050", 1, "vme");
 		VME_SLOT(config, "slot2", mvme120_vme_cards, "mvme120", 2, "vme");
-		VME_SLOT(config, "slot3", mvme120_vme_cards, nullptr, 3, "vme");
-		VME_SLOT(config, "slot4", mvme120_vme_cards, nullptr, 4, "vme");
-		VME_SLOT(config, "slot5", mvme120_vme_cards, nullptr, 5, "vme");
-		VME_SLOT(config, "slot6", mvme120_vme_cards, nullptr, 6, "vme");
-		VME_SLOT(config, "slot7", mvme120_vme_cards, nullptr, 7, "vme");
-		VME_SLOT(config, "slot8", mvme120_vme_cards, nullptr, 8, "vme");
+		//VME_SLOT(config, "slot3", mvme120_vme_cards, nullptr, 3, "vme");
+		//VME_SLOT(config, "slot4", mvme120_vme_cards, nullptr, 4, "vme");
+		//VME_SLOT(config, "slot5", mvme120_vme_cards, nullptr, 5, "vme");
+		//VME_SLOT(config, "slot6", mvme120_vme_cards, nullptr, 6, "vme");
+		//VME_SLOT(config, "slot7", mvme120_vme_cards, nullptr, 7, "vme");
+		//VME_SLOT(config, "slot8", mvme120_vme_cards, nullptr, 8, "vme");
 	}
 
 }
@@ -61,4 +61,4 @@ ROM_START (sys1121)
 ROM_END
 
 //    YEAR  NAME     PARENT   COMPAT  MACHINE  INPUT    CLASS          INIT        COMPANY     FULLNAME    FLAGS
-COMP( 1984, sys1121, 0,       0,      sys1121, sys1121, sys1121_state, empty_init, "Motorola", "SYS1121",  MACHINE_IS_SKELETON )
+COMP( 1984, sys1121, 0,       0,      sys1121, sys1121, sys1121_state, empty_init, "Motorola", "SYS1121",  MACHINE_NOT_WORKING )
