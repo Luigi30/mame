@@ -14,9 +14,6 @@
  *  Current state, it crashes at $F058D8 while testing CPU exception handling.
  *  If you skip over that address (pc=F058E2 in the debugger) it continues
  *  through the self-test.
- *
- *  Looks like you also have to reboot the system once before the terminal
- *  works properly? Still working on that.
  */
 
 #include "emu.h"
@@ -32,7 +29,7 @@
 #define LOG_SETUP   (1U << 2)
 #define LOG_GENERAL (1U << 3)
 
-#define VERBOSE (LOG_PRINTF)
+#define VERBOSE (LOG_GENERAL)
 
 #include "logmacro.h"
 
@@ -116,6 +113,11 @@ static INPUT_PORTS_START(mvme120)
 	PORT_DIPSETTING(   0x00, DEF_STR( Off ))
 	PORT_DIPSETTING(   0x40, DEF_STR( On ))
 
+	PORT_START("J13")	// Undocumented
+	PORT_DIPNAME(0x01, 0x00, "Parity Enable")		PORT_DIPLOCATION("J13:1")
+	PORT_DIPSETTING(   0x01, DEF_STR( On ))
+	PORT_DIPSETTING(   0x00, DEF_STR( Off ))
+
 	// EPROM configuration is J8
 	// Cache configuration is J9/J17
 INPUT_PORTS_END
@@ -162,15 +164,32 @@ vme_mvme123_card_device::vme_mvme123_card_device(const machine_config &mconfig, 
 
 }
 
+/*
+ * 120bug expects devices to be at the following locations if they are present in the system:
+ * $FF0000 -> MVME315
+ * $FFB000 -> MVME320
+ * $FFE0D1 -> RWIN1
+ * $FFE0E1 -> MVME420 5.25"
+ * $FFE0F1 -> MVME420 8"
+ * $FFE1C9 -> MVME400 serial port 1
+ * $FFE1CB -> MVME400 serial port 2
+ * $FFE1E1 -> MVME400 parallel port 1
+ * $FFE1E9 -> MVME400 parallel port 2
+ * $FF1000 -> MVME050 serial port 1
+ * $FF1040 -> MVME050 serial port 2
+ * $FF1080 -> MVME050 printer port
+ */
+
 void vme_mvme120_device::mvme12x_base_mem(address_map &map)
 {
+	map(0x000000, 0xffffff).rw(FUNC(vme_mvme120_card_device::vme_a16_r), FUNC(vme_mvme120_card_device::vme_a16_w)); // VMEbus 16-bit addresses
+	map(0x000000, 0xfeffff).rw(FUNC(vme_mvme120_card_device::vme_a24_r), FUNC(vme_mvme120_card_device::vme_a24_w)); // VMEbus 24-bit addresses
 	map(0xf00000, 0xf0ffff).rom().region("maincpu", 0x00000);               // ROM/EEPROM bank 1 - 120bug
 	map(0xf10000, 0xf1ffff).rom().region("maincpu", 0x10000);               // ROM/EEPROM bank 2 - unpopulated
 	map(0xf20000, 0xf2003f).mirror(0x1ffc0).umask16(0x00ff).rw(m_mfp, FUNC(mc68901_device::read), FUNC(mc68901_device::write));
 	map(0xf40000, 0xf40000).mirror(0x1fffc).rw(FUNC(vme_mvme120_card_device::ctrlreg_r), FUNC(vme_mvme120_card_device::ctrlreg_w));
 	// $F60000-F6003F 68451 MMU, mirrored to $F7FFFF
-	map(0xfa0000, 0xfeffff).rw(FUNC(vme_mvme120_card_device::vme_a24_r), FUNC(vme_mvme120_card_device::vme_a24_w)); // VMEbus 24-bit addresses
-	map(0xff0000, 0xffffff).rw(FUNC(vme_mvme120_card_device::vme_a16_r), FUNC(vme_mvme120_card_device::vme_a16_w)); // VMEbus 16-bit addresses
+	//map(0xfa0000, 0xfeffff).rw(FUNC(vme_mvme120_card_device::vme_a24_r), FUNC(vme_mvme120_card_device::vme_a24_w)); // VMEbus 24-bit addresses
 
 	// $F80002-F80003 clear cache bank   2
 	// $F80004-F80005 clear cache bank 1
@@ -182,7 +201,7 @@ void vme_mvme120_device::mvme120_mem(address_map &map)
 {
 	mvme12x_base_mem(map);
 	map(0x000000, 0x01ffff).ram().share(m_localram);
-	map(0x020000, 0xefffff).rw(FUNC(vme_mvme120_card_device::vme_a24_r), FUNC(vme_mvme120_card_device::vme_a24_w)); // VMEbus 24-bit addresses
+	//map(0x020000, 0xefffff).rw(FUNC(vme_mvme120_card_device::vme_a24_r), FUNC(vme_mvme120_card_device::vme_a24_w)); // VMEbus 24-bit addresses
 	// $F60000-F6003F 68451 MMU, mirrored to $F7FFFF
 	// $F80002-F80003 clear cache bank   2
 	// $F80004-F80005 clear cache bank 1
@@ -224,9 +243,14 @@ void vme_mvme120_device::mvme123_mem(address_map &map)
 void vme_mvme120_device::device_start()
 {
 	LOG("%s\n", FUNCNAME);
+	
+	address_space &program = m_maincpu->space(AS_PROGRAM);
 
 	// hack to bypass failing self-test
-	m_maincpu->space(AS_PROGRAM).install_read_handler(0xF058D8, 0xF058D9, read16smo_delegate(*this, []() { return 0x4E71; }, "hack_r"));
+	// v1.1
+	program.install_read_handler(0xF06132, 0xF06133, read16smo_delegate(*this, []() { return 0x4E71; }, "hack_r"));
+	// v2.0
+	//program.install_read_handler(0xF058D8, 0xF058D9, read16smo_delegate(*this, []() { return 0x4E71; }, "hack_r"));
 	
 	// Onboard RAM is always visible to VMEbus. (Decoding controlled by U28.)
 	m_vme->install_device(vme_device::A24_SC, 0, 0x1FFFF,
@@ -246,15 +270,32 @@ void vme_mvme120_device::device_reset()
 	program.install_rom(0x000000, 0x000007, m_sysrom);
 	m_memory_read_count = 0;
 
-	LOGPRINTF("%s: installing tap\n", FUNCNAME);
 	m_rom_shadow_tap = program.install_read_tap(0x000000, 0x000007, "rom_shadow_r",[this](offs_t offset, u16 &data, u16 mem_mask)
 	{
 		rom_shadow_tap(offset, data, mem_mask);
 	});
 
-	LOGPRINTF("%s: initializing ctrlreg_w\n", FUNCNAME);
 	ctrlreg_w(0, 0xFF); // /RESET flips the latch bits to $FF
 }
+
+/*
+// Memory taps
+uint16_t vme_mvme120_device::ram_parity_tap_r(offs_t address, u16 data, u16 mem_mask)
+{
+	if(!machine().side_effects_disabled())
+	{
+
+	}
+}
+
+void vme_mvme120_device::ram_parity_tap_w(offs_t address, u16 data, u16 mem_mask)
+{
+	if(!machine().side_effects_disabled())
+	{
+		
+	}
+}
+*/
 
 uint16_t vme_mvme120_device::rom_shadow_tap(offs_t address, u16 data, u16 mem_mask)
 {
@@ -311,25 +352,43 @@ void vme_mvme120_device::vme_bus_timeout()
 // Dummy VMEbus access
 uint16_t vme_mvme120_device::vme_a24_r(offs_t offset)
 {
+	offset *= 2;
+
+	if(!machine().side_effects_disabled())
+	{
+		//LOG("A24 read %08X\n", offset);
+	}
+
 	return read16(vme_device::A24_SC, offset);
 	//vme_bus_timeout();
 }
 
 void vme_mvme120_device::vme_a24_w(offs_t offset, uint16_t data)
 {	
+	offset *= 2;
+
 	write16(vme_device::A24_SC, offset, data);
 	//vme_bus_timeout();
 }
 
 uint16_t vme_mvme120_device::vme_a16_r(offs_t offset)
 {
-	return read16(vme_device::A24_SC, offset);
+	offset *= 2;
+
+	if(!machine().side_effects_disabled())
+	{
+		//LOG("A16 read %08X\n", offset);
+	}
+
+	return read16(vme_device::A16_SC, offset);
 	//vme_bus_timeout();
 }
 
 void vme_mvme120_device::vme_a16_w(offs_t offset, uint16_t data)
 {
-	write16(vme_device::A24_SC, offset, data);
+	offset *= 2;
+
+	write16(vme_device::A16_SC, offset, data);
 	//vme_bus_timeout();
 }
 
@@ -350,11 +409,26 @@ uint8_t vme_mvme120_device::ctrlreg_r(offs_t offset)
 
 void vme_mvme120_device::ctrlreg_w(offs_t offset, uint8_t data)
 {
+	// Need to install the bad parity handler?
+	if(BIT(m_ctrlreg, 7) && !BIT(data, 7))
+	{
+		
+	}
+
+	// Need to remove the bad parity handler?
+	if(!BIT(m_ctrlreg, 7) && BIT(data, 7))
+	{
+		
+	}
+
 	LOG("%s: vme120 control register set to $%02X\n", FUNCNAME, data);
 	m_ctrlreg = data;
 
 	// Set lines according to the new ctrlreg status.
 	m_rs232->write_rts(!BIT(m_ctrlreg, 1));
+
+	// When /WWP is asserted, any memory read to an address that has been written to 
+	// will result in a parity error if /PAREN is also asserted.	
 }
 
 static const input_device_default terminal_defaults[] =
@@ -467,7 +541,7 @@ INPUT_CHANGED_MEMBER(vme_mvme120_device::s3_baudrate)
 // ROM definitions
 ROM_START(mvme120)
 	ROM_REGION16_BE(0x20000, "maincpu", 0)
-	ROM_DEFAULT_BIOS("12xbug-v2.0")
+	ROM_DEFAULT_BIOS("12xbug-v1.1")
 
 	ROM_SYSTEM_BIOS(0, "12xbug-v2.0", "MVME120 12xbug v2.0")
 	ROMX_LOAD("12xbug-2.0-u44.bin", 0x0000, 0x4000, CRC(87d62dac) SHA1(c57eb9f8aefe29794b8fc5f0afbaff9b59d38c73), ROM_SKIP(1) | ROM_BIOS(0))

@@ -59,11 +59,27 @@ vme_mvme050_card_device::vme_mvme050_card_device(const machine_config &mconfig, 
 
 void vme_mvme050_device::mvme050_mem(address_map &map)
 {
-	map(0xff0000, 0xff003f).umask16(0x00ff).rw(m_mpcc1, FUNC(mpcc68561_device::read), FUNC(mpcc68561_device::write));
-	map(0xff0040, 0xff007f).umask16(0x00ff).rw(m_mpcc2, FUNC(mpcc68561_device::read), FUNC(mpcc68561_device::write));
-	map(0xff0100, 0xff017f).umask16(0x00ff).rw(m_rtc, FUNC(mc146818_device::read_direct), FUNC(mc146818_device::write_direct));
-	map(0xff00c0, 0xff00df).umask16(0x00ff).rw(m_bim1, FUNC(bim68153_device::read), FUNC(bim68153_device::write));
-	map(0xff00e0, 0xff00ff).umask16(0x00ff).rw(m_bim2, FUNC(bim68153_device::read), FUNC(bim68153_device::write));
+	// map(0xff0000, 0xff003f).umask16(0x00ff).rw(m_mpcc1, FUNC(mpcc68561_device::read), FUNC(mpcc68561_device::write));
+	// map(0xff0040, 0xff007f).umask16(0x00ff).rw(m_mpcc2, FUNC(mpcc68561_device::read), FUNC(mpcc68561_device::write));
+	// map(0xff00a0, 0xff00bf).umask16(0x00ff).rw(FUNC(vme_mvme050_device::frontpanel_r), FUNC(vme_mvme050_device::frontpanel_w));
+	// map(0xff00c0, 0xff00df).umask16(0x00ff).rw(m_bim1, FUNC(bim68153_device::read), FUNC(bim68153_device::write));
+	// map(0xff00e0, 0xff00ff).umask16(0x00ff).rw(m_bim2, FUNC(bim68153_device::read), FUNC(bim68153_device::write));
+	// map(0xff0100, 0xff017f).umask16(0x00ff).rw(m_rtc, FUNC(mc146818_device::read_direct), FUNC(mc146818_device::write_direct));
+}
+
+uint8_t	vme_mvme050_device::frontpanel_r(address_space &space, offs_t offset, uint8_t mem_mask)
+{
+	// Returns the switch block value. Offset doesn't matter
+	return 0xFF;
+}
+
+void vme_mvme050_device::frontpanel_w(address_space &space, offs_t offset, uint8_t data, uint8_t mem_mask)
+{
+	// Latches the byte value to the output displays.
+	// Offset doesn't matter.
+	m_frontpanel_value = data;
+
+	LOG("Front panel LEDs now: $%02X\n", data);
 }
 
 void vme_mvme050_device::device_start()
@@ -79,6 +95,22 @@ void vme_mvme050_device::device_start()
 		read8sm_delegate(*subdevice<mc146818_device>("rtc"), FUNC(mc146818_device::read_direct)), 
 		write8sm_delegate(*subdevice<mc146818_device>("rtc"), FUNC(mc146818_device::write_direct)), 
 		0x00FF00FF);
+
+	m_vme->install_device(vme_device::A16_SC, 0xFF0000, 0xFF003F,
+		read8sm_delegate(*subdevice<mpcc68561_device>("mpcc1"), FUNC(mpcc68561_device::read)), 
+		write8sm_delegate(*subdevice<mpcc68561_device>("mpcc1"), FUNC(mpcc68561_device::write)), 
+		0x00FF00FF);
+
+	m_vme->install_device(vme_device::A16_SC, 0xFF0040, 0xFF007F,
+		read8sm_delegate(*subdevice<mpcc68561_device>("mpcc2"), FUNC(mpcc68561_device::read)), 
+		write8sm_delegate(*subdevice<mpcc68561_device>("mpcc2"), FUNC(mpcc68561_device::write)), 
+		0x00FF00FF);
+
+	m_vme->install_device(vme_device::A16_SC, 0xFF00A0, 0xFF00BF,
+		read8_delegate(*this, FUNC(vme_mvme050_device::frontpanel_r)), 
+		write8_delegate(*this, FUNC(vme_mvme050_device::frontpanel_w)), 
+		0x00FF00FF);
+
 }
 
 void vme_mvme050_device::device_reset()
@@ -139,19 +171,25 @@ void vme_mvme050_device::device_add_mconfig(machine_config &config)
 // a user-configurable timeout. TODO: the timing delay
 uint16_t vme_mvme050_device::unmapped_vme_r(address_space &space, offs_t address, uint16_t mem_mask)
 {
-	LOG("VME bus error!\n");
-	
-	m_vme->berr_w(ASSERT_LINE);
-	m_vme->berr_w(CLEAR_LINE);
+	if(!machine().side_effects_disabled())
+	{
+		LOG("VME bus error: failed read $%08X\n", address);
+		
+		m_vme->berr_w(ASSERT_LINE);
+		m_vme->berr_w(CLEAR_LINE);
+	}
 	return 0xFFFF;
 }
 
 void vme_mvme050_device::unmapped_vme_w(address_space &space, offs_t address, uint16_t data, uint16_t mem_mask)
 {
-	LOG("VME bus error!\n");
+	if(!machine().side_effects_disabled())
+	{
+		LOG("VME bus error: failed write $%08X -> $%04X\n", address, data);
 	
-	m_vme->berr_w(ASSERT_LINE);
-	m_vme->berr_w(CLEAR_LINE);
+		m_vme->berr_w(ASSERT_LINE);
+		m_vme->berr_w(CLEAR_LINE);
+	}
 }
 
 // ROM definitions

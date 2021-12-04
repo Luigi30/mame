@@ -42,8 +42,12 @@ protected:
 	
 	uint16_t 	unmapped_vme_r(address_space &space, offs_t offset, uint16_t mem_mask);
 	void		unmapped_vme_w(address_space &space, offs_t address, uint16_t data, uint16_t mem_mask);
-};
 
+	uint8_t		frontpanel_r(address_space &space, offs_t offset, uint8_t mem_mask);
+	void		frontpanel_w(address_space &space, offs_t offset, uint8_t data, uint8_t mem_mask);
+
+	uint8_t		m_frontpanel_value;
+};
 
 //**************************************************************************
 //  Board Device declarations

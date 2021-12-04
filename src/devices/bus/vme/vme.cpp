@@ -70,6 +70,7 @@
 #include "vme.h"
 //#include "bus/vme/vme_mzr8105.h"
 #include "bus/vme/vme_mzr8300.h"
+#include "bus/vme/vme_mvme320.h"
 #include "bus/vme/vme_mvme350.h"
 #include "bus/vme/vme_fcisio.h"
 #include "bus/vme/vme_fcscsi.h"

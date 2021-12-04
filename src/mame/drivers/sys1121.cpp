@@ -11,6 +11,7 @@
 #include "emu.h"
 #include "bus/vme/vme_mvme120.h"
 #include "bus/vme/vme_mvme050.h"
+#include "bus/vme/vme_mvme320.h"
 #include "logmacro.h"
 
 namespace
@@ -39,6 +40,7 @@ namespace
 		device.option_add("mvme121", VME_MVME121);
 		device.option_add("mvme122", VME_MVME122);
 		device.option_add("mvme123", VME_MVME123);
+		device.option_add("mvme320", VME_MVME320);
 	}
 
 	void sys1121_state::sys1121(machine_config &config)
@@ -46,7 +48,7 @@ namespace
 		VME(config, "vme", 0);
 		VME_SLOT(config, "slot1", mvme120_vme_cards, "mvme050", 1, "vme");
 		VME_SLOT(config, "slot2", mvme120_vme_cards, "mvme120", 2, "vme");
-		//VME_SLOT(config, "slot3", mvme120_vme_cards, nullptr, 3, "vme");
+		VME_SLOT(config, "slot3", mvme120_vme_cards, nullptr, 3, "vme");
 		//VME_SLOT(config, "slot4", mvme120_vme_cards, nullptr, 4, "vme");
 		//VME_SLOT(config, "slot5", mvme120_vme_cards, nullptr, 5, "vme");
 		//VME_SLOT(config, "slot6", mvme120_vme_cards, nullptr, 6, "vme");
