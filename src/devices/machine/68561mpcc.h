@@ -49,7 +49,7 @@ public:
 	// construction/destruction
 	mpcc_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
-	void configure_clocks(int rxc, int txc)
+	void configure_clocks(uint32_t rxc, uint32_t txc)
 	{
 		m_rxc = rxc;
 		m_txc = txc;
