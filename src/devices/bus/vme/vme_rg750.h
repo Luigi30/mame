@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include "emu.h"
 #include "bus/vme/vme.h"
 #include "cpu/tms34010/tms34010.h"
 #include "machine/clock.h"
 #include "video/bt47x.h"
+#include "screen.h"
 
 #ifdef _MSC_VER
 #define FUNCNAME __func__
@@ -39,6 +39,7 @@ protected:
 	void rg750_mem(address_map &map);
 	
 	required_device<tms34010_device> m_maincpu;
+	required_device<screen_device> m_screen;
 	optional_device<bt478_device> m_vdac;
 	
 	uint8_t		m_ctrlreg;
@@ -49,6 +50,10 @@ protected:
 	
 	uint8_t 	statusreg_r(offs_t offset);
 	void 		statusreg_w(offs_t offset, uint8_t data);
+
+	TMS340X0_TO_SHIFTREG_CB_MEMBER(to_shiftreg);
+	TMS340X0_FROM_SHIFTREG_CB_MEMBER(from_shiftreg);
+	TMS340X0_SCANLINE_IND16_CB_MEMBER(scanline_update);
 };
 
 

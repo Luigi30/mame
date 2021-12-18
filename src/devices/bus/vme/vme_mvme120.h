@@ -90,6 +90,8 @@ protected:
 	DECLARE_WRITE_LINE_MEMBER(mfp_interrupt);
 
 	const mvme12x_variant  m_board_id;
+
+	virtual void vme_vberr_w(int state) override;
 };
 
 

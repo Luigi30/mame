@@ -200,10 +200,10 @@ public:
 	uint32_t 	read32(vme_amod_t vme_address_mode, offs_t offset);
 	void 		write32(vme_amod_t vme_address_mode, offs_t offset, uint32_t data);
 
-
 	auto berr_callback() { return m_out_berr_cb.bind(); }
 
 	DECLARE_WRITE_LINE_MEMBER( berr_w );
+	DECLARE_WRITE_LINE_MEMBER( sysfail_w );
 
 protected:
 	vme_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
@@ -243,6 +243,8 @@ class device_vme_card_interface : public device_interface
 {
 	template <class ElementType> friend class simple_list;
 public:
+	device_vme_card_interface *next() const { return m_next; }
+
 	// inline configuration
 	void set_vme_bus(vme_device &vme, int slot) { m_vme = &vme; m_slot = slot; }
 
@@ -254,6 +256,18 @@ public:
 	
 	virtual uint16_t read16(vme_device::vme_amod_t vme_address_mode, offs_t offset);
 	virtual void write16(vme_device::vme_amod_t vme_address_mode, offs_t offset, uint16_t data);
+
+	// Bus control lines
+	virtual void vme_sysfail_w(int state) { }
+	virtual void vme_vberr_w(int state) { }
+	virtual void vme_irq1_w(int state) { }
+	virtual void vme_irq2_w(int state) { }
+	virtual void vme_irq3_w(int state) { }
+	virtual void vme_irq4_w(int state) { }
+	virtual void vme_irq5_w(int state) { }
+	virtual void vme_irq6_w(int state) { }
+	virtual void vme_irq7_w(int state) { }
+	virtual void vme_write_w(int state) { }
 
 protected:
 	device_vme_card_interface(const machine_config &mconfig, device_t &device);

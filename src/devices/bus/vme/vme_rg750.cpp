@@ -43,8 +43,9 @@ ioport_constructor vme_rg750_device::device_input_ports() const
 vme_rg750_device::vme_rg750_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
 	device_t(mconfig, type, tag, owner, clock)
 	, device_vme_card_interface(mconfig, *this)
-	, m_maincpu (*this, "rtc")
-	, m_vdac(*this, "bt478")
+	, m_maincpu (*this, "maincpu")
+	, m_screen (*this, "screen")
+	, m_vdac (*this, "bt478")
 {
 
 }
@@ -61,7 +62,8 @@ void vme_rg750_device::rg750_mem(address_map &map)
 	map(0x03000000, 0x037fffff).ram();	// DRAM
 	
 	//map(0x05000000, 0x0500006f)		// S2691 UART
-	map(0x05400000, 0x0541f000).m(m_vdac, FUNC(bt478_device::map)).umask32(0x000ff000);
+	//map(0x05400000, 0x0540000f).rw(FUNC(bt478_device::address_r), FUNC(bt478_device::address_w)).umask32(0x000000FF);
+	//map(0x05410000, 0x0541000f).rw(FUNC(bt478_device::palette_r), FUNC(bt478_device::palette_w)).umask32(0x000000FF);
 	map(0x05800000, 0x05bfffff).rw(FUNC(vme_rg750_device::ctrlreg_r), FUNC(vme_rg750_device::ctrlreg_w));		// TODO: mirroring
 	map(0x05c00000, 0x05ffffff).rw(FUNC(vme_rg750_device::statusreg_r), FUNC(vme_rg750_device::statusreg_w));	// TODO: mirroring
 	
@@ -142,15 +144,22 @@ void vme_rg750_device::device_add_mconfig(machine_config &config)
 	m_maincpu->set_addrmap(AS_PROGRAM, &vme_rg750_device::rg750_mem);
 	m_maincpu->set_halt_on_reset(false);     /* halt on reset */
 	m_maincpu->set_pixel_clock(25175000); /* pixel clock */
-	//m_maincpu->set_pixels_per_clock(2);      /* pixels per clock */
-	//m_maincpu->set_screen("screen");
-	
-	// TODO: work out the actual video
+	m_maincpu->set_pixels_per_clock(1);
+	m_maincpu->set_scanline_ind16_callback(*this, FUNC(vme_rg750_device::scanline_update));  /* scanline updater (indexed16) */
+	m_maincpu->set_shiftreg_in_callback(*this, FUNC(vme_rg750_device::to_shiftreg));         /* write to shiftreg function */
+	m_maincpu->set_shiftreg_out_callback(*this, FUNC(vme_rg750_device::from_shiftreg));      /* read from shiftreg function */
+
 	/*
 	SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
-	m_screen->set_raw(25175000, 1280, 212, 1024+212, 901, 34, 864+34);
-	m_screen->set_screen_update(FUNC(kn01_state::screen_update));
+	m_screen->set_raw(25175000, 800, 0, 640, 525, 0, 480);	// VGA timings for now, but supports 800 and 1024 SVGA
+	m_screen->set_size(1024, 768);
+	m_screen->set_visarea(0, 640-1, 0, 480-1);
+	m_screen->set_screen_update(m_maincpu, FUNC(tms34010_device::tms340x0_ind16));
 
+	m_maincpu->set_screen(m_screen);
+	*/
+
+	/*
 	TIMER(config, m_scantimer, 0);
 	m_scantimer->configure_scanline(FUNC(kn01_state::scanline_timer), "screen", 0, 1);
 	*/
@@ -159,6 +168,22 @@ void vme_rg750_device::device_add_mconfig(machine_config &config)
 	
 	VME(config, "vme", 0);
 }
+
+TMS340X0_SCANLINE_IND16_CB_MEMBER(vme_rg750_device::scanline_update)
+{
+	// TODO
+}
+
+TMS340X0_TO_SHIFTREG_CB_MEMBER(vme_rg750_device::to_shiftreg)
+{
+	// TODO
+}
+
+TMS340X0_FROM_SHIFTREG_CB_MEMBER(vme_rg750_device::from_shiftreg)
+{
+	// TODO
+}
+
 
 // ROM definitions
 ROM_START (rg750)

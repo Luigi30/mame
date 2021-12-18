@@ -312,20 +312,31 @@ void vme_device::install_ub_handler(offs_t start, offs_t end, read8_delegate rha
 }
 #endif
 
-uint16_t vme_device::bus_error_r(address_space &space, offs_t address, uint16_t mem_mask)
-{
-	berr_w(ASSERT_LINE);
-	berr_w(CLEAR_LINE);
-	return 0;
-}
-
 void vme_device::bus_error_w(address_space &space, offs_t address, uint16_t data, uint16_t mem_mask)
 {
 	berr_w(ASSERT_LINE);
 	berr_w(CLEAR_LINE);
 }
 
-WRITE_LINE_MEMBER( vme_device::berr_w ) { m_out_berr_cb(state); }
+WRITE_LINE_MEMBER( vme_device::berr_w ) {
+	device_vme_card_interface *entry = m_device_list.first();
+
+	while (entry)
+	{
+		entry->vme_vberr_w(state);
+		entry = entry->next();
+	}
+}
+
+WRITE_LINE_MEMBER( vme_device::sysfail_w ) {
+	device_vme_card_interface *entry = m_device_list.first();
+
+	while (entry)
+	{
+		entry->vme_sysfail_w(state);
+		entry = entry->next();
+	}
+}
 
 /*
  *  Install DTB (Data Transfer Bus) handlers for this board

@@ -331,27 +331,18 @@ WRITE_LINE_MEMBER(mpcc_device::dcd_w)
 //-------------------------------------------------
 uint32_t mpcc_device::get_brg_rate()
 {
-
 	uint32_t rate;
-	uint32_t brg_const;
-
-	//brg_const = (m_brdr1 | m_brdr2 << 8); // Baud rate divider
-	//brg_const += (m_ccr & REG_CCR_PSCDIV) ? 3 : 2; // Add prescaler factor
-	//brg_const += (m_psr2 & REG_PSR2_PSEL_MSK) == REG_PSR2_PSEL_ASCII ? 2 : 1; // Add K factor
-	//brg_const = (m_brdr1 | m_brdr2 << 8) * 2 * 16;
 
 	int prescaler_divider = BIT(m_ccr, 4) ? 3 : 2;
 	int k = (m_psr2 & REG_PSR2_PSEL_MSK) == REG_PSR2_PSEL_ASCII ? 2 : 1;
-	//int clkdiv = (m_ccr & 3) * 16;
-	brg_const = prescaler_divider * k;
 
 	// BRD = XTAL / (prescaler)*(baud)*(K)
 	// BRD / baud = XTAL/prescaler*K
 
-	rate = clock() / brg_const;
+	rate = clock() / (prescaler_divider * k);
 	rate = rate / (m_brdr1 | m_brdr2 << 8);
 
-	LOG("calculating BRG rate: rate %d brg_const %d clock %d\n", rate, brg_const, clock());
+	LOG("calculating BRG rate: rate %d clock %d\n", rate, clock());
 
 	return rate;
 }

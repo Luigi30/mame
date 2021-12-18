@@ -257,8 +257,6 @@ void vme_mvme120_device::device_start()
 		read16_delegate(*this, FUNC(vme_mvme120_device::vme_to_ram_r)), 
 		write16_delegate(*this, FUNC(vme_mvme120_device::vme_to_ram_w)), 
 		0xFFFF);
-		
-	m_vme->berr_callback().set(FUNC(vme_mvme120_device::vme_bus_error_changed));
 }
 
 void vme_mvme120_device::device_reset()
@@ -475,7 +473,6 @@ WRITE_LINE_MEMBER( vme_mvme120_device::vme_bus_error_changed )
 	m_maincpu->set_input_line(M68K_LINE_BUSERROR, state);
 }
 
-
 // MVME120 RAM is always visible to the VMEbus.
 uint16_t vme_mvme120_device::vme_to_ram_r(address_space &space, offs_t address, uint16_t mem_mask)
 {
@@ -537,6 +534,15 @@ INPUT_CHANGED_MEMBER(vme_mvme120_device::s3_baudrate)
 	// TODO: verify
 	//m_mfp->i1_w(BIT(m_input_s3->read(), 1));
 }
+
+/* Bus control lines */
+void vme_mvme120_device::vme_vberr_w(int state)
+{
+	// /VBERR comes in on both the MFP GPIO and CPU /BERR line.
+	m_mfp->i2_w(state);
+	m_maincpu->set_input_line(M68K_LINE_BUSERROR, state);
+}
+
 
 // ROM definitions
 ROM_START(mvme120)

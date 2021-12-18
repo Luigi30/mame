@@ -16,15 +16,6 @@ public:
 
 	virtual void map(address_map &map);
 
-protected:
-	bt47x_device_base(machine_config const &mconfig, device_type type, char const *tag, device_t *owner, u32 clock, unsigned const palette_colors, unsigned const overlay_colors, unsigned const color_bits);
-
-	// device_t overrides
-	virtual void device_start() override;
-
-	// device_palette_interface overrides
-	virtual u32 palette_entries() const override { return m_palette_colors + m_overlay_colors; }
-
 	// read/write handlers
 	u8 address_r();
 	void address_w(u8 data);
@@ -34,6 +25,15 @@ protected:
 	void mask_w(u8 data);
 	u8 overlay_r();
 	void overlay_w(u8 data);
+
+protected:
+	bt47x_device_base(machine_config const &mconfig, device_type type, char const *tag, device_t *owner, u32 clock, unsigned const palette_colors, unsigned const overlay_colors, unsigned const color_bits);
+
+	// device_t overrides
+	virtual void device_start() override;
+
+	// device_palette_interface overrides
+	virtual u32 palette_entries() const override { return m_palette_colors + m_overlay_colors; }
 
 	virtual unsigned color_bits() const { return m_color_bits; }
 
