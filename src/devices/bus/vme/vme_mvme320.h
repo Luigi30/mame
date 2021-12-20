@@ -115,7 +115,7 @@ protected:
 
 	// VME bus master stuff
 	uint32_t m_vme_address;
-	uint8_t m_vme_data;
+	uint16_t m_vme_data;
 
 	uint8_t m_vme_control_register;
 	uint8_t m_vme_status_1, m_vme_status_2;

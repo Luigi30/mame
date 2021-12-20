@@ -90,7 +90,7 @@ void n8x371_device::update()
     // IV bus -> m_value
     if(m_wc_state && !m_me_state)
     {
-        LOG("8X371: updating m_value from IV bus\n");
+        LOG("8X371: updating m_value from IV bus: %02X\n", m_iv_incoming);
         m_value = 0x00;
         for(int i=0; i<8; i++)
         {

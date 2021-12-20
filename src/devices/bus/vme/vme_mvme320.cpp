@@ -54,6 +54,7 @@
 #define VSR2_EXA02		0x80 // VME A02 is asserted
 
 void vme_control_line_log(char *logdata, uint8_t data);
+void vme_dbc3_line_log(char *logdata, uint8_t data);
 
 DEFINE_DEVICE_TYPE(VME_MVME320, vme_mvme320_card_device, "mvme320", "Motorola MVME320/B Disk Controller")
 
@@ -144,8 +145,8 @@ void vme_mvme320_device::device_reset()
 	m_vme_address = 0;
 	m_vme_data = 0;
 
-	m_vme_status_1 = VSR1_1;
-	m_vme_status_2 = VSR2_LBERRn | VSR2_SYSRESETn;
+	m_vme_status_1 = VSR1_1 | VSR1_RSTVECT;
+	m_vme_status_2 = VSR2_LBERRn | VSR2_BCLR | VSR2_SYSRESETn;
 	m_vme_control_register = 0;
 
 	m_io_bank = IO_BANK_NONE;
@@ -290,19 +291,36 @@ void vme_mvme320_device::mclk_w(uint8_t val)
 
 	if(m_mclk_state == MCLK_CLEARED && m_io_bank == IO_BANK_RB && m_io_phase == IO_PHASE_WC)
 	{
+		// RB Output Phase - Subcycle 3/4
 		switch(m_write_state)
 		{
+			default:
+				break;
+		}
+	}
+	else if(m_mclk_state == MCLK_ASSERTED && m_io_bank == IO_BANK_RB && m_io_phase == IO_PHASE_WC)
+	{
+		// RB Output Phase - Subcycle 4/4
+		LOG("%04X: RB Data phase: %02X, IV %02X\n", m_maincpu->pc(), val, m_iv_state);
 
+		char tmp[256];
+
+		switch(m_write_state)
+		{
 			case WUASn: // IV bus is latched when /WUAS & /MCLK
+				LOG("%04X: Writing WUAS: %02X\n", m_maincpu->pc(), m_iv_state);
 				m_vme_address = 0x0000FFFF | (m_iv_state << 16);
 				break;
 			case WUDSn: // IV bus is latched when /WUDS & /MCLK
+				LOG("%04X: Writing WUDS: %02X\n", m_maincpu->pc(), m_iv_state);
 				m_vme_data = 0x00FF | (m_iv_state << 8);
 				break;
 			case WRDn:	// IV bus is latched when /WRD & MCLK
+				LOG("%04X: Writing Drive Status: %02X\n", m_maincpu->pc(), m_iv_state);
 				m_drive_status = m_iv_state;
 				break;
 			case WLDSn: // IV bus is latched when /WLDS & /MCLK
+				LOG("%04X: Writing WLDS: %02X\n", m_maincpu->pc(), m_iv_state);
 				m_vme_data = 0xFF00 | m_iv_state;
 				break;
 			case VCRn:	// IV bus is latched when /VCR & /MCLK
@@ -310,15 +328,17 @@ void vme_mvme320_device::mclk_w(uint8_t val)
 				update_vme_control_lines(~m_iv_state); // inverted output
 				break;
 			case WMASn: // IV bus is latched when /WMAS &/ MCLK
+				LOG("%04X: Writing WMAS: %02X\n", m_maincpu->pc(), m_iv_state);
 				m_vme_address = 0x00FF00FF | (m_iv_state << 8);
 				break;
 			case WLASn: // IV bus is latched when /WLAS & /MCLK
+				LOG("%04X: Writing WLAS: %02X\n", m_maincpu->pc(), m_iv_state);
 				m_vme_address = 0x00FFFF00 | m_iv_state;
 				break;
 			case WDC1n:	// IV bus is latched when /WDC1 & /MCLK
 				// Write Disk Control 1 (U44)
 				LOG("%04X: writing Disk Control 1: %02X\n", m_maincpu->pc(), m_iv_state);
-				m_disk_control_1 = m_iv_state;
+				m_disk_control_1 = m_iv_state & (~0x04); // IV5 is not connected, it comes from Disk Status Reg
 				break;
 			case WDC2n: // IV bus is latched when /WDC2 & /MCLK
 				// Write Disk Control 2 (U49)
@@ -327,20 +347,10 @@ void vme_mvme320_device::mclk_w(uint8_t val)
 				break;
 			case WDC3n: // IV bus is latched when /WDC3 & /MCLK
 				// Write Disk Control 3 (U58)
-				LOG("%04X: writing Disk Control 3: %02X\n", m_maincpu->pc(), m_iv_state);
+				vme_dbc3_line_log(tmp, ~m_iv_state);
+				LOG("%04X: writing Disk Control 3: %02X (%s)\n", m_maincpu->pc(), m_iv_state, tmp);
 				m_disk_control_3 = m_iv_state;
 				break;
-			default:
-				break;
-		}
-	}
-	else if(m_mclk_state == MCLK_ASSERTED && m_io_bank == IO_BANK_RB && m_io_phase == IO_PHASE_WC)
-	{
-		// RB Data phase
-		LOG("RB Data phase: %02X, IV %02X\n", val, m_iv_state);
-
-		switch(m_write_state)
-		{
 			case WDBCn:
 				// Write Disk Bit Control - handled separately
 				break;
@@ -356,7 +366,7 @@ void vme_mvme320_device::mclk_w(uint8_t val)
 	else if(m_mclk_state == MCLK_ASSERTED && m_io_bank == IO_BANK_LB && m_io_phase == IO_PHASE_SC)
 	{
 		// LB Address phase
-		LOG("MCU updating DBU address: %02X\n", m_iv_state);
+		LOG("%04X: MCU updating DBU address: %02X\n", m_maincpu->pc(), m_iv_state);
 		m_disk_buffer_address_latch = m_iv_state;
 	}
 }
@@ -448,7 +458,7 @@ uint8_t vme_mvme320_device::io_rb_r(offs_t offset)
 		switch(m_read_state)
 		{
 			case VSR1n:
-				m_iv_state = bitswap<8>(~m_vme_status_1, 0, 1, 2, 3, 4, 5, 6, 7); // inverted buffer with swapped data lines
+				m_iv_state = bitswap<8>(m_vme_status_1, 0, 1, 2, 3, 4, 5, 6, 7); // inverted buffer with swapped data lines
 				LOG("%04X: MCU reading VSR1, value %02X\n", m_maincpu->pc(), m_iv_state);
 				break;
 			case RDBCn:
@@ -473,11 +483,12 @@ uint8_t vme_mvme320_device::io_rb_r(offs_t offset)
 				// BCLR 	- b1 - IV2 (IV5)
 				// /LBERR 	- b2 - IV1 (IV6)
 				// CYACTIV 	- b3 - IV0 (IV7)
-				m_iv_state = bitswap<4>(m_vme_status_2, 3, 2, 1, 0) << 4; // non-inverting, only returns the 4 low bits of VSR2
+				m_iv_state = bitswap<4>(~m_vme_status_2, 3, 2, 1, 0) << 4; // non-inverting, only returns the 4 low bits of VSR2
 				LOG("%04X: MCU reading VSR2, value %02X\n", m_maincpu->pc(), m_iv_state);
 				break;
 			case RDSn:	// Output enabled when /RB & /RDS.
-				m_iv_state = 0xFF; // TODO: hook up a disk drive or four
+				// All pins but Q5 of U48 pulled high when N/C but go through a transparent buffer to an active-low bus.
+				m_iv_state = 0x04;
 				LOG("%04X: MCU reading DS, value %02X\n", m_maincpu->pc(), m_iv_state);
 				break;
 			case VRDUn:
@@ -819,3 +830,42 @@ void vme_control_line_log(char *logdata, uint8_t data)
 		strcat(logdata, "/START ");
 	}
 }
+
+
+void vme_dbc3_line_log(char *logdata, uint8_t data)
+{
+	memset(logdata, 0, 100);
+	if(!BIT(data, 0))
+	{	
+		strcat(logdata, "/SDR ");
+	}
+	if(BIT(data, 1))
+	{	
+		strcat(logdata, "U64.A7 ");
+	}
+	if(BIT(data, 2))
+	{	
+		strcat(logdata, "CIRQ ");
+	}
+	if(BIT(data, 3))
+	{	
+		strcat(logdata, "PRECOMP ");
+	}
+	if(BIT(data, 4))
+	{	
+		strcat(logdata, "ECC ");
+	}
+	if(BIT(data, 5))
+	{	
+		strcat(logdata, "MS2 ");
+	}
+	if(BIT(data, 6))
+	{	
+		strcat(logdata, "MS1 ");
+	}
+	if(BIT(data, 7))
+	{	
+		strcat(logdata, "FDHD ");
+	}
+}
+
