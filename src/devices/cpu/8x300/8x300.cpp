@@ -315,6 +315,10 @@ void n8x300_cpu_device::device_reset()
 	m_AR = 0;
 	m_genPC = 0;
 	m_increment_pc = true;
+
+	m_lb_callback(0);
+	m_rb_callback(0);
+	m_mclk_callback(0);
 }
 
 void n8x300_cpu_device::execute_run()

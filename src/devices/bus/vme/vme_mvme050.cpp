@@ -17,14 +17,16 @@
 #define LOG_PRINTF  (1U << 1)
 #define LOG_SETUP 	(1U << 2)
 #define LOG_GENERAL (1U << 3)
+#define LOG_VMEBUS	(1U << 5)
 
-#define VERBOSE (LOG_PRINTF | LOG_SETUP | LOG_GENERAL)
+//#define VERBOSE (LOG_PRINTF | LOG_SETUP | LOG_GENERAL)
  
 #include "logmacro.h"
 
 #define LOGPRINTF(...) 	LOGMASKED(LOG_PRINTF, 	__VA_ARGS__)
 #define LOGSETUP(...) 	LOGMASKED(LOG_SETUP, 	__VA_ARGS__)
 #define LOGGENERAL(...) LOGMASKED(LOG_GENERAL, 	__VA_ARGS__)
+#define LOGVMEBUS(...) 	LOGMASKED(LOG_VMEBUS, 	__VA_ARGS__)
 
 #define MASTER_XTAL	( 32_MHz_XTAL )
 
@@ -178,8 +180,6 @@ void vme_mvme050_device::device_add_mconfig(machine_config &config)
 
 	OUTPUT_LATCH(config, m_lpt_latch);
 	m_lpt->set_output_latch(*m_lpt_latch);
-	
-	VME(config, "vme", 0);
 }
 
 /************************

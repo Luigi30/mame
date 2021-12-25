@@ -52,7 +52,7 @@ protected:
 	} MCLKState;
 
     required_device<n8x305_cpu_device> m_maincpu;
-	required_device<floppy_connector> m_fd0;
+	required_device<floppy_connector> m_fd0, m_fd1, m_fd2, m_fd3;
 	required_device<n8x371_device> m_dbcr;
 	
 	memory_passthrough_handler *m_state_machine_tap;
@@ -61,7 +61,6 @@ protected:
 
 	virtual void device_start() override;
 	virtual void device_reset() override;
-	virtual void device_timer(emu_timer &timer, device_timer_id id, int param, void *ptr) override;
     virtual const tiny_rom_entry *device_rom_region() const override;
 
     void device_add_mconfig(machine_config &config) override;
@@ -126,50 +125,62 @@ protected:
 
 	uint8_t vme_read_lobyte();
 	uint8_t vme_read_hibyte();
-	void vme_write_byte();
+	void vme_write_lobyte();
+	void vme_write_hibyte();
+
+	uint8_t get_floppy_state(int floppy_num);
+	void update_disk_control_1(uint8_t value);
+	void update_disk_control_2(uint8_t value);
+	void update_disk_control_3(uint8_t value);
 
 	void update_vme_control_lines(uint8_t data);
 
-	emu_timer *m_us_to_vme_read_timer;	// 0
-	emu_timer *m_us_to_vme_write_timer;	// 1
+	emu_timer *m_dtack_timer;
+	TIMER_CALLBACK_MEMBER(dtack_timer_expired);
+	emu_timer *m_cyactiv_timer;
+	TIMER_CALLBACK_MEMBER(cyactiv_timer_expired);
 
-	emu_timer *m_vme_to_us_read_timer; 	// 2
-	emu_timer *m_vme_to_us_write_timer;	// 3
-
-	typedef enum
+	typedef struct
 	{
-		VSR1n,		// VME Status Register 1
-		RDBCn,		// Read Disk Bit Controller
-		VRDLn,		// VME Read Data Lower
-		RBUn,		// Read Buffer
-		VSR2n,		// VME Status Register 2
-		RDSn,		// Read Disk Status
-		VRDUn,		// VME Read Data Upper
-		NOP			// No operation
-	} ReadState;
+		typedef enum
+		{
+			VSR1n,		// VME Status Register 1
+			RDBCn,		// Read Disk Bit Controller
+			VRDLn,		// VME Read Data Lower
+			RBUn,		// Read Buffer
+			VSR2n,		// VME Status Register 2
+			RDSn,		// Read Disk Status
+			VRDUn,		// VME Read Data Upper
+			NOP			// No operation
+		} ReadState;
 
-	typedef enum
-	{
-		NOP0,
-		WUASn,		// Write Upper Address Strobe
-		WUDSn,		// Write Upper Data Strobe
-		WRDn,		// Write Register $D
-		WLDSn,		// Write Lower Data Strobe
-		VCRn,		// VME Control Register
-		WMASn,		// Write Middle Address Strobe
-		WLASn,		// Write Lower Address Strobe
-		WDC1n,		// Write Disk Control 1
-		WDBCn,		// Write Disk Bit Control
-		WDC3n,		// Write Disk Control 3
-		NOP11,
-		WDC2n,		// Write Disk Control 2
-		NOP13,	
-		WBUn,		// Write Buffer
-		NOP15
-	} WriteState;
+		typedef enum
+		{
+			NOP0,
+			WUASn,		// Write Upper Address Strobe
+			WUDSn,		// Write Upper Data Strobe
+			WRDn,		// Write Register $D
+			WLDSn,		// Write Lower Data Strobe
+			VCRn,		// VME Control Register
+			WMASn,		// Write Middle Address Strobe
+			WLASn,		// Write Lower Address Strobe
+			WDC1n,		// Write Disk Control 1
+			WDBCn,		// Write Disk Bit Control
+			WDC3n,		// Write Disk Control 3
+			NOP11,
+			WDC2n,		// Write Disk Control 2
+			NOP13,	
+			WBUn,		// Write Buffer
+			NOP15
+		} WriteState;
 
-	ReadState m_read_state;
-	WriteState m_write_state;
+		ReadState m_read_state;
+		WriteState m_write_state;
+	} RegDecoder;
+	RegDecoder regDecoder;
+
+	// ReadState m_read_state;
+	// WriteState m_write_state;
 	bool m_read_line_state[8];
 	bool m_write_line_state[16];
 
@@ -200,6 +211,60 @@ protected:
 	void VSR2n_w(bool state);
 	void RDSn_w(bool state);
 	void VRDUn_w(bool state);
+
+	// PALDECODE
+	typedef struct
+	{
+		bool REGSELn;
+		bool REG13RDn;
+		bool ILMATCHn;
+
+		void update(uint8_t vme_am, bool selected, uint8_t offset, uint8_t interrupt_level, bool write, bool cirq);
+		void log(vme_mvme320_device *device);
+	} PALDECODE;
+	PALDECODE m_paldecode;
+
+	typedef struct 
+	{
+		bool LDAOEn;
+		bool TOMEMn;
+		bool TODISKn;
+		bool DBDIR;
+		bool RDR13n;
+		bool I8X305n;
+		bool RGMND;
+		bool CLRDTKn;
+
+		void update(bool REGSELn, bool REG13RDn, bool VWRT, bool CWRT, bool DTBMn, bool OBG, bool DS060n, bool IACKRn);
+		void log(vme_mvme320_device *device);
+	} PALBUF;
+	PALBUF m_palbuf;
+	
+	typedef struct
+	{
+		bool DS060On;
+		bool IACKRn;
+		bool IACKOUTn;
+		bool DS020On;
+
+		void update(bool ILMATCHn, bool IACKIN, bool AS, bool DS020I, bool DS0, bool DS060In);
+		void log(vme_mvme320_device *device);
+	} PALIACK;
+	PALIACK m_paliack;
+
+	typedef struct
+	{
+		bool CYACTIVn;
+		bool DATAXCYn;
+		bool DTBMSn;
+		bool DLATCH;
+		bool EXDTACK;
+		bool STB;
+
+		void update(bool STARTn, bool DTBMn, bool ACKn, bool ACKSn, bool DTACK13n, bool CDTACK, bool SYSRSTn, bool N8XRSTn, bool CWRT, bool CLKI);
+		void log(vme_mvme320_device *device);
+	} PALVSEQ;
+	PALVSEQ m_palvseq;
 };
 
 //**************************************************************************

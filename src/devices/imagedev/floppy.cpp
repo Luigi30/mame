@@ -38,7 +38,7 @@
 */
 
 // Show step operation
-#define TRACE_STEP 0
+#define TRACE_STEP 1
 #define TRACE_AUDIO 0
 
 #define PITCH_SEEK_SAMPLES 1

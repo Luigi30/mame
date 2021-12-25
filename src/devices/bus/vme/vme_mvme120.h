@@ -39,8 +39,11 @@ public:
 	
 	DECLARE_WRITE_LINE_MEMBER( vme_bus_error_changed );
 			
-	uint16_t vme_to_ram_r(address_space &space, offs_t offset, uint16_t mem_mask);
-	void vme_to_ram_w(address_space &space, offs_t address, uint16_t data, uint16_t mem_mask);
+	uint16_t vme_to_ram16_r(offs_t offset);
+	void vme_to_ram16_w(offs_t address, uint16_t data);
+
+	uint8_t vme_to_ram8_r(offs_t offset);
+	void vme_to_ram8_w(offs_t address, uint8_t data);
 
 protected:
 	void device_add_mconfig(machine_config &config) override;
@@ -79,8 +82,8 @@ protected:
 	void vme_bus_timeout();
 	uint16_t vme_a24_r(offs_t offset);
 	void vme_a24_w(offs_t offset, uint16_t data);
-	uint16_t vme_a16_r(offs_t offset);
-	void vme_a16_w(offs_t offset, uint16_t data);
+	uint8_t vme_a16_r(offs_t offset);
+	void vme_a16_w(offs_t offset, uint8_t data);
 
 	uint16_t rom_shadow_tap(offs_t address, u16 data, u16 mem_mask);
 	uint16_t ram_parity_tap_r(offs_t address, u16 data, u16 mem_mask);
@@ -91,7 +94,14 @@ protected:
 
 	const mvme12x_variant  m_board_id;
 
-	virtual void vme_vberr_w(int state) override;
+	virtual void vme_berr_w(int state) override;
+	virtual void vme_dtack_w(int state) override;
+
+	emu_timer *m_vme_bus_timeout_timer;
+	TIMER_CALLBACK_MEMBER(vme_bus_timeout_expired
+	);
+	int m_vme_dtack_trigger;
+	bool m_performing_vme_transaction;
 };
 
 

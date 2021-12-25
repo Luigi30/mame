@@ -28,6 +28,7 @@
 #define LOG_PRINTF  (1U << 1)
 #define LOG_SETUP   (1U << 2)
 #define LOG_GENERAL (1U << 3)
+#define LOG_VMEBUS	(1U << 5)
 
 #define VERBOSE (LOG_GENERAL)
 
@@ -36,6 +37,7 @@
 #define LOGPRINTF(...)  LOGMASKED(LOG_PRINTF,   __VA_ARGS__)
 #define LOGSETUP(...)   LOGMASKED(LOG_SETUP,    __VA_ARGS__)
 #define LOGGENERAL(...) LOGMASKED(LOG_GENERAL,  __VA_ARGS__)
+#define LOGVMEBUS(...) 	LOGMASKED(LOG_VMEBUS,	__VA_ARGS__)
 
 // Clocks
 #define MVME120_MASTER_CLOCK    20_MHz_XTAL
@@ -137,6 +139,7 @@ vme_mvme120_device::vme_mvme120_device(const machine_config &mconfig, device_typ
 	, m_sysrom(*this, "maincpu")
 	, m_localram(*this, "localram")
 	, m_board_id(board_id)
+	, m_vme_bus_timeout_timer(nullptr)
 {
 
 }
@@ -182,8 +185,8 @@ vme_mvme123_card_device::vme_mvme123_card_device(const machine_config &mconfig, 
 
 void vme_mvme120_device::mvme12x_base_mem(address_map &map)
 {
-	map(0x000000, 0xffffff).rw(FUNC(vme_mvme120_card_device::vme_a16_r), FUNC(vme_mvme120_card_device::vme_a16_w)); // VMEbus 16-bit addresses
-	map(0x000000, 0xfeffff).rw(FUNC(vme_mvme120_card_device::vme_a24_r), FUNC(vme_mvme120_card_device::vme_a24_w)); // VMEbus 24-bit addresses
+	map(0x000000, 0xffffff).rw(FUNC(vme_mvme120_card_device::vme_a16_r), FUNC(vme_mvme120_card_device::vme_a16_w)).umask16(0xFFFF); // VMEbus 16-bit addresses
+	map(0x000000, 0xfeffff).rw(FUNC(vme_mvme120_card_device::vme_a24_r), FUNC(vme_mvme120_card_device::vme_a24_w)).umask16(0xFFFF); // VMEbus 24-bit addresses
 	map(0xf00000, 0xf0ffff).rom().region("maincpu", 0x00000);               // ROM/EEPROM bank 1 - 120bug
 	map(0xf10000, 0xf1ffff).rom().region("maincpu", 0x10000);               // ROM/EEPROM bank 2 - unpopulated
 	map(0xf20000, 0xf2003f).mirror(0x1ffc0).umask16(0x00ff).rw(m_mfp, FUNC(mc68901_device::read), FUNC(mc68901_device::write));
@@ -201,7 +204,6 @@ void vme_mvme120_device::mvme120_mem(address_map &map)
 {
 	mvme12x_base_mem(map);
 	map(0x000000, 0x01ffff).ram().share(m_localram);
-	//map(0x020000, 0xefffff).rw(FUNC(vme_mvme120_card_device::vme_a24_r), FUNC(vme_mvme120_card_device::vme_a24_w)); // VMEbus 24-bit addresses
 	// $F60000-F6003F 68451 MMU, mirrored to $F7FFFF
 	// $F80002-F80003 clear cache bank   2
 	// $F80004-F80005 clear cache bank 1
@@ -213,7 +215,6 @@ void vme_mvme120_device::mvme121_mem(address_map &map)
 {
 	mvme12x_base_mem(map);
 	map(0x000000, 0x07ffff).ram().share(m_localram);
-	map(0x080000, 0xefffff).rw(FUNC(vme_mvme120_card_device::vme_a24_r), FUNC(vme_mvme120_card_device::vme_a24_w)); // VMEbus 24-bit addresses
 	// $F60000-F6003F 68451 MMU, mirrored to $F7FFFF
 	// $F80002-F80003 clear cache bank   2
 	// $F80004-F80005 clear cache bank 1
@@ -225,7 +226,6 @@ void vme_mvme120_device::mvme122_mem(address_map &map)
 {
 	mvme12x_base_mem(map);
 	map(0x000000, 0x01ffff).ram().share(m_localram);
-	map(0x020000, 0xefffff).rw(FUNC(vme_mvme120_card_device::vme_a24_r), FUNC(vme_mvme120_card_device::vme_a24_w)); // VMEbus 24-bit addresses
 	// No MMU, no cache
 }
 
@@ -233,7 +233,6 @@ void vme_mvme120_device::mvme123_mem(address_map &map)
 {
 	mvme12x_base_mem(map);
 	map(0x000000, 0x07ffff).ram().share(m_localram);
-	map(0x020000, 0xefffff).rw(FUNC(vme_mvme120_card_device::vme_a24_r), FUNC(vme_mvme120_card_device::vme_a24_w)); // VMEbus 24-bit addresses
 	// $F80002-F80003 clear cache bank   2
 	// $F80004-F80005 clear cache bank 1
 	// $F80006-F80007 clear cache bank 1+2
@@ -253,10 +252,17 @@ void vme_mvme120_device::device_start()
 	//program.install_read_handler(0xF058D8, 0xF058D9, read16smo_delegate(*this, []() { return 0x4E71; }, "hack_r"));
 	
 	// Onboard RAM is always visible to VMEbus. (Decoding controlled by U28.)
-	m_vme->install_device(vme_device::A24_SC, 0, 0x1FFFF,
-		read16_delegate(*this, FUNC(vme_mvme120_device::vme_to_ram_r)), 
-		write16_delegate(*this, FUNC(vme_mvme120_device::vme_to_ram_w)), 
-		0xFFFF);
+	m_vme->install_device(vme_device::A24_SC, 0, 0x7FFFF,
+		read16sm_delegate(*this, FUNC(vme_mvme120_device::vme_to_ram16_r)), 
+		write16sm_delegate(*this, FUNC(vme_mvme120_device::vme_to_ram16_w)), 
+		0x0000FFFF);
+
+	m_vme->install_device(vme_device::A24_SC, 0, 0x7FFFF,
+		read8sm_delegate(*this, FUNC(vme_mvme120_device::vme_to_ram8_r)), 
+		write8sm_delegate(*this, FUNC(vme_mvme120_device::vme_to_ram8_w)), 
+		0x0000FFFF);
+	
+	m_vme_bus_timeout_timer = machine().scheduler().timer_alloc(timer_expired_delegate(FUNC(vme_mvme120_device::vme_bus_timeout_expired), this));
 }
 
 void vme_mvme120_device::device_reset()
@@ -274,6 +280,12 @@ void vme_mvme120_device::device_reset()
 	});
 
 	ctrlreg_w(0, 0xFF); // /RESET flips the latch bits to $FF
+	m_performing_vme_transaction = 0;
+}
+
+TIMER_CALLBACK_MEMBER(vme_mvme120_device::vme_bus_timeout_expired)
+{
+	m_maincpu->scheduler().trigger(m_vme_dtack_trigger);
 }
 
 /*
@@ -369,24 +381,30 @@ void vme_mvme120_device::vme_a24_w(offs_t offset, uint16_t data)
 	//vme_bus_timeout();
 }
 
-uint16_t vme_mvme120_device::vme_a16_r(offs_t offset)
+uint8_t vme_mvme120_device::vme_a16_r(offs_t offset)
 {
-	offset *= 2;
+	//offset *= 2;
 
 	if(!machine().side_effects_disabled())
 	{
+		m_performing_vme_transaction = 1;
 		//LOG("A16 read %08X\n", offset);
 	}
 
-	return read16(vme_device::A16_SC, offset);
+	return read8(vme_device::A16_SC, offset);
 	//vme_bus_timeout();
 }
 
-void vme_mvme120_device::vme_a16_w(offs_t offset, uint16_t data)
+void vme_mvme120_device::vme_a16_w(offs_t offset, uint8_t data)
 {
-	offset *= 2;
+	//offset *= 2;
 
-	write16(vme_device::A16_SC, offset, data);
+	if(!machine().side_effects_disabled())
+	{
+		m_performing_vme_transaction = 1;
+	}
+
+	write8(vme_device::A16_SC, offset, data);
 	//vme_bus_timeout();
 }
 
@@ -463,7 +481,6 @@ void vme_mvme120_device::device_add_mconfig(machine_config &config)
 	m_rs232->set_option_device_input_defaults("terminal", terminal_defaults);
 
 	// Missing: MMU
-	VME(config, "vme", 0);
 }
 
 WRITE_LINE_MEMBER( vme_mvme120_device::vme_bus_error_changed )
@@ -474,15 +491,53 @@ WRITE_LINE_MEMBER( vme_mvme120_device::vme_bus_error_changed )
 }
 
 // MVME120 RAM is always visible to the VMEbus.
-uint16_t vme_mvme120_device::vme_to_ram_r(address_space &space, offs_t address, uint16_t mem_mask)
+uint16_t vme_mvme120_device::vme_to_ram16_r(offs_t address)
 {
+	// address $2000 would be the word in localram[1000]
+	//if(!machine().side_effects_disabled()) LOG("VMEbus reading 120 RAM: %08X\n", address);
 	return m_localram[address];
 }
 
-void vme_mvme120_device::vme_to_ram_w(address_space &space, offs_t address, uint16_t data, uint16_t mem_mask)
+void vme_mvme120_device::vme_to_ram16_w(offs_t address, uint16_t data)
 {
+	//if(!machine().side_effects_disabled()) LOG("VMEbus writing 120 RAM: %08X\n", address);
 	m_localram[address] = data;
 }
+
+uint8_t vme_mvme120_device::vme_to_ram8_r(offs_t address)
+{
+	bool odd = address & 0x01;
+
+	//if(!machine().side_effects_disabled()) LOG("VMEbus reading 120 RAM D8: %08X\n", address);
+
+	address = address >> 1;	
+	if(!odd)
+	{
+		return (m_localram[address] & 0xFF00) >> 8;
+	}
+	else
+	{
+		return (m_localram[address] & 0x00FF);
+	}
+}
+
+void vme_mvme120_device::vme_to_ram8_w(offs_t address, uint8_t data)
+{
+	bool odd = address & 0x01;
+
+	//if(!machine().side_effects_disabled()) LOG("VMEbus writing 120 RAM D8: %08X\n", address);
+
+	address = address >> 1;
+	if(odd)
+	{
+		m_localram[address] = ((m_localram[address]) & 0xFF00) | data;
+	}
+	else
+	{
+		m_localram[address] = ((m_localram[address]) & 0x00FF) | (data << 8);
+	}
+}
+
 
 void vme_mvme120_card_device::device_add_mconfig(machine_config &config)
 {
@@ -536,13 +591,37 @@ INPUT_CHANGED_MEMBER(vme_mvme120_device::s3_baudrate)
 }
 
 /* Bus control lines */
-void vme_mvme120_device::vme_vberr_w(int state)
+void vme_mvme120_device::vme_berr_w(int state)
 {
 	// /VBERR comes in on both the MFP GPIO and CPU /BERR line.
 	m_mfp->i2_w(state);
 	m_maincpu->set_input_line(M68K_LINE_BUSERROR, state);
+	m_performing_vme_transaction = 0;
 }
 
+void vme_mvme120_device::vme_dtack_w(int state)
+{
+	m_vme_dtack_trigger = 1000;
+
+	if(m_performing_vme_transaction)
+	{
+		if(state == 0)
+		{
+			// Wait 220 microseconds for DTACK. If not asserted by then, assert a bus error.
+			m_vme_bus_timeout_timer->adjust(attotime::from_usec(220));
+			m_vme_bus_timeout_timer->enable(true);
+			m_maincpu->spin_until_trigger(m_vme_dtack_trigger);
+		}
+		else
+		{
+			// DTACK asserted before time ran out.
+			m_vme_bus_timeout_timer->enable(false);
+			m_maincpu->scheduler().trigger(m_vme_dtack_trigger);
+
+			m_performing_vme_transaction = 0;
+		}
+	}
+}
 
 // ROM definitions
 ROM_START(mvme120)

@@ -146,7 +146,8 @@ public:
 	void set_cputag(const char *tag) { m_cputag = tag; }
 	void use_owner_spaces();
 
-	const address_space_config m_a32_config;
+	const address_space_config m_a24_config;
+	//const address_space_config m_a32_config;
 
 	void add_vme_card(device_vme_card_interface *card);
 
@@ -191,19 +192,26 @@ public:
 	void install_device(vme_amod_t amod, offs_t start, offs_t end, read8smo_delegate rhandler, write8smo_delegate whandler, uint32_t mask);
 	//  void install_device(vme_amod_t amod, offs_t start, offs_t end, read8_delegate rhandler, write8_delegate whandler);
 	void install_device(vme_amod_t amod, offs_t start, offs_t end, read16_delegate rhandler, write16_delegate whandler, uint32_t mask);
-	void install_device(vme_amod_t amod, offs_t start, offs_t end, read32_delegate rhandler, write32_delegate whandler, uint32_t mask);
+	void install_device(vme_amod_t amod, offs_t start, offs_t end, read16sm_delegate rhandler, write16sm_delegate whandler, uint32_t mask);
+	//void install_device(vme_amod_t amod, offs_t start, offs_t end, read32_delegate rhandler, write32_delegate whandler, uint32_t mask);
 	
 	uint8_t		read8(vme_amod_t vme_address_mode, offs_t offset);
 	void 		write8(vme_amod_t vme_address_mode, offs_t offset, uint8_t data);
 	uint16_t 	read16(vme_amod_t vme_address_mode, offs_t offset);
 	void 		write16(vme_amod_t vme_address_mode, offs_t offset, uint16_t data);
-	uint32_t 	read32(vme_amod_t vme_address_mode, offs_t offset);
-	void 		write32(vme_amod_t vme_address_mode, offs_t offset, uint32_t data);
+	//uint32_t 	read32(vme_amod_t vme_address_mode, offs_t offset);
+	//void 		write32(vme_amod_t vme_address_mode, offs_t offset, uint32_t data);
 
 	auto berr_callback() { return m_out_berr_cb.bind(); }
 
-	DECLARE_WRITE_LINE_MEMBER( berr_w );
 	DECLARE_WRITE_LINE_MEMBER( sysfail_w );
+
+	DECLARE_WRITE_LINE_MEMBER( as_w );
+	DECLARE_WRITE_LINE_MEMBER( ds0_w );
+	DECLARE_WRITE_LINE_MEMBER( ds1_w );
+	DECLARE_WRITE_LINE_MEMBER( dtack_w );
+	DECLARE_WRITE_LINE_MEMBER( berr_w );
+	DECLARE_WRITE_LINE_MEMBER( write_w );
 
 protected:
 	vme_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
@@ -259,7 +267,6 @@ public:
 
 	// Bus control lines
 	virtual void vme_sysfail_w(int state) { }
-	virtual void vme_vberr_w(int state) { }
 	virtual void vme_irq1_w(int state) { }
 	virtual void vme_irq2_w(int state) { }
 	virtual void vme_irq3_w(int state) { }
@@ -267,7 +274,13 @@ public:
 	virtual void vme_irq5_w(int state) { }
 	virtual void vme_irq6_w(int state) { }
 	virtual void vme_irq7_w(int state) { }
+	
+	virtual void vme_berr_w(int state) { }
 	virtual void vme_write_w(int state) { }
+	virtual void vme_dtack_w(int state) { }
+	virtual void vme_as_w(int state) { }
+	virtual void vme_ds0_w(int state) { }
+	virtual void vme_ds1_w(int state) { }
 
 protected:
 	device_vme_card_interface(const machine_config &mconfig, device_t &device);

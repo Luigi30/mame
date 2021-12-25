@@ -215,7 +215,8 @@ DEFINE_DEVICE_TYPE(VME, vme_device, "vme", "VME bus")
 device_memory_interface::space_config_vector vme_device::memory_space_config() const
 {
 	return space_config_vector {
-		std::make_pair(AS_PROGRAM, &m_a32_config)
+		std::make_pair(AS_PROGRAM, &m_a24_config)
+		//std::make_pair(AS_PROGRAM, &m_a32_config)
 	};
 }
 
@@ -237,7 +238,8 @@ vme_device::vme_device(const machine_config &mconfig, const char *tag, device_t 
 vme_device::vme_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
 	: device_t(mconfig, type, tag, owner, clock)
 	, device_memory_interface(mconfig, *this)
-	, m_a32_config("a32", ENDIANNESS_BIG, 32, 32, 0, address_map_constructor())
+	, m_a24_config("a24", ENDIANNESS_BIG, 16, 24, 0, address_map_constructor())
+	//, m_a32_config("a32", ENDIANNESS_BIG, 32, 32, 1, address_map_constructor())
 	, m_allocspaces(true)
 	, m_cputag("maincpu")
 	, m_out_berr_cb(*this)
@@ -323,7 +325,7 @@ WRITE_LINE_MEMBER( vme_device::berr_w ) {
 
 	while (entry)
 	{
-		entry->vme_vberr_w(state);
+		entry->vme_berr_w(state);
 		entry = entry->next();
 	}
 }
@@ -338,6 +340,55 @@ WRITE_LINE_MEMBER( vme_device::sysfail_w ) {
 	}
 }
 
+WRITE_LINE_MEMBER( vme_device::dtack_w ) {
+	device_vme_card_interface *entry = m_device_list.first();
+
+	while (entry)
+	{
+		entry->vme_dtack_w(state);
+		entry = entry->next();
+	}
+}
+
+WRITE_LINE_MEMBER( vme_device::as_w ) {
+	device_vme_card_interface *entry = m_device_list.first();
+
+	while (entry)
+	{
+		entry->vme_as_w(state);
+		entry = entry->next();
+	}
+}
+
+WRITE_LINE_MEMBER( vme_device::ds0_w ) {
+	device_vme_card_interface *entry = m_device_list.first();
+
+	while (entry)
+	{
+		entry->vme_ds0_w(state);
+		entry = entry->next();
+	}
+}
+
+WRITE_LINE_MEMBER( vme_device::ds1_w ) {
+	device_vme_card_interface *entry = m_device_list.first();
+
+	while (entry)
+	{
+		entry->vme_ds1_w(state);
+		entry = entry->next();
+	}
+}
+
+WRITE_LINE_MEMBER( vme_device::write_w ) {
+	device_vme_card_interface *entry = m_device_list.first();
+
+	while (entry)
+	{
+		entry->vme_ds1_w(state);
+		entry = entry->next();
+	}
+}
 /*
  *  Install DTB (Data Transfer Bus) handlers for this board
  */
@@ -464,8 +515,7 @@ void vme_device::install_device(vme_amod_t amod, offs_t start, offs_t end, read1
 	}
 }
 
-// D32 bit devices in A16, A24 and A32
-void vme_device::install_device(vme_amod_t amod, offs_t start, offs_t end, read32_delegate rhandler, write32_delegate whandler, uint32_t mask)
+void vme_device::install_device(vme_amod_t amod, offs_t start, offs_t end, read16sm_delegate rhandler, write16sm_delegate whandler, uint32_t mask)
 {
 	LOG("%s %s AM%d D%02x\n", tag(), FUNCNAME, amod, m_prgwidth);
 
@@ -477,7 +527,7 @@ void vme_device::install_device(vme_amod_t amod, offs_t start, offs_t end, read3
 	case A16_SC: break;
 	case A24_SC: break;
 	case A32_SC: break;
-	default: fatalerror("VME D32: Non supported Address modifier: %02x\n", amod);
+	default: fatalerror("VME D16: Non supported Address modifier: %02x\n", amod);
 	}
 
 	switch(m_prgwidth)
@@ -491,9 +541,40 @@ void vme_device::install_device(vme_amod_t amod, offs_t start, offs_t end, read3
 	case 32:
 		m_prgspace->install_readwrite_handler(start, end, rhandler, whandler, mask);
 		break;
-	default: fatalerror("VME D32: Bus width %d not supported\n", m_prgwidth);
+	default: fatalerror("VME D16: Bus width %d not supported\n", m_prgwidth);
 	}
 }
+
+// // D32 bit devices in A16, A24 and A32
+// void vme_device::install_device(vme_amod_t amod, offs_t start, offs_t end, read32_delegate rhandler, write32_delegate whandler, uint32_t mask)
+// {
+// 	LOG("%s %s AM%d D%02x\n", tag(), FUNCNAME, amod, m_prgwidth);
+
+// 	LOG(" - width:%d\n", m_prgwidth);
+
+// 	// TODO: support address modifiers and buscycles other than single access cycles
+// 	switch(amod)
+// 	{
+// 	case A16_SC: break;
+// 	case A24_SC: break;
+// 	case A32_SC: break;
+// 	default: fatalerror("VME D32: Non supported Address modifier: %02x\n", amod);
+// 	}
+
+// 	switch(m_prgwidth)
+// 	{
+// 	case 16:
+// 		m_prgspace->install_readwrite_handler(start, end, rhandler, whandler, (uint16_t)(mask & 0x0000ffff));
+// 		break;
+// 	case 24:
+// 		m_prgspace->install_readwrite_handler(start, end, rhandler, whandler, (uint32_t)(mask & 0x00ffffff));
+// 		break;
+// 	case 32:
+// 		m_prgspace->install_readwrite_handler(start, end, rhandler, whandler, mask);
+// 		break;
+// 	default: fatalerror("VME D32: Bus width %d not supported\n", m_prgwidth);
+// 	}
+// }
 
 uint8_t	vme_device::read8(vme_amod_t vme_address_mode, offs_t offset)
 {
@@ -515,15 +596,15 @@ void vme_device::write16(vme_amod_t vme_address_mode, offs_t offset, uint16_t da
 	m_prgspace->write_word(offset, data);
 }
 
-uint32_t vme_device::read32(vme_amod_t vme_address_mode, offs_t offset)
-{
-	return m_prgspace->read_dword(offset);
-}
+// uint32_t vme_device::read32(vme_amod_t vme_address_mode, offs_t offset)
+// {
+// 	return m_prgspace->read_dword(offset);
+// }
 
-void vme_device::write32(vme_amod_t vme_address_mode, offs_t offset, uint32_t data)
-{
-	m_prgspace->write_dword(offset, data);
-}
+// void vme_device::write32(vme_amod_t vme_address_mode, offs_t offset, uint32_t data)
+// {
+// 	m_prgspace->write_dword(offset, data);
+// }
 
 //
 // Card interface
