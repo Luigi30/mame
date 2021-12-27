@@ -46,6 +46,8 @@ vme_rg750_device::vme_rg750_device(const machine_config &mconfig, device_type ty
 	, m_maincpu (*this, "maincpu")
 	, m_screen (*this, "screen")
 	, m_vdac (*this, "bt478")
+	, m_vram(*this, "vram")
+	, m_dram(*this, "dram")
 {
 
 }
@@ -58,8 +60,8 @@ vme_rg750_card_device::vme_rg750_card_device(const machine_config &mconfig, cons
 
 void vme_rg750_device::rg750_mem(address_map &map)
 {
-	map(0x02000000, 0x02ffffff).ram();	// VRAM
-	map(0x03000000, 0x037fffff).ram();	// DRAM
+	map(0x02000000, 0x02ffffff).ram().share("vram");
+	map(0x03000000, 0x037fffff).ram().share("dram");
 	
 	//map(0x05000000, 0x0500006f)		// S2691 UART
 	//map(0x05400000, 0x0540000f).rw(FUNC(bt478_device::address_r), FUNC(bt478_device::address_w)).umask32(0x000000FF);
@@ -149,15 +151,12 @@ void vme_rg750_device::device_add_mconfig(machine_config &config)
 	m_maincpu->set_shiftreg_in_callback(*this, FUNC(vme_rg750_device::to_shiftreg));         /* write to shiftreg function */
 	m_maincpu->set_shiftreg_out_callback(*this, FUNC(vme_rg750_device::from_shiftreg));      /* read from shiftreg function */
 
-	/*
 	SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
 	m_screen->set_raw(25175000, 800, 0, 640, 525, 0, 480);	// VGA timings for now, but supports 800 and 1024 SVGA
 	m_screen->set_size(1024, 768);
 	m_screen->set_visarea(0, 640-1, 0, 480-1);
-	m_screen->set_screen_update(m_maincpu, FUNC(tms34010_device::tms340x0_ind16));
-
+	//m_screen->set_screen_update(m_maincpu, FUNC(tms34010_device::tms340x0_ind16));
 	m_maincpu->set_screen(m_screen);
-	*/
 
 	/*
 	TIMER(config, m_scantimer, 0);
@@ -167,6 +166,25 @@ void vme_rg750_device::device_add_mconfig(machine_config &config)
 	BT478(config, m_vdac, 25175000);
 	
 	VME(config, "vme", 0);
+}
+
+void vme_rg750_device::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, rectangle const &cliprect)
+{
+	// VRAM is 1024x1024 in 8bpp mode and 1024x2048 in 4bpp mode.
+	/*
+	// TODO: 8bpp modes
+	for (unsigned y = 0; y < 2048; y++)
+	{
+		u32 *scanline = &bitmap.pix(y);
+		for (unsigned x = 0; x < 640; x++)
+		{
+			u8 pixel = m_vram[(y * 1024) + x];
+			*scanline++ = m_vdac->palette_lookup(pixel);
+			// u8 const pixels = m_vram->read((y * 1024) + BYTE4_XOR_BE(x));
+			// *scanline++ = m_vdac->palette_lookup(pixels);
+		}
+	}
+	*/
 }
 
 TMS340X0_SCANLINE_IND16_CB_MEMBER(vme_rg750_device::scanline_update)

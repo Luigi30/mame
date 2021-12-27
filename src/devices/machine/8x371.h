@@ -53,7 +53,7 @@ public:
     DECLARE_WRITE_LINE_MEMBER( uoc_w )  { m_uoc_state = state; }        // active low
     DECLARE_WRITE_LINE_MEMBER( uic_w )  { m_uic_state = state; }        // active low
     DECLARE_WRITE_LINE_MEMBER( me_w )   { m_me_state = state; }         // active low
-    DECLARE_WRITE_LINE_MEMBER( mclk_w ) { if(state == 1) update(); }
+    DECLARE_WRITE_LINE_MEMBER( mclk_w ) { if(state == 1 && m_me_state == 1) update(); }
 
     // IV bus (active low)
     DECLARE_WRITE_LINE_MEMBER( iv0_w );
@@ -65,14 +65,15 @@ public:
 	DECLARE_WRITE_LINE_MEMBER( iv6_w );
     DECLARE_WRITE_LINE_MEMBER( iv7_w );
 
-	DECLARE_READ_LINE_MEMBER( iv0_r )   { if(m_rc_state == 0) return BIT(m_value, 7); };
-	DECLARE_READ_LINE_MEMBER( iv1_r )   { if(m_rc_state == 0) return BIT(m_value, 6); };
-	DECLARE_READ_LINE_MEMBER( iv2_r )   { if(m_rc_state == 0) return BIT(m_value, 5); };
-	DECLARE_READ_LINE_MEMBER( iv3_r )   { if(m_rc_state == 0) return BIT(m_value, 4); };
-	DECLARE_READ_LINE_MEMBER( iv4_r )   { if(m_rc_state == 0) return BIT(m_value, 3); };
-	DECLARE_READ_LINE_MEMBER( iv5_r )   { if(m_rc_state == 0) return BIT(m_value, 2); };
-    DECLARE_READ_LINE_MEMBER( iv6_r )   { if(m_rc_state == 0) return BIT(m_value, 1); };
-    DECLARE_READ_LINE_MEMBER( iv7_r )   { if(m_rc_state == 0) return BIT(m_value, 0); };
+    // really it's three-stated
+	DECLARE_READ_LINE_MEMBER( iv0_r )   { if(m_rc_state == 0) return BIT(m_value, 7); else return 0; };
+	DECLARE_READ_LINE_MEMBER( iv1_r )   { if(m_rc_state == 0) return BIT(m_value, 6); else return 0; };
+	DECLARE_READ_LINE_MEMBER( iv2_r )   { if(m_rc_state == 0) return BIT(m_value, 5); else return 0; };
+	DECLARE_READ_LINE_MEMBER( iv3_r )   { if(m_rc_state == 0) return BIT(m_value, 4); else return 0; };
+	DECLARE_READ_LINE_MEMBER( iv4_r )   { if(m_rc_state == 0) return BIT(m_value, 3); else return 0; };
+	DECLARE_READ_LINE_MEMBER( iv5_r )   { if(m_rc_state == 0) return BIT(m_value, 2); else return 0; };
+    DECLARE_READ_LINE_MEMBER( iv6_r )   { if(m_rc_state == 0) return BIT(m_value, 1); else return 0; };
+    DECLARE_READ_LINE_MEMBER( iv7_r )   { if(m_rc_state == 0) return BIT(m_value, 0); else return 0; };
 
     // UD bus
 	DECLARE_WRITE_LINE_MEMBER( ud0_w );
@@ -84,14 +85,15 @@ public:
 	DECLARE_WRITE_LINE_MEMBER( ud6_w );
     DECLARE_WRITE_LINE_MEMBER( ud7_w );
 
-	DECLARE_READ_LINE_MEMBER( ud0_r )   { if(m_uoc_state == 0) return BIT(m_value, 7); };
-	DECLARE_READ_LINE_MEMBER( ud1_r )   { if(m_uoc_state == 0) return BIT(m_value, 6); };
-	DECLARE_READ_LINE_MEMBER( ud2_r )   { if(m_uoc_state == 0) return BIT(m_value, 5); };
-	DECLARE_READ_LINE_MEMBER( ud3_r )   { if(m_uoc_state == 0) return BIT(m_value, 4); };
-	DECLARE_READ_LINE_MEMBER( ud4_r )   { if(m_uoc_state == 0) return BIT(m_value, 3); };
-	DECLARE_READ_LINE_MEMBER( ud5_r )   { if(m_uoc_state == 0) return BIT(m_value, 2); };
-    DECLARE_READ_LINE_MEMBER( ud6_r )   { if(m_uoc_state == 0) return BIT(m_value, 1); };
-    DECLARE_READ_LINE_MEMBER( ud7_r )   { if(m_uoc_state == 0) return BIT(m_value, 0); };
+    // really it's three-stated
+	DECLARE_READ_LINE_MEMBER( ud0_r )   { if(m_uoc_state == 0) return !BIT(m_value, 7); else return 0; };
+	DECLARE_READ_LINE_MEMBER( ud1_r )   { if(m_uoc_state == 0) return !BIT(m_value, 6); else return 0; };
+	DECLARE_READ_LINE_MEMBER( ud2_r )   { if(m_uoc_state == 0) return !BIT(m_value, 5); else return 0; };
+	DECLARE_READ_LINE_MEMBER( ud3_r )   { if(m_uoc_state == 0) return !BIT(m_value, 4); else return 0; };
+	DECLARE_READ_LINE_MEMBER( ud4_r )   { if(m_uoc_state == 0) return !BIT(m_value, 3); else return 0; };
+	DECLARE_READ_LINE_MEMBER( ud5_r )   { if(m_uoc_state == 0) return !BIT(m_value, 2); else return 0; };
+    DECLARE_READ_LINE_MEMBER( ud6_r )   { if(m_uoc_state == 0) return !BIT(m_value, 1); else return 0; };
+    DECLARE_READ_LINE_MEMBER( ud7_r )   { if(m_uoc_state == 0) return !BIT(m_value, 0); else return 0; };
 
 protected:
 	// void ud_w(uint8_t line, bool state);

@@ -41,6 +41,9 @@ protected:
 	required_device<tms34010_device> m_maincpu;
 	required_device<screen_device> m_screen;
 	optional_device<bt478_device> m_vdac;
+
+	required_shared_ptr<uint16_t> m_vram;
+	required_shared_ptr<uint16_t> m_dram;
 	
 	uint8_t		m_ctrlreg;
 	uint8_t		m_statusreg;
@@ -50,6 +53,8 @@ protected:
 	
 	uint8_t 	statusreg_r(offs_t offset);
 	void 		statusreg_w(offs_t offset, uint8_t data);
+
+	void 		screen_update(screen_device &screen, bitmap_rgb32 &bitmap, rectangle const &cliprect);
 
 	TMS340X0_TO_SHIFTREG_CB_MEMBER(to_shiftreg);
 	TMS340X0_FROM_SHIFTREG_CB_MEMBER(from_shiftreg);

@@ -65,6 +65,13 @@ void vme_dbc1_line_log(char *logdata, uint8_t data);
 
 DEFINE_DEVICE_TYPE(VME_MVME320, vme_mvme320_card_device, "mvme320", "Motorola MVME320/B Disk Controller")
 
+#define I8X305_MASK (m_dbcr->read_ud() & 0x20)
+
+// These values are for MFM 5.25" floppies
+constexpr unsigned HALF_BIT_CELL_US = 2;	// Half bit cell duration in µs
+constexpr unsigned BIT_FREQUENCY = 250000;  // Frequency of bit cells in Hz
+constexpr uint16_t CRC_POLY = 0x1021;   	// CRC-CCITT
+
 vme_mvme320_device::vme_mvme320_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock) :
 	device_t(mconfig, type, tag, owner, clock)
 	, device_vme_card_interface(mconfig, *this)
@@ -120,7 +127,6 @@ void vme_mvme320_device::device_start()
 	save_item(NAME(m_vme_data));
 
 	save_item(NAME(m_iv_state));
-
 	m_maincpu->state_add(23, "FAST_IO", m_state_machine).mask(0xFF);
 	m_maincpu->state_add(24, "VSR1", m_vme_status_1);
 	m_maincpu->state_add(25, "VSR2", m_vme_status_2);
@@ -149,8 +155,8 @@ void vme_mvme320_device::device_start()
 	// Set up the control lines for the DBC register
 	m_dbcr->uoc_w(0);
 	m_dbcr->uic_w(1);
-	m_dbcr->me_w(1);
-	m_dbcr->rc_w(1);
+	m_dbcr->me_w(0);
+	m_dbcr->rc_w(0);
 	m_dbcr->wc_w(0);
 }
 
@@ -205,8 +211,8 @@ void vme_mvme320_device::device_reset()
 	// Set up the control lines for the DBC register
 	m_dbcr->uoc_w(0);
 	m_dbcr->uic_w(1);
-	m_dbcr->me_w(1);
-	m_dbcr->rc_w(1);
+	m_dbcr->me_w(0);
+	m_dbcr->rc_w(0);
 	m_dbcr->wc_w(0);
 }
 
@@ -269,8 +275,9 @@ uint8_t vme_mvme320_device::registers_r(offs_t offset)
 
 		if(m_palbuf.RGMND) m_vme_status_1 |= VSR1_RGMND; else m_vme_status_1 &= ~(VSR1_RGMND);
 
-		if(m_palbuf.I8X305n)
+		if(m_palbuf.I8X305n && !I8X305_MASK)
 		{
+			// Pulses /RESET for 142ms via R/C circuit
 			m_maincpu->reset();
 		}
 
@@ -339,8 +346,10 @@ void vme_mvme320_device::registers_w(offs_t offset, uint8_t data)
 		// Latch incoming VME low byte.
 		m_vme_data = (m_vme_data & 0xFF00) | data;
 	}
-	if(m_palbuf.I8X305n)
+
+	if(m_palbuf.I8X305n && !I8X305_MASK)
 	{
+		// Pulses /RESET for 142ms via R/C circuit
 		m_maincpu->reset();
 	}
 
@@ -374,7 +383,7 @@ void vme_mvme320_device::wc_w(uint8_t val)
 {
 	if(val) m_io_phase = IO_PHASE_WC; else if (m_io_phase == IO_PHASE_WC) m_io_phase = IO_PHASE_NONE;
 
-	// Propagate to 8X371 buffers.
+	// Propagate IV to 8X371 buffers.
 	m_dbcr->wc_w(val);
 
 	decoder_read_outputs();
@@ -485,7 +494,16 @@ void vme_mvme320_device::mclk_w(uint8_t val)
 				update_disk_control_3(m_iv_state);
 				break;
 			case RegDecoder::WDBCn:
-				if(m_iv_state != 0) LOGFLOPPY("MVME WDBC: %02X\n", m_iv_state);
+				if(m_iv_state != 0) LOGDECODER("%04X MVME WDBC: %02X\n", m_maincpu->pc(), m_iv_state);
+				m_dbcr->write_iv(~m_iv_state);
+				m_dbcr->wc_w(1);
+				m_dbcr->me_w(1);
+				m_dbcr->mclk_w(1);
+				m_dbcr->mclk_w(0);
+				m_dbcr->me_w(0);
+				m_dbcr->wc_w(0);
+
+				if(!BIT(m_dbcr->read_ud(), 3)) drive_sequencer_reset();
 				// Write Disk Bit Control - handled separately
 				break;
 			case RegDecoder::WBUn:
@@ -621,12 +639,12 @@ uint8_t vme_mvme320_device::io_rb_r(offs_t offset)
 				LOGDECODER("%04X: MCU reading VSR1, value %02X\n", m_maincpu->pc(), m_iv_state);
 				break;
 			case RegDecoder::RDBCn:
-				m_dbcr->me_w(0);
-				m_dbcr->rc_w(0);
-				m_iv_state = m_dbcr->read_iv();
-				m_dbcr->rc_w(1);
 				m_dbcr->me_w(1);
-				LOGDECODER("%04X: MCU reading DBC, value %02X\n", m_maincpu->pc(), m_iv_state);
+				m_dbcr->rc_w(1);
+				m_iv_state = m_dbcr->read_iv();
+				m_dbcr->rc_w(0);
+				m_dbcr->me_w(0);
+				LOGFLOPPY("%04X: MCU reading DBC, value %02X\n", m_maincpu->pc(), m_iv_state);
 				break;
 			case RegDecoder::VRDLn:
 				m_iv_state = m_vme_data & 0xFF; // Reads the register, NOT the VMEbus.
@@ -649,7 +667,7 @@ uint8_t vme_mvme320_device::io_rb_r(offs_t offset)
 				// All pins but Q5 of U48 pulled high when N/C but go through a transparent buffer to an active-low bus.
 				//m_iv_state = 0x04;
 				m_iv_state = get_floppy_state(0);
-				LOGDECODER("%04X: MCU reading DS, value %02X\n", m_maincpu->pc(), m_iv_state);
+				LOGFLOPPY("%04X: MCU reading DS, value %02X\n", m_maincpu->pc(), m_iv_state);
 				break;
 			case RegDecoder::VRDUn:
 				m_iv_state = m_vme_data >> 8; // Reads the register, NOT the VMEbus.
@@ -806,44 +824,122 @@ void vme_mvme320_device::ram_bank_w(offs_t offset, uint8_t data)
 	m_disk_buffer[offset] = data;
 }
 
+/* 
+ * The floppy stuff on sheet 13
+ */
+void vme_mvme320_device::HWRDn_assert()
+{
+	LOGFLOPPY("HWRDn asserted on PAL U50\n");
+
+	// Asserts U50 Q13n.
+	// Every time the PAL is clocked, the pulse advances: Q13n, Q14n, Q15n, Q16n, Q17n, Q18n.
+	// Clocking the PAL also activates delay line DL1.
+	// CL2 is pulsed 
+}
+
+void vme_mvme320_device::drive_sequencer_reset()
+{
+	// AMS pulled low, reset U59. Update U64 accordingly when required.
+	if(m_latch_u59 != 0)
+	{
+		LOGFLOPPY("Sequencer reset. %02X -> U59\n", m_latch_u59);
+		if(BIT(m_latch_u59, 6)) HWRDn_assert(); // Assert if going from 1 to 0 transition
+	}
+	
+	m_latch_u59 = 0;
+
+	// HWRDn and PRESn are both asserted now if they weren't before.
+	// HWRDn goes into PAL U50
+	// PRESn resets the CRC/ECC LOOP DIVIDER
+}
+
+void vme_mvme320_device::drive_sequencer_clock()
+{
+	// CL asserted.
+	// Signals propagate U64 -> U59 -> U62 -> U63.
+
+	// Drive control lines.
+	bool AMS = (m_dbcr->read_ud() & 0x08);
+	bool ENDE = (m_dbcr->read_ud() & 0x04);
+	bool RW = (m_dbcr->read_ud() & 0x01);
+	bool DATA = 0; // TODO, from CRC divider
+
+	// Calculate the address for U64.
+	uint16_t u64_address = 0;
+	// Low 6 bits of U64.An come from U59.
+	// U64.A6: U63.Q5
+	// U64.A7: DCR3.Q6
+	// U64.A8: U63.Q4
+	if(AMS == 0) m_latch_u59 = 0;
+	uint16_t u64_a6 = BIT(m_latch_u63, 5) << 6;
+	uint16_t u64_a7 = BIT(m_disk_control_3, 6) << 7;
+	uint16_t u64_a8 = BIT(m_latch_u63, 4) << 8;
+	u64_address = (u64_address & 0xC0) | (m_latch_u59 & 0x3F) | u64_a6 | u64_a7 | u64_a8;
+	m_latch_u59 = memregion("disk_u64")->base()[u64_address];
+
+	// Calculate the address for U62.
+	uint16_t u62_address = 0;
+	// Low 6 bits of U62.An come from U59.
+	// U62.A6: U63.Q4
+	// U62.A7: U63.Q7
+	uint16_t u62_a6 = BIT(m_latch_u63, 4) << 6;
+	uint16_t u62_a7 = BIT(m_latch_u63, 7) << 7;
+	u62_address = (m_latch_u59 & 0xC0) | u62_a6 | u62_a7;
+	uint8_t u62_data = memregion("disk_u62")->base()[u62_address];
+	m_latch_u63 = BIT(u62_data, 0) | (BIT(u62_data, 1) << 1) | (RW << 4) | (DATA << 5) | (BIT(u62_data, 3) << 6) | (ENDE << 7);
+
+	LOGFLOPPY("Sequencer clock. %02X -> U59\n", m_latch_u59);
+
+	// and the LS952 at U57
+	// clocked by CLD
+	// DISS is always L
+	// DISTU is TRDWNn
+	// DISTD is TRUPn
+	// DISO is (RW & WAIT)
+	// DISI is (!RW & !WAIT)
+	// IS is DSIN
+
+	// if DBCRn.1 is low, /INDEX from the floppy will pulse timer U68A for 150ns, giving us TICKn.
+}
+
 /*
  * Read lines from the decoder
  */
 void vme_mvme320_device::decoder_read_outputs()
 {
 	// Start by disabling all of them.
-	VSR1n_w(1);
-	RDBCn_w(1);
-	VRDLn_w(1);
-	RBUn_w(1);
-	VSR2n_w(1);
-	RDSn_w(1);
-	VRDUn_w(1);
+	VSR1n_w(0);
+	RDBCn_w(0);
+	VRDLn_w(0);
+	RBUn_w(0);
+	VSR2n_w(0);
+	RDSn_w(0);
+	VRDUn_w(0);
 
 	if(m_io_phase == IO_PHASE_NONE)
 	{
 		switch(regDecoder.m_read_state)
 		{
 			case RegDecoder::VSR1n:
-				VSR1n_w(0);
+				VSR1n_w(1);
 				break;
 			case RegDecoder::RDBCn:
-				RDBCn_w(0);
+				RDBCn_w(1);
 				break;
 			case RegDecoder::VRDLn:
-				VRDLn_w(0);
+				VRDLn_w(1);
 				break;
 			case RegDecoder::RBUn:
-				RBUn_w(0);
+				RBUn_w(1);
 				break;
 			case RegDecoder::VSR2n:
-				VSR2n_w(0);
+				VSR2n_w(1);
 				break;
 			case RegDecoder::RDSn:
-				RDSn_w(0);
+				RDSn_w(1);
 				break;
 			case RegDecoder::VRDUn:
-				VRDUn_w(0);
+				VRDUn_w(1);
 				break;
 			case RegDecoder::NOP:
 				break;
@@ -886,18 +982,18 @@ void vme_mvme320_device::VRDUn_w(bool state)
 void vme_mvme320_device::decoder_write_outputs()
 {
 	// Start by disabling all of them.
-	WUASn_w(1);
-	WUDSn_w(1);
-	WRDn_w(1);
-	WLDSn_w(1);
-	VCRn_w(1);
-	WMASn_w(1);
-	WLASn_w(1);
-	WDC1n_w(1);
-	WDBCn_w(1);
-	WDC3n_w(1);
-	WDC2n_w(1);
-	WBUn_w(1);
+	WUASn_w(0);
+	WUDSn_w(0);
+	WRDn_w(0);
+	WLDSn_w(0);
+	VCRn_w(0);
+	WMASn_w(0);
+	WLASn_w(0);
+	WDC1n_w(0);
+	WDBCn_w(0);
+	WDC3n_w(0);
+	WDC2n_w(0);
+	WBUn_w(0);
 
 	// Now enable the one that's selected.
 	if(m_io_phase == IO_PHASE_WC && m_io_bank == IO_BANK_RB)
@@ -905,40 +1001,40 @@ void vme_mvme320_device::decoder_write_outputs()
 		switch(regDecoder.m_write_state)
 		{
 			case RegDecoder::WUASn:
-				WUASn_w(0);
+				WUASn_w(1);
 				break;
 			case RegDecoder::WUDSn:
-				WUDSn_w(0);
+				WUDSn_w(1);
 				break;
 			case RegDecoder::WRDn:
-				WRDn_w(0);
+				WRDn_w(1);
 				break;
 			case RegDecoder::WLDSn:
-				WLDSn_w(0);
+				WLDSn_w(1);
 				break;
 			case RegDecoder::VCRn:
-				VCRn_w(0);
+				VCRn_w(1);
 				break;
 			case RegDecoder::WMASn:
-				WMASn_w(0);
+				WMASn_w(1);
 				break;
 			case RegDecoder::WLASn:
-				WLASn_w(0);
+				WLASn_w(1);
 				break;
 			case RegDecoder::WDC1n:
-				WDC1n_w(0);
+				WDC1n_w(1);
 				break;
 			case RegDecoder::WDBCn:
-				WDBCn_w(0);
+				WDBCn_w(1);
 				break;
 			case RegDecoder::WDC3n:
-				WDC3n_w(0);
+				WDC3n_w(1);
 				break;
 			case RegDecoder::WDC2n:
-				WDC2n_w(0);
+				WDC2n_w(1);
 				break;
 			case RegDecoder::WBUn:
-				WBUn_w(0);
+				WBUn_w(1);
 				break;
 			default:
 				break;
@@ -1094,6 +1190,28 @@ void vme_mvme320_device::PALVSEQ::log(vme_mvme320_device *device)
 	device->logerror(tmp);
 }
 
+void vme_mvme320_device::PALU50::update(bool CL2, bool CL3, bool CL4, bool HWRDn, bool PRECOMP, bool WAIT, bool IVLn, bool FLA)
+{
+	// Every time the PAL is clocked, the HWRDn pulse advances: Q13n, Q14n, Q15n, Q16n, Q17n, Q18n.
+	// Clocking the PAL also activates delay line DL1, asserting CL2 (T+20ns), CL3 (T+30ns), CL4 (T+40ns).
+
+	m_delay_line_dl1_ticks = 0;
+
+	WCKLn = (!FLA & WAIT) | (!IVLn & !WAIT);
+
+	Q18n = Q17n;
+	Q17n = Q16n;
+	Q16n = Q15n;
+	Q15n = Q14n;
+	Q14n = Q13n;
+	Q13n = HWRDn;
+
+	WRDATAn = (CL2 & PRECOMP & !Q14n & Q16n & Q18n) |
+			  (CL4 & PRECOMP & Q14n & Q16n & !Q18n) |
+			  (CL3 & !PRECOMP & Q16n)               |
+			  (CL3 & PRECOMP & !Q14n & Q16n & Q18n) |
+			  (CL3 & PRECOMP & Q14n & Q16n & Q18n);
+}
 
 /*
  * Machine configuration
@@ -1148,9 +1266,9 @@ void vme_mvme320_device::device_add_mconfig(machine_config &config)
 	m_fd3->set_formats(floppy_image_device::default_mfm_floppy_formats);
 
 	N8X371(config, m_dbcr, 0);
-	m_maincpu->mclk_callback().append(m_dbcr, FUNC(n8x371_device::mclk_w));
-	m_maincpu->iv_callback().append(m_dbcr, FUNC(n8x371_device::write_iv));
-	m_maincpu->wc_callback().append(m_dbcr, FUNC(n8x371_device::wc_w));
+	//m_maincpu->mclk_callback().append(m_dbcr, FUNC(n8x371_device::mclk_w));
+	//m_maincpu->iv_callback().append(m_dbcr, FUNC(n8x371_device::write_iv));
+	//m_maincpu->wc_callback().append(m_dbcr, FUNC(n8x371_device::wc_w));
 }
 
 // ROM definitions
@@ -1161,6 +1279,12 @@ ROM_START(mvme320)
 
 	ROM_REGION(0x1000, "fast_io", 0)
 	ROM_LOAD("3.0-u3.bin", 0x0000, 0x1000, CRC(3ed42fe5) SHA1(d1b020753aa4be0f0e8b89ace8fa2856f1bf5c79))
+
+	ROM_REGION(0x100, "disk_u62", 0)
+	ROM_LOAD("u62.bin", 0x000, 0x100, CRC(00000000) SHA1(d1b020753aa4be0f0e8b89ace8fa2856f1bf5c79))
+
+	ROM_REGION(0x200, "disk_u64", 0)
+	ROM_LOAD("u64.bin", 0x000, 0x200, CRC(00000000) SHA1(d1b020753aa4be0f0e8b89ace8fa2856f1bf5c79))
 ROM_END
 
 const tiny_rom_entry *vme_mvme320_device::device_rom_region() const

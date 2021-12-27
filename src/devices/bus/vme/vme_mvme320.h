@@ -14,6 +14,7 @@
 #include "machine/ram.h"
 #include "machine/8x371.h"
 #include "machine/latch8.h"
+#include "machine/fdc_pll.h"
 
 DECLARE_DEVICE_TYPE(VME_MVME320, vme_mvme320_card_device)
 
@@ -140,6 +141,14 @@ protected:
 	emu_timer *m_cyactiv_timer;
 	TIMER_CALLBACK_MEMBER(cyactiv_timer_expired);
 
+	// sequencer
+	void drive_sequencer_reset();
+	void drive_sequencer_clock();
+	uint8_t m_latch_u59;
+	uint8_t m_latch_u63;
+
+	fdc_pll_t m_pll;
+
 	typedef struct
 	{
 		typedef enum
@@ -265,6 +274,22 @@ protected:
 		void log(vme_mvme320_device *device);
 	} PALVSEQ;
 	PALVSEQ m_palvseq;
+
+	typedef struct
+	{
+		uint8_t m_delay_line_dl1_ticks;
+
+		bool WCKLn;
+		bool Q13n, Q14n, Q15n;
+		bool WRDATAn;
+		bool Q16n, Q17n, Q18n;
+
+		void update(bool CL2, bool CL3, bool CL4, bool HWRDn, bool PRECOMP, bool WAIT, bool IVLn, bool FLA);
+		void log(vme_mvme320_device *device);
+	} PALU50;
+	PALU50 m_palu50;
+
+	void HWRDn_assert();
 };
 
 //**************************************************************************

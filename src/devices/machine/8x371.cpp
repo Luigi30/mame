@@ -13,7 +13,7 @@
 #define LOG_SETUP   (1U << 2)
 #define LOG_GENERAL (1U << 3)
 
-//#define VERBOSE (LOG_PRINTF | LOG_SETUP | LOG_GENERAL)
+#define VERBOSE (LOG_PRINTF | LOG_SETUP | LOG_GENERAL)
 
 #include "logmacro.h"
 
@@ -28,6 +28,8 @@ n8x371_device::n8x371_device(const machine_config &mconfig, const char *tag, dev
 	, m_write_cb(*this)
 	, m_read_cb(*this)
 	, m_value(0)
+    , m_wc_state(0)
+    , m_me_state(0)
 {
 }
 
@@ -38,6 +40,8 @@ n8x371_device::n8x371_device(const machine_config &mconfig, const char *tag, dev
 void n8x371_device::device_start()
 {
 	save_item(NAME(m_value));
+    save_item(NAME(m_me_state));
+    save_item(NAME(m_wc_state));
 }
 
 //-------------------------------------------------
@@ -47,6 +51,8 @@ void n8x371_device::device_start()
 void n8x371_device::device_reset()
 {
 	m_value = 0;
+    m_me_state = 0;
+    m_wc_state = 0;
 }
 
 // UD bus
@@ -88,25 +94,17 @@ void n8x371_device::device_reset()
 void n8x371_device::update()
 {
     // IV bus -> m_value
-    if(m_wc_state && !m_me_state)
+    if(m_wc_state && m_me_state)
     {
-        LOG("8X371: updating m_value from IV bus: %02X\n", m_iv_incoming);
-        m_value = 0x00;
-        for(int i=0; i<8; i++)
-        {
-            m_value |= (m_iv_incoming & (1 << i));
-            m_value_came_from_iv = true;
-        }
+        //if(m_iv_incoming != m_value) LOG("8X371: updating m_value from IV bus: %02X\n", m_iv_incoming);
+        m_value = m_iv_incoming;
+        m_value_came_from_iv = true;
     }
-    else if(m_uic_state == 0 && !m_me_state)
+    else if(m_uic_state == 0 && m_me_state)
     {
-        LOG("8X371: updating m_value from UD bus\n");
-        m_value = 0x00;
-        for(int i=0; i<8; i++)
-        {
-            m_value |= (m_iv_incoming & (1 << i));
-            m_value_came_from_iv = false;
-        }
+        //LOG("8X371: updating m_value from UD bus\n");
+        m_value = m_iv_incoming;
+        m_value_came_from_iv = false;
     }
 }
 
