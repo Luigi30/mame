@@ -10,218 +10,295 @@
 #include "bus/vme/vme.h"
 #include "bus/rs232/rs232.h"
 #include "machine/clock.h"
+#include "machine/mc68901.h"
 #include "machine/ram.h"
+#include "machine/8x371.h"
 #include "machine/latch8.h"
 #include "machine/fdc_pll.h"
 
 DECLARE_DEVICE_TYPE(VME_MVME320, vme_mvme320_card_device)
 
-class vme_mvme320_device : public device_t, public device_vme_card_interface, public device_execute_interface
+//**************************************************************************
+//  Base Device declaration
+//**************************************************************************
+class vme_mvme320_device :  public device_t, public device_vme_card_interface
 {
 public:
 	vme_mvme320_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
 
-protected:
-    virtual void device_start() override;
-	virtual void device_reset() override;
-    virtual void execute_run() override;
+	auto in_sc_callback() { return m_in_sc_cb.bind(); }
+	auto in_wc_callback() { return m_in_sc_cb.bind(); }
+	auto in_lb_callback() { return m_in_lb_cb.bind(); }
+	auto in_rb_callback() { return m_in_rb_cb.bind(); }
+	auto in_iv_callback() { return m_in_iv_cb.bind(); }
 
+protected:
+	typedef enum {
+		IO_BANK_NONE,
+		IO_BANK_LB,
+		IO_BANK_RB
+	} IOBank;
+
+	typedef enum
+	{
+		IO_PHASE_NONE,
+		IO_PHASE_SC,
+		IO_PHASE_WC
+	} IOPhase;
+
+	typedef enum
+	{
+		MCLK_CLEARED,
+		MCLK_ASSERTED
+	} MCLKState;
+
+    required_device<n8x305_cpu_device> m_maincpu;
 	required_device<floppy_connector> m_fd0, m_fd1, m_fd2, m_fd3;
+	required_device<n8x371_device> m_dbcr;
+	
+	memory_passthrough_handler *m_state_machine_tap;
+	void update_state_machine(offs_t offset, uint8_t data, uint8_t mem_mask);
+	uint8_t m_state_machine;
+
+	virtual void device_start() override;
+	virtual void device_reset() override;
+    virtual const tiny_rom_entry *device_rom_region() const override;
 
     void device_add_mconfig(machine_config &config) override;
+    void mvme320_program_map(address_map &map);
+    void mvme320_io_map(address_map &map);
 
-    uint32_t m_eca_pointer;
-    uint8_t m_interrupt_vector;
-    uint8_t m_interrupt_source;
-    uint8_t m_drive_status;
+	void floppy_formats(format_registration &fr);
 
-	struct live_info {
-		enum { PT_NONE, PT_CRC_1, PT_CRC_2 };
-        
-        floppy_image_device *curfloppy;
-		attotime tm;
-		int state, next_state;
-		uint16_t shift_reg;
-		uint16_t crc;
-		int bit_counter;
-		bool data_separator_phase;
-		uint8_t data_reg;
-	};
+    void unscramble_proms();
 
-	live_info cur_live, checkpoint_live;
-	fdc_pll_t cur_pll, checkpoint_pll;
-
-	void pll_reset(const attotime &when, int usec);
-	//void pll_start_writing(const attotime &tm);
-	void pll_commit(floppy_image_device *floppy, const attotime &tm);
-	void pll_stop_writing(floppy_image_device *floppy, const attotime &tm);
-	int pll_get_next_bit(attotime &tm, floppy_image_device *floppy, const attotime &limit);
-	bool pll_write_next_bit(bool bit, attotime &tm, floppy_image_device *floppy, const attotime &limit);
-	void pll_save_checkpoint();
-	void pll_retrieve_checkpoint();
-
-	void live_start(int live_state, floppy_image_device *curfloppy);
-	void live_abort();
-	void checkpoint();
-	void rollback();
-	void live_delay(int state);
-	void live_sync();
-	void live_run(attotime limit = attotime::never);
-	bool read_one_bit(const attotime &limit);
-	bool write_one_bit(const attotime &limit);
-
-    void fdc_index_callback(floppy_image_device *floppy, int state);
-
-    typedef enum
-    {
-        ECAPointerLow,      // $FFB001
-        ECAPointerMiddle,   // $FFB003
-        ECAPointerUpper,    // $FFB005
-        ECAPointerNotUsed,  // $FFB007
-        InterruptVector,    // $FFB009
-        InterruptSource,    // $FFB00B
-        DriveStatus         // $FFB00D
-    } Register;
-
-    typedef enum
-    {
-        Recalibrate,
-        WriteDeletedData,
-        Verify,
-        TransparentRead,
-        ReadIdentifier,
-        ReadMultiple,
-        WriteMultiple,
-        FormatTrack
-    } DriveCommand;
-
-    typedef enum
-    {
-        Success,
-        HardError,
-        DriveNotReady,
-        Reserved,
-        SectorOutOfRange,
-        ThroughputError,
-        CommandRejected,
-        Busy,
-        DriveNotAvailable,
-        DMAFailed,
-        UserAbort
-    } MainStatus;
-
-    uint8_t registers_r(offs_t offset);
+	uint8_t registers_r(offs_t offset);
 	void registers_w(offs_t offset, uint8_t data);
 
-    void update_drive_status(uint8_t data);
-    void begin_disk_command(int drive_index);
-    void execute_disk_command(int drive_index);
-    void command_set_status(uint8_t main, uint16_t extended);
+	uint8_t ram_bank_r(offs_t offset);
+	void ram_bank_w(offs_t offset, uint8_t data);
 
-    constexpr static int NUM_TRACKS[] = { 77, 77, -1, -1, 40, 40 }; // Number of tracks per side for each drive type
+	uint8_t buffer_u34_r();
+	void buffer_u34_w(uint8_t data);
+	uint8_t m_buffer_u34;
 
-    typedef struct
-    {
-        uint8_t command_code;
-        uint8_t main_status;
-        uint16_t extended_status;
-        uint8_t max_retries;
-        uint8_t actual_retries;
-        uint8_t dma_type;
-        uint8_t command_options;
-        uint16_t buffer_msw;
-        uint16_t buffer_lsw;
-        uint16_t buffer_length;
-        uint16_t bytes_transferred;
-        uint16_t cylinder_number;
-        uint8_t head_number;
-        uint8_t sector_number;
-        uint16_t current_cylinder;
-        uint8_t reserved10[10];
-        uint8_t preindex_gap;
-        uint8_t postindex_gap;
-        uint8_t sync_byte_count;
-        uint8_t postid_gap;
-        uint8_t postdata_gap;
-        uint8_t address_mark_count;
-        uint8_t sector_length_code;
-        uint8_t fill_byte;
-        uint8_t reserved6[6];
-        uint8_t drive_type;
-        uint8_t num_surfaces;
-        uint8_t sectors_per_track;
-        uint8_t step_rate;
-        uint8_t head_settling_time;
-        uint8_t head_load_time;
-        uint8_t seek_type;
-        uint8_t phase_count;
-        uint16_t low_write_current_cylinder;
-        uint16_t precomp_cylinder;
-        uint8_t ecc_remainder[6];
-        uint8_t ecc_remainder_from_disk[6];
-        uint8_t reserved4[4];
-        uint8_t working_area[12];
-        uint16_t reserved;
-    } ECA;
-    ECA m_current_eca;
+	uint8_t io_lb_r(offs_t offset);
+	void io_lb_w(offs_t offset, uint8_t data);
+	uint8_t io_rb_r(offs_t offset);
+	void io_rb_w(offs_t offset, uint8_t data);
 
-	enum { TM_HEAD_LOAD, TM_TIMEOUT, TM_GEN };
+	void update_u81_speeds();
 
-    floppy_image_device *m_floppy[4];
-    emu_timer *t_gen;
-    emu_timer *m_command_exec_timer;
-    emu_timer *m_ready_timeout;
-    emu_timer *m_step_time;
-	TIMER_CALLBACK_MEMBER(command_exec_timer_expired);
-    TIMER_CALLBACK_MEMBER(ready_timeout);
-    TIMER_CALLBACK_MEMBER(step_time);
+	devcb_read_line	m_in_sc_cb;
+	devcb_read_line	m_in_wc_cb;
+	devcb_read_line m_in_lb_cb;
+	devcb_read_line m_in_rb_cb;
+	devcb_read8 m_in_iv_cb;
 
-    int m_current_command_drive_number;
-    bool m_timeout;
+	void lb_w(uint8_t data);
+	void rb_w(uint8_t data);
+	void sc_w(uint8_t data);
+	void wc_w(uint8_t data);
+	void mclk_w(uint8_t data);
+	void iv_w(uint8_t data);
 
-    bool perform_recalibrate(int drive_index);
-    bool perform_read_multiple(int drive_index);
+	IOBank m_io_bank;
+	IOPhase m_io_phase;
+	MCLKState m_mclk_state;
+	uint8_t m_iv_state;
 
-    typedef enum
-    {
-        CMD_IDLE,
-        CMD_0_WAITING_FOR_READY,
-        CMD_0_STEPPING,
-    } ControllerState;
-    ControllerState m_controller_state;
+	uint32_t m_eca_address;
+	uint8_t m_interrupt_vec;
+	uint8_t	m_interrupt_src_status;
+	uint8_t m_drive_status;
 
-    enum
-    {
-        IDLE,
-		//
-		SYNC1,
-		SYNC_BYTE1,
-		SYNC2,
-		SYNC_BYTE2,
-		READ,
-		READ_BYTE,
-		WRITE,
-		WRITE_BITS,
-    };
+	bool m_watchdog;
+	bool m_s0;
 
-    enum
-    {
-        TRIGGER_READY,
-        TRIGGER_STEP
-    };
+	// VME bus master stuff
+	uint32_t m_vme_address;
+	uint16_t m_vme_data;
 
-    void floppy_ready_cb(floppy_image_device *floppy, int state);
+	uint8_t m_vme_control_register;
+	uint8_t m_vme_status_1, m_vme_status_2;
 
-    int m_icount;
+	uint8_t m_disk_control_1, m_disk_control_2, m_disk_control_3;
+	uint8_t m_disk_buffer_address_latch;
+	uint8_t m_disk_buffer[1024];
 
-    void start_read();
+	uint8_t vme_read_lobyte();
+	uint8_t vme_read_hibyte();
+	void vme_write_lobyte();
+	void vme_write_hibyte();
 
-    uint16_t m_shift_register;
-    uint8_t read_byte_from_shift_register();
+	uint8_t get_floppy_state(int floppy_num);
+	void update_disk_control_1(uint8_t value);
+	void update_disk_control_2(uint8_t value);
+	void update_disk_control_3(uint8_t value);
 
-    u8 m_crc;
-	u8 m_last_crc;
+	void update_vme_control_lines(uint8_t data);
+
+	emu_timer *m_dtack_timer;
+	TIMER_CALLBACK_MEMBER(dtack_timer_expired);
+	emu_timer *m_cyactiv_timer;
+	TIMER_CALLBACK_MEMBER(cyactiv_timer_expired);
+	emu_timer *m_cl_timer;
+	TIMER_CALLBACK_MEMBER(cl_timer_expired);
+
+	// sequencer
+	void drive_sequencer_reset();
+	void drive_sequencer_clock();
+	uint8_t m_latch_u59;
+	uint8_t m_latch_u63;
+
+	fdc_pll_t m_pll;
+
+	typedef struct
+	{
+		typedef enum
+		{
+			VSR1n,		// VME Status Register 1
+			RDBCn,		// Read Disk Bit Controller
+			VRDLn,		// VME Read Data Lower
+			RBUn,		// Read Buffer
+			VSR2n,		// VME Status Register 2
+			RDSn,		// Read Disk Status
+			VRDUn,		// VME Read Data Upper
+			NOP			// No operation
+		} ReadState;
+
+		typedef enum
+		{
+			NOP0,
+			WUASn,		// Write Upper Address Strobe
+			WUDSn,		// Write Upper Data Strobe
+			WRDn,		// Write Register $D
+			WLDSn,		// Write Lower Data Strobe
+			VCRn,		// VME Control Register
+			WMASn,		// Write Middle Address Strobe
+			WLASn,		// Write Lower Address Strobe
+			WDC1n,		// Write Disk Control 1
+			WDBCn,		// Write Disk Bit Control
+			WDC3n,		// Write Disk Control 3
+			NOP11,
+			WDC2n,		// Write Disk Control 2
+			NOP13,	
+			WBUn,		// Write Buffer
+			NOP15
+		} WriteState;
+
+		ReadState m_read_state;
+		WriteState m_write_state;
+	} RegDecoder;
+	RegDecoder regDecoder;
+
+	// ReadState m_read_state;
+	// WriteState m_write_state;
+	bool m_read_line_state[8];
+	bool m_write_line_state[16];
+
+	// write lines from the decoder
+	void decoder_write_outputs();
+	void WUASn_w(bool state);
+	void WUDSn_w(bool state);
+	void WRDn_w(bool state);
+	void WLDSn_w(bool state);
+	void VCRn_w(bool state);
+	void WMASn_w(bool state);
+	void WLASn_w(bool state);
+	void WDC1n_w(bool state);
+	void WDBCn_w(bool state);
+	void WDC3n_w(bool state);
+	void NOP11_w(bool state);
+	void WDC2n_w(bool state);
+	void NOP13_w(bool state);
+	void WBUn_w(bool state);
+	void NOP15_w(bool state);
+
+	// read lines from the decoder
+	void decoder_read_outputs();
+	void VSR1n_w(bool state);
+	void RDBCn_w(bool state);
+	void VRDLn_w(bool state);
+	void RBUn_w(bool state);
+	void VSR2n_w(bool state);
+	void RDSn_w(bool state);
+	void VRDUn_w(bool state);
+
+	// PALDECODE
+	typedef struct
+	{
+		bool REGSELn;
+		bool REG13RDn;
+		bool ILMATCHn;
+
+		void update(uint8_t vme_am, bool selected, uint8_t offset, uint8_t interrupt_level, bool write, bool cirq);
+		void log(vme_mvme320_device *device);
+	} PALDECODE;
+	PALDECODE m_paldecode;
+
+	typedef struct 
+	{
+		bool LDAOEn;
+		bool TOMEMn;
+		bool TODISKn;
+		bool DBDIR;
+		bool RDR13n;
+		bool I8X305n;
+		bool RGMND;
+		bool CLRDTKn;
+
+		void update(bool REGSELn, bool REG13RDn, bool VWRT, bool CWRT, bool DTBMn, bool OBG, bool DS060n, bool IACKRn);
+		void log(vme_mvme320_device *device);
+	} PALBUF;
+	PALBUF m_palbuf;
+	
+	typedef struct
+	{
+		bool DS060On;
+		bool IACKRn;
+		bool IACKOUTn;
+		bool DS020On;
+
+		void update(bool ILMATCHn, bool IACKIN, bool AS, bool DS020I, bool DS0, bool DS060In);
+		void log(vme_mvme320_device *device);
+	} PALIACK;
+	PALIACK m_paliack;
+
+	typedef struct
+	{
+		bool CYACTIVn;
+		bool DATAXCYn;
+		bool DTBMSn;
+		bool DLATCH;
+		bool EXDTACK;
+		bool STB;
+
+		void update(bool STARTn, bool DTBMn, bool ACKn, bool ACKSn, bool DTACK13n, bool CDTACK, bool SYSRSTn, bool N8XRSTn, bool CWRT, bool CLKI);
+		void log(vme_mvme320_device *device);
+	} PALVSEQ;
+	PALVSEQ m_palvseq;
+
+	typedef struct
+	{
+		uint8_t m_delay_line_dl1_ticks;
+
+		bool WCKLn;
+		bool Q13n, Q14n, Q15n;
+		bool WRDATAn;
+		bool Q16n, Q17n, Q18n;
+
+		void update(bool CL2, bool CL3, bool CL4, bool HWRDn, bool PRECOMP, bool WAIT, bool IVLn, bool FLA);
+		void log(vme_mvme320_device *device);
+	} PALU50;
+	PALU50 m_palu50;
+
+	void HWRDn_assert();
 };
+
+//**************************************************************************
+//  Board Device declarations
+//**************************************************************************
 
 class vme_mvme320_card_device : public vme_mvme320_device
 {
