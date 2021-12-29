@@ -98,8 +98,7 @@ protected:
 	virtual void vme_dtack_w(int state) override;
 
 	emu_timer *m_vme_bus_timeout_timer;
-	TIMER_CALLBACK_MEMBER(vme_bus_timeout_expired
-	);
+	TIMER_CALLBACK_MEMBER(vme_bus_timeout_expired);
 	int m_vme_dtack_trigger;
 	bool m_performing_vme_transaction;
 };

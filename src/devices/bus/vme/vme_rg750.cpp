@@ -44,6 +44,7 @@ vme_rg750_device::vme_rg750_device(const machine_config &mconfig, device_type ty
 	device_t(mconfig, type, tag, owner, clock)
 	, device_vme_card_interface(mconfig, *this)
 	, m_maincpu (*this, "maincpu")
+	, m_uart (*this, "uart")
 	, m_screen (*this, "screen")
 	, m_vdac (*this, "bt478")
 	, m_vram(*this, "vram")
@@ -63,12 +64,24 @@ void vme_rg750_device::rg750_mem(address_map &map)
 	map(0x02000000, 0x02ffffff).ram().share("vram");
 	map(0x03000000, 0x037fffff).ram().share("dram");
 	
-	//map(0x05000000, 0x0500006f)		// S2691 UART
-	//map(0x05400000, 0x0540000f).rw(FUNC(bt478_device::address_r), FUNC(bt478_device::address_w)).umask32(0x000000FF);
-	//map(0x05410000, 0x0541000f).rw(FUNC(bt478_device::palette_r), FUNC(bt478_device::palette_w)).umask32(0x000000FF);
+	map(0x05000000, 0x0500006f).rw(FUNC(vme_rg750_device::uart_r), FUNC(vme_rg750_device::uart_w)).umask32(0x000000FF);
+	map(0x05400000, 0x0540000f).rw(FUNC(vme_rg750_device::ramdac_address_read), FUNC(vme_rg750_device::ramdac_address_write)).umask32(0x000000FF);
+	map(0x05410000, 0x0541000f).rw(FUNC(vme_rg750_device::ramdac_palette_read), FUNC(vme_rg750_device::ramdac_palette_write)).umask32(0x000000FF);
 	map(0x05800000, 0x05bfffff).rw(FUNC(vme_rg750_device::ctrlreg_r), FUNC(vme_rg750_device::ctrlreg_w));		// TODO: mirroring
 	map(0x05c00000, 0x05ffffff).rw(FUNC(vme_rg750_device::statusreg_r), FUNC(vme_rg750_device::statusreg_w));	// TODO: mirroring
+	map(0x06c00000, 0x06ffffff).rom().region("maincpu", 0x0000);
+	map(0xffc00000, 0xffffffff).rom().region("maincpu", 0x0000); // can be replaced by DRAM by ROMDIS register
 	
+}
+
+uint8_t vme_rg750_device::uart_r(offs_t offset)
+{
+	return m_uart->read(offset);
+}
+
+void vme_rg750_device::uart_w(offs_t offset, uint8_t data)
+{
+	m_uart->write(offset, data);
 }
 
 void vme_rg750_device::device_start()
@@ -101,14 +114,17 @@ void vme_rg750_device::device_reset()
  * 	D01 - Pixel clock divisor (0 = divide by 1, 1 = divide by 2)
  *	D00 - Shift clock enable
  */
-uint8_t vme_rg750_device::ctrlreg_r(offs_t offset)
+uint16_t vme_rg750_device::ctrlreg_r(offs_t offset)
 {
 	return m_ctrlreg;
 }
 
-void vme_rg750_device::ctrlreg_w(offs_t offset, uint8_t data)
+void vme_rg750_device::ctrlreg_w(offs_t offset, uint16_t data)
 {
-	LOG("%s: control register set to $%02X\n", FUNCNAME, data);
+	LOG("%s: control register set to %X $%02X\n", FUNCNAME, offset, data);
+	m_ctrlreg = data;
+
+	if(BIT(m_ctrlreg, 1)) m_maincpu->set_pixels_per_clock(2); else m_maincpu->set_pixels_per_clock(1);
 }
 
 /* 	
@@ -126,15 +142,13 @@ void vme_rg750_device::ctrlreg_w(offs_t offset, uint8_t data)
  * 	D01 - Config
  *	D00 - Config
  */
-uint8_t vme_rg750_device::statusreg_r(offs_t offset)
+uint16_t vme_rg750_device::statusreg_r(offs_t offset)
 {
+	m_statusreg = 0;
 	return m_statusreg;
 }
 
-void vme_rg750_device::statusreg_w(offs_t offset, uint8_t data)
-{
-	LOG("%s: status register set to $%02X\n", FUNCNAME, data);
-}
+void vme_rg750_device::statusreg_w(offs_t offset, uint16_t data) { }
 
 /*
  * Machine configuration
@@ -145,7 +159,7 @@ void vme_rg750_device::device_add_mconfig(machine_config &config)
 	TMS34010(config, m_maincpu, MASTER_XTAL);
 	m_maincpu->set_addrmap(AS_PROGRAM, &vme_rg750_device::rg750_mem);
 	m_maincpu->set_halt_on_reset(false);     /* halt on reset */
-	m_maincpu->set_pixel_clock(25175000); /* pixel clock */
+	m_maincpu->set_pixel_clock(25175000); 	/* pixel clock */
 	m_maincpu->set_pixels_per_clock(1);
 	m_maincpu->set_scanline_ind16_callback(*this, FUNC(vme_rg750_device::scanline_update));  /* scanline updater (indexed16) */
 	m_maincpu->set_shiftreg_in_callback(*this, FUNC(vme_rg750_device::to_shiftreg));         /* write to shiftreg function */
@@ -153,10 +167,12 @@ void vme_rg750_device::device_add_mconfig(machine_config &config)
 
 	SCREEN(config, m_screen, SCREEN_TYPE_RASTER);
 	m_screen->set_raw(25175000, 800, 0, 640, 525, 0, 480);	// VGA timings for now, but supports 800 and 1024 SVGA
-	m_screen->set_size(1024, 768);
+	m_screen->set_size(640, 480);
 	m_screen->set_visarea(0, 640-1, 0, 480-1);
-	//m_screen->set_screen_update(m_maincpu, FUNC(tms34010_device::tms340x0_ind16));
+	m_screen->set_screen_update(FUNC(vme_rg750_device::screen_update));
 	m_maincpu->set_screen(m_screen);
+
+	SCN2681(config, "uart", 3.6864_MHz_XTAL);
 
 	/*
 	TIMER(config, m_scantimer, 0);
@@ -168,7 +184,7 @@ void vme_rg750_device::device_add_mconfig(machine_config &config)
 	VME(config, "vme", 0);
 }
 
-void vme_rg750_device::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, rectangle const &cliprect)
+uint32_t vme_rg750_device::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, rectangle const &cliprect)
 {
 	// VRAM is 1024x1024 in 8bpp mode and 1024x2048 in 4bpp mode.
 	/*
@@ -185,6 +201,8 @@ void vme_rg750_device::screen_update(screen_device &screen, bitmap_rgb32 &bitmap
 		}
 	}
 	*/
+
+	return 0;
 }
 
 TMS340X0_SCANLINE_IND16_CB_MEMBER(vme_rg750_device::scanline_update)
@@ -206,11 +224,8 @@ TMS340X0_FROM_SHIFTREG_CB_MEMBER(vme_rg750_device::from_shiftreg)
 // ROM definitions
 ROM_START (rg750)
 	ROM_REGION16_LE(0x80000, "maincpu", 0)
-	ROM_DEFAULT_BIOS("afgis-v3.11a")
-
-	ROM_SYSTEM_BIOS(0, "afgis-v3.11a", "AFGIS v3.11a 12/14/94")
-	ROMX_LOAD("afgis-v3.11a-u17.bin", 0x0000, 0x40000, CRC(71c67430) SHA1(52872291b160abd11b720a6949c2246bd32c80c4), ROM_SKIP(1) | ROM_BIOS(0))
-	ROMX_LOAD("afgis-v3.11a-u18.bin", 0x0001, 0x40000, CRC(8cd81681) SHA1(0b19f06bef5cf43ccfe2e24bbc8c7067b2eb3cfa), ROM_SKIP(1) | ROM_BIOS(0))
+	ROM_LOAD16_BYTE("afgis-v3.11a-u18.bin", 0x00000, 0x40000, CRC(71c67430) SHA1(52872291b160abd11b720a6949c2246bd32c80c4))
+	ROM_LOAD16_BYTE("afgis-v3.11a-u17.bin", 0x00001, 0x40000, CRC(8cd81681) SHA1(0b19f06bef5cf43ccfe2e24bbc8c7067b2eb3cfa))
 ROM_END
 
 const tiny_rom_entry *vme_rg750_device::device_rom_region() const

@@ -28,9 +28,9 @@
 #define LOG_PRINTF  (1U << 1)
 #define LOG_SETUP   (1U << 2)
 #define LOG_GENERAL (1U << 3)
-#define LOG_VMEBUS	(1U << 5)
+#define LOG_VMEBUS	(1U << 4)
 
-#define VERBOSE (LOG_GENERAL)
+#define VERBOSE (LOG_VMEBUS)
 
 #include "logmacro.h"
 
@@ -494,7 +494,7 @@ WRITE_LINE_MEMBER( vme_mvme120_device::vme_bus_error_changed )
 uint16_t vme_mvme120_device::vme_to_ram16_r(offs_t address)
 {
 	// address $2000 would be the word in localram[1000]
-	//if(!machine().side_effects_disabled()) LOG("VMEbus reading 120 RAM: %08X\n", address);
+	//if(!machine().side_effects_disabled()) LOGVMEBUS("VMEbus reading 120 RAM: %08X %02X\n", address<<1, m_localram[address]);
 	return m_localram[address];
 }
 
@@ -507,27 +507,30 @@ void vme_mvme120_device::vme_to_ram16_w(offs_t address, uint16_t data)
 uint8_t vme_mvme120_device::vme_to_ram8_r(offs_t address)
 {
 	bool odd = address & 0x01;
-
-	//if(!machine().side_effects_disabled()) LOG("VMEbus reading 120 RAM D8: %08X\n", address);
+	uint8_t retval;
 
 	address = address >> 1;	
 	if(!odd)
 	{
-		return (m_localram[address] & 0xFF00) >> 8;
+		retval = (m_localram[address] & 0xFF00) >> 8;
 	}
 	else
 	{
-		return (m_localram[address] & 0x00FF);
+		retval = (m_localram[address] & 0x00FF);
 	}
+
+	if(!machine().side_effects_disabled()) LOGVMEBUS("VMEbus reading 120 RAM D8: %08X %02X\n", address<<1, retval);
+
+	return retval;
 }
 
 void vme_mvme120_device::vme_to_ram8_w(offs_t address, uint8_t data)
 {
 	bool odd = address & 0x01;
-
-	//if(!machine().side_effects_disabled()) LOG("VMEbus writing 120 RAM D8: %08X\n", address);
-
 	address = address >> 1;
+
+	if(!machine().side_effects_disabled()) LOGVMEBUS("VMEbus writing 120 RAM D8: %08X %02X\n", address<<1, data);
+
 	if(odd)
 	{
 		m_localram[address] = ((m_localram[address]) & 0xFF00) | data;

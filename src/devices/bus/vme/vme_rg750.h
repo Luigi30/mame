@@ -8,6 +8,7 @@
 #include "bus/vme/vme.h"
 #include "cpu/tms34010/tms34010.h"
 #include "machine/clock.h"
+#include "machine/mc68681.h"
 #include "video/bt47x.h"
 #include "screen.h"
 
@@ -39,22 +40,31 @@ protected:
 	void rg750_mem(address_map &map);
 	
 	required_device<tms34010_device> m_maincpu;
+	required_device<scn2681_device> m_uart;		// really an SCC2691
 	required_device<screen_device> m_screen;
 	optional_device<bt478_device> m_vdac;
 
 	required_shared_ptr<uint16_t> m_vram;
 	required_shared_ptr<uint16_t> m_dram;
 	
-	uint8_t		m_ctrlreg;
-	uint8_t		m_statusreg;
+	uint16_t	m_ctrlreg;
+	uint16_t	m_statusreg;
 	
-	uint8_t 	ctrlreg_r(offs_t offset);
-	void 		ctrlreg_w(offs_t offset, uint8_t data);
+	uint16_t 	ctrlreg_r(offs_t offset);
+	void 		ctrlreg_w(offs_t offset, uint16_t data);
 	
-	uint8_t 	statusreg_r(offs_t offset);
-	void 		statusreg_w(offs_t offset, uint8_t data);
+	uint16_t 	statusreg_r(offs_t offset);
+	void 		statusreg_w(offs_t offset, uint16_t data);
 
-	void 		screen_update(screen_device &screen, bitmap_rgb32 &bitmap, rectangle const &cliprect);
+	uint32_t	screen_update(screen_device &screen, bitmap_rgb32 &bitmap, rectangle const &cliprect);
+
+	uint8_t uart_r(offs_t offset);
+	void uart_w(offs_t offset, uint8_t value);
+
+	uint8_t ramdac_address_read(offs_t _) { return m_vdac->address_r(); }
+	void	ramdac_address_write(offs_t _, uint8_t value) { m_vdac->address_w(value); }
+	uint8_t ramdac_palette_read(offs_t _) { return m_vdac->palette_r(); }
+	void	ramdac_palette_write(offs_t _, uint8_t value) { m_vdac->palette_w(value); }
 
 	TMS340X0_TO_SHIFTREG_CB_MEMBER(to_shiftreg);
 	TMS340X0_FROM_SHIFTREG_CB_MEMBER(from_shiftreg);
