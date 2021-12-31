@@ -4893,3 +4893,25 @@ if (MACHINES["N8X371"]~=null) then
 		MAME_DIR .. "src/devices/machine/8x371.h",
 	}
 end
+
+---------------------------------------------------
+--
+--@src/devices/machine/tsconfdma.h,MACHINES["TSCONF_DMA"] = true
+---------------------------------------------------
+if (MACHINES["TSCONF_DMA"]~=null) then
+	files {
+		MAME_DIR .. "src/devices/machine/tsconfdma.cpp",
+		MAME_DIR .. "src/devices/machine/tsconfdma.h",
+	}
+end
+
+---------------------------------------------------
+--
+--@src/devices/machine/glukrs.h,MACHINES["GLUKRS"] = true
+---------------------------------------------------
+if (MACHINES["GLUKRS"]~=null) then
+	files {
+		MAME_DIR .. "src/devices/machine/glukrs.cpp",
+		MAME_DIR .. "src/devices/machine/glukrs.h",
+	}
+end

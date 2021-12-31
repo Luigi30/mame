@@ -1026,6 +1026,9 @@ aim65                           // Rockwell AIM65
 @source:aim65_40.cpp
 aim65_40                        // Rockwell AIM65/40
 
+@source:airbase99.cpp
+airbase99
+
 @source:airbustr.cpp
 airbustr                        // (c) 1990 Kaneko + Namco
 airbustrb                       // bootleg
@@ -2151,6 +2154,7 @@ cclimbr2a                       // (c) 1988 (Japan)
 kozure                          // (c) 1987 (Japan)
 legion                          // (c) 1986
 legionj                         // (c) 1986
+legionj2                        // (c) 1986
 legionjb                        // (c) 1986
 legionjb2                       // (c) 1986
 skyrobo                         // (c) 1989
@@ -11629,6 +11633,7 @@ tsarevnaa                       //
 akatana                         // (c) 2010 Cave (AMI license) - 2010/ 8/13 MASTER VER.
 ddpdfk                          // (c) 2008 Cave (AMI license) - 2008/06/23  MASTER VER 1.5
 ddpdfk10                        // (c) 2008 Cave (AMI license) - 2008/05/16  MASTER VER
+ddpsdoj                         // (c) 2012 Cave - 2012/04/20
 deathsml                        // (c) 2007 Cave (AMI license) - 2007/10/09 MASTER VER
 dfkbl                           // (c) 2010 Cave (AMI license) - 2010/1/18 BLACK LABEL
 dsmbl                           // (c) 2008 Cave (AMI license) - 2008/10/06 MEGABLACK LABEL VER
@@ -17159,6 +17164,7 @@ ikt5a                           //
 @source:im01.cpp
 im01
 im01t
+im05
 
 @source:imds2.cpp
 imds2                           // Intellec MDS series-II
@@ -17707,7 +17713,6 @@ halley                          //
 halleya                         //
 lortium                         //
 olympus                         //
-petaco                          //
 petacon                         //
 petacona                        //
 petaco2                         //
@@ -19255,6 +19260,9 @@ wndrplnt                        // (c) 1987 Data East Corporation (Japan)
 
 @source:kas89.cpp
 kas89                           // 1989, SFC S.R.L.
+
+@source:kawai_acr20.cpp
+acr20                           //
 
 @source:kawai_k1.cpp
 k1                              //
@@ -34756,6 +34764,7 @@ nemesisp                        //
 odin                            //
 odin_dlx                        //
 odisea                          //
+petaco                          //
 poleposn                        //
 solarwap                        //
 sonstwar                        //
@@ -36553,6 +36562,7 @@ rzindy500                       //
 rztoshden                       //
 
 @source:s11.cpp
+alcat_l7                        //
 gmine_l2                        //
 grand_l3                        //
 grand_l4                        //
@@ -36764,7 +36774,6 @@ pfevr_p3                        //
 scrzy_l1                        //
 
 @source:s9.cpp
-alcat_l7                        //
 comet_l4                        //
 comet_l5                        //
 ratrc_l1                        //
@@ -37834,6 +37843,7 @@ lovebery                        // 2004.10 Oshare Majo Love and Berry / Fashiona
 manpuku                         // 2013.09 Manpuku Suizokukan
 mirworld                        // 2007.06 Mirage World (satellite)
 ochaken                         //
+puyomedal                       // 2009.03 Puyo Puyo! The Medal Edition
 segasp                          //
 tetgiano                        //
 tetgiant                        //
@@ -43701,6 +43711,9 @@ psr70                           // 1985 PSR-70
 @source:ympsr340.cpp
 psr340                          // 1999 PSR-340
 
+@source:ymrx15.cpp
+rx15                            //
+
 @source:ymsy35.cpp
 sy35                            //
 
@@ -43748,6 +43761,9 @@ z22                             //
 
 @source:z29.cpp
 z29                             //
+
+@source:z80clock.cpp
+z80clock                        // 2020 Tom Storey
 
 @source:z80dev.cpp
 z80dev                          //
@@ -44063,6 +44079,9 @@ ts1500                          // Timex Sinclair 1500
 zx80                            // 1980 Sinclair ZX-80
 zx81                            // 1981 Sinclair ZX-81
 zx97                            //
+
+@source:tsconf.cpp
+tsconf                           // ZX Evolution - TS-Configuration
 
 @source:testpat.cpp
 tp1983

@@ -80,10 +80,12 @@ const double XTAL::known_xtals[] = {
 	  2'000'000, /* 2_MHz_XTAL             - */
 	  2'012'160, /* 2.01216_MHz_XTAL       Cidelsa Draco sound board */
 	  2'097'152, /* 2.097152_MHz_XTAL      Icatel 1995 - Brazilian public payphone */
+	  2'250'000, /* 2.25_MHz_XTAL          Resonator - YM2154 on Yamaha PSR-60 & PSR-70 */
 	  2'376'000, /* 2.376_MHz_XTAL         CIT-101 keyboard */
 	  2'457'600, /* 2.4576_MHz_XTAL        Atari ST MFP */
 	  2'500'000, /* 2.5_MHz_XTAL           Janken Man units */
 	  2'600'000, /* 2.6_MHz_XTAL           Sharp PC-1500 */
+	  2'700'000, /* 2.7_MHz_XTAL           Resonator - YM2154 on Yamaha RX15 */
 	  2'950'000, /* 2.95_MHz_XTAL          Playmatic MPU-C, MPU-III & Sound-3 */
 	  3'000'000, /* 3_MHz_XTAL             Probably only used to drive 68705 or similar MCUs on 80's Taito PCBs */
 	  3'072'000, /* 3.072_MHz_XTAL         INS 8520 input clock rate */
@@ -372,7 +374,7 @@ const double XTAL::known_xtals[] = {
 	 28'475'000, /* 28.475_MHz_XTAL        CoCo 3 PAL */
 	 28'480'000, /* 28.48_MHz_XTAL         Chromatics CGC-7900 */
 	 28'636'000, /* 28.636_MHz_XTAL        Super Kaneko Nova System */
-	 28'636'363, /* 28.636363_MHz_XTAL     Later Leland games and Atari GT, Amiga NTSC, Raiden2 h/w (8x NTSC subcarrier)*/
+	 28'636'363, /* 28.636363_MHz_XTAL     Later Leland games and Atari GT, Amiga NTSC, Raiden2 h/w (8x NTSC subcarrier), NEC PC-88xx */
 	 28'640'000, /* 28.64_MHz_XTAL         Fuuki FG-1c AI AM-2 PCB */
 	 28'700'000, /* 28.7_MHz_XTAL          - */
 	 29'376'000, /* 29.376_MHz_XTAL        Qume QVT-103 */
