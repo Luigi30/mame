@@ -48,7 +48,7 @@ namespace
 		VME(config, "vme", 0);
 		VME_SLOT(config, "slot1", mvme120_vme_cards, "mvme050", 1, "vme");
 		VME_SLOT(config, "slot2", mvme120_vme_cards, "mvme121", 2, "vme");
-		VME_SLOT(config, "slot3", mvme120_vme_cards, "mvme320", 3, "vme");
+		VME_SLOT(config, "slot3", mvme120_vme_cards, nullptr, 3, "vme");
 		//VME_SLOT(config, "slot5", mvme120_vme_cards, nullptr, 5, "vme");
 		//VME_SLOT(config, "slot6", mvme120_vme_cards, nullptr, 6, "vme");
 		//VME_SLOT(config, "slot7", mvme120_vme_cards, nullptr, 7, "vme");
