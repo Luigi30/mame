@@ -66,8 +66,8 @@ protected:
 
 	required_ioport m_input_s3;
 
-	memory_passthrough_handler *m_rom_shadow_tap;
-	memory_passthrough_handler *m_ram_parity_tap;
+	memory_passthrough_handler m_rom_shadow_tap;
+	memory_passthrough_handler m_ram_parity_tap;
 
 	required_region_ptr<uint16_t> m_sysrom;
 	required_shared_ptr<uint16_t> m_localram;
