@@ -312,7 +312,7 @@ void vme_mvme120_device::ram_parity_tap_w(offs_t address, u16 data, u16 mem_mask
 }
 */
 
-uint16_t vme_mvme120_device::rom_shadow_tap(offs_t address, u16 data, u16 mem_mask)
+void vme_mvme120_device::rom_shadow_tap(offs_t address, u16 data, u16 mem_mask)
 {
 	if(!machine().side_effects_disabled())
 	{

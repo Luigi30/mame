@@ -85,7 +85,7 @@ protected:
 	uint8_t vme_a16_r(offs_t offset);
 	void vme_a16_w(offs_t offset, uint8_t data);
 
-	uint16_t rom_shadow_tap(offs_t address, u16 data, u16 mem_mask);
+	void rom_shadow_tap(offs_t address, u16 data, u16 mem_mask);
 	uint16_t ram_parity_tap_r(offs_t address, u16 data, u16 mem_mask);
 	void ram_parity_tap_w(offs_t address, u16 data, u16 mem_mask);
 
