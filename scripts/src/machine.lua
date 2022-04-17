@@ -1827,6 +1827,18 @@ end
 
 ---------------------------------------------------
 --
+--@src/devices/machine/imsc012.h,MACHINES["IMSC012"] = true
+---------------------------------------------------
+
+if (MACHINES["IMSC012"]~=null) then
+	files {
+		MAME_DIR .. "src/devices/machine/imsc012.cpp",
+		MAME_DIR .. "src/devices/machine/imsc012.h",
+	}
+end
+
+---------------------------------------------------
+--
 --@src/devices/machine/ins8154.h,MACHINES["INS8154"] = true
 ---------------------------------------------------
 

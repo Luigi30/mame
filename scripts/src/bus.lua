@@ -1577,6 +1577,21 @@ if (BUSES["INTELLEC4"]~=null) then
 	}
 end
 
+---------------------------------------------------
+--
+--@src/devices/bus/inmos/inmos.h,BUSES["INMOS"] = true
+---------------------------------------------------
+
+if (BUSES["INMOS"]~=null) then
+	files {
+		MAME_DIR .. "src/devices/bus/inmos/imsb411.cpp",
+		MAME_DIR .. "src/devices/bus/inmos/imsb411.h",
+		MAME_DIR .. "src/devices/bus/inmos/inmos.cpp",
+		MAME_DIR .. "src/devices/bus/inmos/inmos.h",
+		MAME_DIR .. "src/devices/bus/inmos/link.cpp",
+		MAME_DIR .. "src/devices/bus/inmos/link.h",
+	}
+end
 
 ---------------------------------------------------
 --
@@ -1690,6 +1705,8 @@ if (BUSES["ISA"]~=null) then
 		MAME_DIR .. "src/devices/bus/isa/ibm_speech.h",
 		MAME_DIR .. "src/devices/bus/isa/ide.cpp",
 		MAME_DIR .. "src/devices/bus/isa/ide.h",
+		MAME_DIR .. "src/devices/bus/isa/imsb008.cpp",
+		MAME_DIR .. "src/devices/bus/isa/imsb008.h",	
 		MAME_DIR .. "src/devices/bus/isa/lbaenhancer.cpp",
 		MAME_DIR .. "src/devices/bus/isa/lbaenhancer.h",
 		MAME_DIR .. "src/devices/bus/isa/lpt.cpp",

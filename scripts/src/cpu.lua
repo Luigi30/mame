@@ -3772,6 +3772,7 @@ end
 
 --------------------------------------------------
 -- Varian 620, disassembler only
+--@src/devices/cpu/v620/v620.h,CPUS["V620"] = true
 --------------------------------------------------
 
 if opt_tool(CPUS, "V620") then
@@ -3825,3 +3826,27 @@ if opt_tool(CPUS, "INTERDATA16") then
 	table.insert(disasm_files , MAME_DIR .. "src/devices/cpu/interdata16/dasm16.cpp")
 	table.insert(disasm_files , MAME_DIR .. "src/devices/cpu/interdata16/dasm16.h")
 end
+
+--------------------------------------------------
+-- INMOS Transputer
+--@src/devices/cpu/inmos/transputer.h,CPUS["INMOS"] = true
+--------------------------------------------------
+
+if CPUS["INMOS"] then
+	files {
+		MAME_DIR .. "src/devices/cpu/inmos/transputer.cpp",
+		MAME_DIR .. "src/devices/cpu/inmos/transputer.h",
+		MAME_DIR .. "src/devices/cpu/inmos/t2.cpp",
+		MAME_DIR .. "src/devices/cpu/inmos/t2.h",
+		MAME_DIR .. "src/devices/cpu/inmos/t4.cpp",
+		MAME_DIR .. "src/devices/cpu/inmos/t4.h",
+		MAME_DIR .. "src/devices/cpu/inmos/t8.cpp",
+		MAME_DIR .. "src/devices/cpu/inmos/t8.h",
+	}
+end
+
+if opt_tool(CPUS, "INMOS") then
+	table.insert(disasm_files , MAME_DIR .. "src/devices/cpu/inmos/transputer_dasm.cpp")
+	table.insert(disasm_files , MAME_DIR .. "src/devices/cpu/inmos/transputer_dasm.h")
+end
+

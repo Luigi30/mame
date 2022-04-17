@@ -650,7 +650,7 @@ void at_state::at386l(machine_config &config)
 
 void at_state::at486(machine_config &config)
 {
-	i486_device &maincpu(I486(config, m_maincpu, 25'000'000));
+	i486_device &maincpu(I486(config, m_maincpu, 33'000'000));
 	maincpu.set_addrmap(AS_PROGRAM, &at_state::at32_map);
 	maincpu.set_addrmap(AS_IO, &at_state::at32_io);
 	maincpu.set_irq_acknowledge_callback("mb:pic8259_master", FUNC(pic8259_device::inta_cb));
