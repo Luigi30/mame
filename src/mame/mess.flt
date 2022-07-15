@@ -40,6 +40,7 @@ amstrad/pcw16.cpp
 amstrad/pda600.cpp
 apf/apf.cpp
 apollo/apollo.cpp
+apollo/dn300.cpp
 apple/apple1.cpp
 apple/apple2.cpp
 apple/apple2e.cpp

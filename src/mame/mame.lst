@@ -1438,6 +1438,9 @@ dsp3000                         // Apollo Server DSP3000 (1987)
 dsp3500                         // Apollo Server DSP3500 (1989)
 dsp5500                         // Apollo Server DSP5500 (1991)
 
+@source:apollo/dn300.cpp
+dn300                           // Apollo Workstation DN300
+
 @source:apple/apple1.cpp
 apple1                          // Jul 1976 Apple 1
 
@@ -32160,7 +32163,7 @@ youkaidk2                       // (c) 1987 (Japan, new version (YD2, Rev B))
 chocovdr                        // 2002.10 Uchuu Daisakusen : Chocovader Contactee
 gamshara                        // 2002.08 Gamshara (10021 Ver.A)
 gamsharaj                       // 2002.08 Gamshara (10021 Ver.A)
-gegemdb                         // 2007.?? Gegege no Kitarō Yōkai Yokochō Matsuri De Batoru Ja (GYM1 Ver.A)
+gegemdb                         // 2007.?? Gegege no Kitar?? Y??kai Yokoch?? Matsuri De Batoru Ja (GYM1 Ver.A)
 gjspace                         // 2001.12 Gekitoride-Jong Space (10011 Ver.A)
 g13jnc                          // 2001.?? Golgo 13: Juusei no Chinkonka (Japan, GLT1 VER.A)
 gunbalina                       // 2000.12 Gunbalina (GNN1 Ver.A)
