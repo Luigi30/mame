@@ -173,7 +173,6 @@ if (MACHINES["AMIGA_COPPER"]~=null) then
 		MAME_DIR .. "src/devices/machine/amiga_copper.h",
 	}
 end
-
 --------------------------------------------------
 --
 --@src/devices/machine/arm_iomd.h,MACHINES["ARM_IOMD"] = true
@@ -1156,6 +1155,19 @@ if (MACHINES["DL11"]~=null) then
 		MAME_DIR .. "src/devices/machine/dl11.h",
 	}
 end
+
+---------------------------------------------------
+--
+--@src/devices/machine/dn300_mmu.h,MACHINES["DN300_MMU"] = true
+---------------------------------------------------
+
+if (MACHINES["DN300_MMU"]~=null) then
+	files {
+		MAME_DIR .. "src/devices/machine/dn300_mmu.cpp",
+		MAME_DIR .. "src/devices/machine/dn300_mmu.h",
+	}
+end
+
 
 --@src/devices/machine/ds1204.h,MACHINES["DS1204"] = true
 ---------------------------------------------------

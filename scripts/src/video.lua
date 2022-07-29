@@ -177,6 +177,18 @@ end
 
 --------------------------------------------------
 --
+--@src/devices/video/dn300.h,VIDEOS["DN300"] = true
+--------------------------------------------------
+
+if (VIDEOS["DN300"]~=null) then
+	files {
+		MAME_DIR .. "src/devices/video/dn300.cpp",
+		MAME_DIR .. "src/devices/video/dn300.h",
+	}
+end
+
+--------------------------------------------------
+--
 --@src/devices/video/dp8350.h,VIDEOS["DP8350"] = true
 --------------------------------------------------
 
