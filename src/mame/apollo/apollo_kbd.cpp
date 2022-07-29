@@ -12,7 +12,7 @@
 
 #include "emu.h"
 
-#define VERBOSE 0
+#define VERBOSE 2
 
 #include "apollo_kbd.h"
 #include "speaker.h"
@@ -491,6 +491,8 @@ void apollo_kbd_device::input_callback(uint8_t state)
 
 void apollo_kbd_device::xmit_char(uint8_t data)
 {
+	LOG2(("xmit char received %02X\n", data));
+
 	// if tx is busy it'll pick this up automatically when it completes
 	if (!m_tx_busy)
 	{
@@ -514,6 +516,8 @@ void apollo_kbd_device::xmit_char(uint8_t data)
 
 void apollo_kbd_device::putdata(const uint8_t *data, int data_length)
 {
+	LOG2(("kbd putdata %d len %d\n", data[0], data_length));
+
 	// send data only if no real Apollo keyboard has been connected
 	if (m_mode > KBD_MODE_1_KEYSTATE)
 	{

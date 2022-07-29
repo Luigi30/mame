@@ -3,6 +3,22 @@
 #include "emu.h"
 #include "keyboard.h"
 
+#define LOG_GENERAL 0x01
+#define LOG_SETUP   0x02
+
+#define VERBOSE (LOG_SETUP | LOG_GENERAL)
+
+#include "logmacro.h"
+
+#define LOG(...)      LOGMASKED(LOG_GENERAL, __VA_ARGS__)
+#define LOGSETUP(...) LOGMASKED(LOG_SETUP,   __VA_ARGS__)
+
+#ifdef _MSC_VER
+#define FUNCNAME __func__
+#else
+#define FUNCNAME __PRETTY_FUNCTION__
+#endif
+
 namespace {
 INPUT_PORTS_START(serial_keyboard)
 	PORT_INCLUDE(generic_keyboard)
@@ -78,6 +94,7 @@ void serial_keyboard_device::tra_callback()
 
 void serial_keyboard_device::send_key(uint8_t code)
 {
+	LOG("%s\n", FUNCNAME);
 	transmit_byte(code);
 }
 

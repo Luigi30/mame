@@ -204,7 +204,7 @@ void dn300_display_device::update_display_control(uint16_t data)
             do_copy_blit(m_wssx, m_wssy, m_wsdx, m_wsdy, abs(m_dcx), abs(m_dcy));
 		}		
 
-        m_blitter_operation_timer->adjust(attotime::from_nsec(100)); // TODO: arbitrary
+        m_blitter_operation_timer->adjust(attotime::from_nsec(200)); // TODO: arbitrary
 	}
 
 	if(BIT(data, 0) && !BIT(old, 0))
@@ -219,83 +219,21 @@ void dn300_display_device::do_fill_blit(uint16_t wssx, uint16_t wssy, uint16_t w
 
     LOG("%s: doing fill blit from %d,%d to %d,%d of rect size %d,%d\n", FUNCNAME, wssx, wssy, wsdx, wsdy, dcx, dcy);
 
-    uint16_t end_bit_mask = (0xFFFF >> m_deb) << m_deb;
-    LOG("%s: end word mask is %04X. m_deb %d. end at bit %d\n", FUNCNAME, end_bit_mask, m_deb, 15-m_deb);
-
-    uint16_t cur_src_x = wssx;
-    uint16_t cur_src_y = wssy;
-
-    uint16_t cur_dst_x = wsdx;
-    uint16_t cur_dst_y = wsdy;
-
-    for(int scanline=0; scanline<abs(m_dcy); scanline++)
-    {
-        cur_src_x = wssx;
-        cur_dst_x = wsdx;
-
-        if(dcx > 2)
-        {
-            uint16_t words_to_go = (dcx / 2);
-
-            for(int word=0; word<dcx-2; word++)
-            {
-                // LOG("%s: (%d,%d) (b%d) <= (%d,%d) (b%d)\n", FUNCNAME,
-                //     cur_dst_x, cur_dst_y, 15 - (cur_dst_x % 16),
-                //     cur_src_x, cur_src_y, 15 - (cur_src_x % 16));
-                for(int bit=0; bit<16; bit++) set_vram_pixel(cur_dst_x, cur_dst_y, false);
-                cur_src_x++;
-                cur_dst_x++;
-
-                if((cur_dst_x % 16) == 0)
-                {
-                    // Rolled through a word. Do we have more than 16 bits to go?
-                    words_to_go--;
-                    if(words_to_go == 0)
-                    {
-                        break;
-                    }
-                }
-            }
-        }
-
-        // last word
-        for(int bit=(15 - (cur_dst_x % 16)); bit != 15-m_deb-1; bit--)
-        {
-            // LOG("%s: (%d,%d) (b%d) <= (%d,%d) (b%d) [last word]\n", FUNCNAME, 
-            //     cur_dst_x, cur_dst_y, 15 - (cur_dst_x % 16),
-            //     cur_src_x, cur_src_y, 15 - (cur_src_x % 16));
-            set_vram_pixel(cur_dst_x, cur_dst_y, false);
-            if((cur_dst_x % 16) == m_deb) 
-            { 
-                // LOG("%s: out of pixels\n", FUNCNAME); 
-                break; 
-            }
-
-            cur_src_x++;
-            cur_dst_x++;
-        }
-
-        cur_src_y++;
-        cur_dst_y++;
-    }
-}
-
-void dn300_display_device::do_copy_blit(uint16_t wssx, uint16_t wssy, uint16_t wsdx, uint16_t wsdy, uint16_t dcx, uint16_t dcy)
-{
-    LOG("%s: doing copy blit from %d,%d to %d,%d of rect size %d,%d\n", FUNCNAME, wssx, wssy, wsdx, wsdy, dcx*2, dcy);
-
     bool increment_x = BIT(m_display_control, 2);
     bool increment_y = BIT(m_display_control, 3);
-    LOG("%s: increment X %d increment Y %d\n", FUNCNAME, increment_x, increment_y);
+    // LOG("%s: increment X %d increment Y %d\n", FUNCNAME, increment_x, increment_y);
 
-    uint16_t end_bit_mask = (0xFFFF >> m_deb) << m_deb;
-    LOG("%s: end word mask is %04X. m_deb %d. end at bit %d\n", FUNCNAME, end_bit_mask, m_deb, 15-m_deb);
+    // uint16_t end_bit_mask = (0xFFFF >> m_deb) << m_deb;
+    // LOG("%s: end word mask is %04X. m_deb %d. start at bit %d end at bit %d\n", FUNCNAME, 
+    //     end_bit_mask, m_deb, 15-(wsdx % 16), 15-m_deb);
 
     uint16_t cur_src_x = wssx;
     uint16_t cur_src_y = wssy;
 
     uint16_t cur_dst_x = wsdx;
     uint16_t cur_dst_y = wsdy;
+
+    uint8_t start_bit = 15 - (cur_dst_x % 16);
 
     for(int scanline=0; scanline<abs(m_dcy); scanline++)
     {
@@ -304,16 +242,21 @@ void dn300_display_device::do_copy_blit(uint16_t wssx, uint16_t wssy, uint16_t w
 
         if(dcx > 1)
         {
-            uint16_t words_to_go = dcx;
+            uint16_t words_to_go = dcx/2;
 
-            for(int word=0; word<dcx-1; word++)
+            for(int byte=0; byte<dcx-1; byte++)
             {
                 // LOG("%s: (%d,%d) (b%d) <= (%d,%d) (b%d)\n", FUNCNAME,
                 //     cur_dst_x, cur_dst_y, 15 - (cur_dst_x % 16),
                 //     cur_src_x, cur_src_y, 15 - (cur_src_x % 16));
-                for(int bit=0; bit<16; bit++) set_vram_pixel(cur_dst_x, cur_dst_y, get_vram_pixel(cur_src_x, cur_src_y));
-                if(increment_x) cur_src_x++;
-                cur_dst_x++;
+                for(int bit=0; bit<16; bit++)
+                {
+                    set_vram_pixel(cur_dst_x, cur_dst_y, 0);
+                    if(increment_x) cur_src_x++;
+                    cur_dst_x++;
+
+                    if((cur_dst_x % 16) == 0) break;
+                } 
 
                 if((cur_dst_x % 16) == 0)
                 {
@@ -322,24 +265,92 @@ void dn300_display_device::do_copy_blit(uint16_t wssx, uint16_t wssy, uint16_t w
                     if(words_to_go == 0)
                     {
                         // LOG("out of words\n");
-                        break;
+                        start_bit = 15;
+                        break;  
                     }
                 }
             }
         }
 
-        // last word
-        for(int bit=(15 - (cur_dst_x % 16)); bit != 15-m_deb-1; bit--)
+        for(int bit=start_bit; (bit >= 0) && (bit != 15-m_deb-1); bit--)
+        {
+            // LOG("%s: (%d,%d) (b%d) <= (%d,%d) (b%d) [last word]\n", FUNCNAME, 
+            //     cur_dst_x, cur_dst_y, 15 - (cur_dst_x % 16),
+            //     cur_src_x, cur_src_y, 15 - (cur_src_x % 16));
+            set_vram_pixel(cur_dst_x, cur_dst_y, 0);
+
+            if(increment_x) cur_src_x++;
+            cur_dst_x++;
+        }
+
+        if(increment_y) cur_src_y++;
+        cur_dst_y++;
+    }
+}
+
+void dn300_display_device::do_copy_blit(uint16_t wssx, uint16_t wssy, uint16_t wsdx, uint16_t wsdy, uint16_t dcx, uint16_t dcy)
+{
+    LOG("%s: doing copy blit from %d,%d to %d,%d of rect size %d,%d\n", FUNCNAME, wssx, wssy, wsdx, wsdy, dcx, dcy);
+
+    bool increment_x = BIT(m_display_control, 2);
+    bool increment_y = BIT(m_display_control, 3);
+    // LOG("%s: increment X %d increment Y %d\n", FUNCNAME, increment_x, increment_y);
+
+    // uint16_t end_bit_mask = (0xFFFF >> m_deb) << m_deb;
+    // LOG("%s: end word mask is %04X. m_deb %d. start at bit %d end at bit %d\n", FUNCNAME, 
+    //     end_bit_mask, m_deb, 15-(wsdx % 16), 15-m_deb);
+
+    uint16_t cur_src_x = wssx;
+    uint16_t cur_src_y = wssy;
+
+    uint16_t cur_dst_x = wsdx;
+    uint16_t cur_dst_y = wsdy;
+
+    uint8_t start_bit = 15 - (cur_dst_x % 16);
+
+    for(int scanline=0; scanline<abs(m_dcy); scanline++)
+    {
+        cur_src_x = wssx;
+        cur_dst_x = wsdx;
+
+        if(dcx > 1)
+        {
+            uint16_t words_to_go = dcx/2;
+
+            for(int byte=0; byte<dcx-1; byte++)
+            {
+                // LOG("%s: (%d,%d) (b%d) <= (%d,%d) (b%d)\n", FUNCNAME,
+                //     cur_dst_x, cur_dst_y, 15 - (cur_dst_x % 16),
+                //     cur_src_x, cur_src_y, 15 - (cur_src_x % 16));
+                for(int bit=0; bit<16; bit++)
+                {
+                    set_vram_pixel(cur_dst_x, cur_dst_y, get_vram_pixel(cur_src_x, cur_src_y));
+                    if(increment_x) cur_src_x++;
+                    cur_dst_x++;
+
+                    if((cur_dst_x % 16) == 0) break;
+                } 
+
+                if((cur_dst_x % 16) == 0)
+                {
+                    // Rolled through a word. Do we have more than 16 bits to go?
+                    words_to_go--;
+                    if(words_to_go == 0)
+                    {
+                        // LOG("out of words\n");
+                        start_bit = 15;
+                        break;  
+                    }
+                }
+            }
+        }
+
+        for(int bit=start_bit; (bit >= 0) && (bit != 15-m_deb-1); bit--)
         {
             // LOG("%s: (%d,%d) (b%d) <= (%d,%d) (b%d) [last word]\n", FUNCNAME, 
             //     cur_dst_x, cur_dst_y, 15 - (cur_dst_x % 16),
             //     cur_src_x, cur_src_y, 15 - (cur_src_x % 16));
             set_vram_pixel(cur_dst_x, cur_dst_y, get_vram_pixel(cur_src_x, cur_src_y));
-            if((cur_dst_x % 16) == m_deb) 
-            { 
-                // LOG("%s: out of pixels\n", FUNCNAME); 
-                break; 
-            }
 
             if(increment_x) cur_src_x++;
             cur_dst_x++;

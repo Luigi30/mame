@@ -28,6 +28,22 @@
  *
  */
 
+#define LOG(x)  { logerror x; logerror ("\n"); apollo_check_log(); }
+#define LOG1(x) { if (VERBOSE > 0) LOG(x) }
+#define LOG2(x) { if (VERBOSE > 1) LOG(x) }
+#define CLOG(x) { machine().logerror ("%s - %s: ", apollo_cpu_context(machine()), tag()); machine().logerror x; machine().logerror ("\n"); apollo_check_log(); }
+#define CLOG1(x) { if (VERBOSE > 0) CLOG(x) }
+#define CLOG2(x) { if (VERBOSE > 1) CLOG(x) }
+#define DLOG(x) { device->logerror ("%s - %s: ", apollo_cpu_context(device->machine()), device->tag()); device->logerror x; device->logerror ("\n"); apollo_check_log(); }
+#define DLOG1(x) { if (VERBOSE > 0) DLOG(x) }
+#define DLOG2(x) { if (VERBOSE > 1) DLOG(x) }
+#define MLOG(x)  { machine().logerror ("%s: ", apollo_cpu_context(machine())); machine().logerror x; machine().logerror ("\n"); apollo_check_log(); }
+#define MLOG1(x) { if (VERBOSE > 0) MLOG(x) }
+#define MLOG2(x) { if (VERBOSE > 1) MLOG(x) }
+#define SLOG(x)  { machine().logerror ("%s: ", apollo_cpu_context(machine()));machine().logerror x; machine().logerror ("\n"); apollo_check_log(); }
+#define SLOG1(x) { if (VERBOSE > 0) SLOG(x) }
+#define SLOG2(x) { if (VERBOSE > 1) SLOG(x) }
+
 #include "emu.h"
 #include "apollo.h"
 
