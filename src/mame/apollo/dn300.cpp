@@ -53,18 +53,19 @@ void apollo_keyboard_devices(device_slot_interface &device)
 class apollo_dn300_state : public driver_device
 {
 public:
-	apollo_dn300_state(const machine_config &mconfig, device_type type, const char *tag)
-		: driver_device(mconfig, type, tag),
-		m_maincpu(*this, "maincpu"),
-		m_mmu(*this, "mmu"),
-		m_dmac(*this, "dmac"),
-		m_duart(*this, "duart"),
-		m_acia(*this, "acia"),
-		m_fdc(*this, "fdc"),
-		m_ptm(*this, "ptm"),
-		m_rtc(*this, "rtc"),
-		m_display(*this, "display"),
-		m_kbd(*this, "kbd")
+	apollo_dn300_state(const machine_config &mconfig, device_type type, const char *tag) : 
+		driver_device(mconfig, type, tag)
+		, m_maincpu(*this, "maincpu")
+		, m_mmu(*this, "mmu")
+		, m_dmac(*this, "dmac")
+		, m_duart(*this, "duart")
+		, m_acia(*this, "acia")
+		, m_fdc(*this, "fdc")
+		, m_ptm(*this, "ptm")
+		, m_rtc(*this, "rtc")
+		, m_display(*this, "display")
+		, m_kbd(*this, "kbd")
+		, m_view(*this, "view")
 	{ }
 
     required_device<m68010_device> 				m_maincpu;
@@ -84,24 +85,60 @@ public:
 
 protected:
 	void machine_start() override;
+	void machine_reset() override;
     
-	void use_physical_map(address_map &map);
-	void use_virtual_map(address_map &map);
+	void physical_map(address_map &map);
+	void virtual_map(address_map &map);
 
-	uint16_t mmu_r(offs_t offset);
-	void mmu_w(offs_t offset, uint16_t data);
+    void pid_priv_w(uint16_t data);
 
 private:
-	uint16_t m_pid_priv;
-	uint16_t m_mmu_status;
-
-	uint8_t m_mcr;
-	uint8_t m_msr;
+	memory_view m_view;
 };
+
+void apollo_dn300_state::pid_priv_w(uint16_t data)
+{
+	m_view.select(BIT(data, 0));
+	m_mmu->pid_priv_w(data);
+}
+
+void apollo_dn300_state::machine_reset()
+{
+	m_view.select(0);
+}
 
 void apollo_dn300_state::machine_start()
 {
+	m_view.select(0);
+	// address_space &pgmspace = m_maincpu->space(AS_PROGRAM);
 
+	// pgmspace.install_read_tap(0x000000, 0xffffff, "mmu_tap_r",[this](offs_t offset, u16 &data, u16 mem_mask)
+	// {
+	// 	if(m_mmu->mmu_is_enabled())
+	// 	{
+	// 		m_mmu->translated_read(offset, mem_mask);
+	// 		// Don't call the parent read handler, we already took care of it.
+	// 	}
+	// 	else
+	// 	{
+	// 		// pass through
+	// 	}
+	// 	return data;
+	// });
+
+	// pgmspace.install_write_tap(0x000000, 0xffffff, "mmu_tap_w",[this](offs_t offset, u16 &data, u16 mem_mask)
+	// {
+	// 	if(m_mmu->mmu_is_enabled())
+	// 	{
+	// 		m_mmu->translated_write(offset, data, mem_mask);
+	// 		// Don't call the parent write handler, we already took care of it.
+	// 	}
+	// 	else
+	// 	{
+	// 		// pass through
+	// 	}
+	// 	return data;
+	// });
 }
 
 void apollo_dn300_state::init_dn300()
@@ -109,16 +146,58 @@ void apollo_dn300_state::init_dn300()
 
 }
 
-void apollo_dn300_state::use_physical_map(address_map &map)
+void apollo_dn300_state::virtual_map(address_map &map)
 {
-	map.unmap_value_high();
-	map(0x000000, 0xffffff).m(m_mmu, FUNC(apollo_dn300_mmu_device::physical_map));
+	map(0x000000, 0xffffff).view(m_view);
+
+	// Physical addresses.
+	m_view[0](0x000000, 0x003FFF).rom().region(":prom", 0);
+	m_view[0](0x004000, 0x007FFF).rw(":mmu", FUNC(apollo_dn300_mmu_device::pft_r), FUNC(apollo_dn300_mmu_device::pft_w));
+	m_view[0](0x008000, 0x008001).r(":mmu", FUNC(apollo_dn300_mmu_device::pid_priv_r));
+	m_view[0](0x008000, 0x008001).w(FUNC(apollo_dn300_state::pid_priv_w));
+	m_view[0](0x008002, 0x008003).rw(":mmu", FUNC(apollo_dn300_mmu_device::status_r), FUNC(apollo_dn300_mmu_device::status_w));
+	m_view[0](0x008004, 0x008005).rw(":mmu", FUNC(apollo_dn300_mmu_device::mem_ctrl_r), FUNC(apollo_dn300_mmu_device::mem_ctrl_w)).umask16(0x00FF);
+	m_view[0](0x008006, 0x008007).rw(":mmu", FUNC(apollo_dn300_mmu_device::mem_status_r), FUNC(apollo_dn300_mmu_device::mem_status_w));
+	m_view[0](0x008400, 0x00841F).rw(":duart", FUNC(scn2681_device::read), FUNC(scn2681_device::write)).umask16(0x00FF);	// Serial I/O Interface
+	m_view[0](0x008420, 0x008423).rw(":acia", FUNC(acia6850_device::read), FUNC(acia6850_device::write)).umask16(0x00FF);	// Display Keyboard Interface
+	m_view[0](0x008800, 0x008803).rw(":ptm", FUNC(ptm6840_device::read), FUNC(ptm6840_device::write)); 					// TIMERS
+	m_view[0](0x009000, 0x0090FF).rw(":dmac", FUNC(hd63450_device::read), FUNC(hd63450_device::write));					// DMA CTL
+	m_view[0](0x009400, 0x00941F).rw(":display", FUNC(dn300_display_device::regs_r), FUNC(dn300_display_device::regs_w)); // DISP 1
+	m_view[0](0x009800, 0x009803).rw(":mmu", FUNC(apollo_dn300_mmu_device::ring_2_r), FUNC(apollo_dn300_mmu_device::ring_2_w)); 	// RING 2
+	// Winchester controller at 0x9C00-0x9C0F
+	m_view[0](0x009C00, 0x009C0F).rw(":mmu", FUNC(apollo_dn300_mmu_device::dsk_r), FUNC(apollo_dn300_mmu_device::dsk_w));
+	m_view[0](0x009C10, 0x009C15).m(":fdc", FUNC(upd765a_device::map)).umask16(0x00FF);									// FLP
+	m_view[0](0x009C20, 0x009C25).rw(":rtc", FUNC(mc146818_device::read), FUNC(mc146818_device::write)).umask16(0x00FF);	// CAL
+	m_view[0](0x020000, 0x03FFFF).rw(":display", FUNC(dn300_display_device::vram_r), FUNC(dn300_display_device::vram_w));
+	m_view[0](0x100000, 0x3FFFFF).ram().share(":phys_mem");
+	m_view[0](0x700000, 0x7FFFFF).rw(":mmu", FUNC(apollo_dn300_mmu_device::ptt_r), FUNC(apollo_dn300_mmu_device::ptt_w)); // PTT
+
+	m_view[1](0x000000, 0xFFFFFF).rw(":mmu", FUNC(apollo_dn300_mmu_device::translated_read), FUNC(apollo_dn300_mmu_device::translated_write)).cswidth(16);
 }
 
-void apollo_dn300_state::use_virtual_map(address_map &map)
+void apollo_dn300_state::physical_map(address_map &map)
 {
-	map.unmap_value_high();
-	map(0x000000, 0xffffff).m(m_mmu, FUNC(apollo_dn300_mmu_device::virtual_map));
+	// Physical addresses.
+	map(0x000000, 0x003FFF).rom().region(":prom", 0);
+	map(0x004000, 0x007FFF).rw(":mmu", FUNC(apollo_dn300_mmu_device::pft_r), FUNC(apollo_dn300_mmu_device::pft_w));
+	map(0x008000, 0x008001).r(":mmu", FUNC(apollo_dn300_mmu_device::pid_priv_r));
+	map(0x008000, 0x008001).w(FUNC(apollo_dn300_state::pid_priv_w));
+	map(0x008002, 0x008003).rw(":mmu", FUNC(apollo_dn300_mmu_device::status_r), FUNC(apollo_dn300_mmu_device::status_w));
+	map(0x008004, 0x008005).rw(":mmu", FUNC(apollo_dn300_mmu_device::mem_ctrl_r), FUNC(apollo_dn300_mmu_device::mem_ctrl_w)).umask16(0x00FF);
+	map(0x008006, 0x008007).rw(":mmu", FUNC(apollo_dn300_mmu_device::mem_status_r), FUNC(apollo_dn300_mmu_device::mem_status_w));
+	map(0x008400, 0x00841F).rw(":duart", FUNC(scn2681_device::read), FUNC(scn2681_device::write)).umask16(0x00FF);	// Serial I/O Interface
+	map(0x008420, 0x008423).rw(":acia", FUNC(acia6850_device::read), FUNC(acia6850_device::write)).umask16(0x00FF);	// Display Keyboard Interface
+	map(0x008800, 0x008803).rw(":ptm", FUNC(ptm6840_device::read), FUNC(ptm6840_device::write)); 					// TIMERS
+	map(0x009000, 0x0090FF).rw(":dmac", FUNC(hd63450_device::read), FUNC(hd63450_device::write));					// DMA CTL
+	map(0x009400, 0x00941F).rw(":display", FUNC(dn300_display_device::regs_r), FUNC(dn300_display_device::regs_w)); // DISP 1
+	map(0x009800, 0x009803).rw(":mmu", FUNC(apollo_dn300_mmu_device::ring_2_r), FUNC(apollo_dn300_mmu_device::ring_2_w)); 	// RING 2
+	// Winchester controller at 0x9C00-0x9C0F
+	map(0x009C00, 0x009C0F).rw(":mmu", FUNC(apollo_dn300_mmu_device::dsk_r), FUNC(apollo_dn300_mmu_device::dsk_w));
+	map(0x009C10, 0x009C15).m(":fdc", FUNC(upd765a_device::map)).umask16(0x00FF);									// FLP
+	map(0x009C20, 0x009C25).rw(":rtc", FUNC(mc146818_device::read), FUNC(mc146818_device::write)).umask16(0x00FF);	// CAL
+	map(0x020000, 0x03FFFF).rw(":display", FUNC(dn300_display_device::vram_r), FUNC(dn300_display_device::vram_w));
+	map(0x100000, 0x3FFFFF).ram().share(":phys_mem");
+	map(0x700000, 0x7FFFFF).rw(":mmu", FUNC(apollo_dn300_mmu_device::ptt_r), FUNC(apollo_dn300_mmu_device::ptt_w)); // PTT
 }
 
 static DEVICE_INPUT_DEFAULTS_START(keyboard)
@@ -144,9 +223,11 @@ void apollo_dn300_state::dn300(machine_config &config)
 	// DMA3: Winchester/floppy
 
     M68010(config, m_maincpu, 16_MHz_XTAL / 2);
-	m_maincpu->set_addrmap(AS_PROGRAM, &apollo_dn300_state::use_physical_map);
+	m_maincpu->set_addrmap(AS_PROGRAM, &apollo_dn300_state::virtual_map);
 
 	APOLLO_DN300_MMU(config, m_mmu, 0);
+	m_mmu->set_addrmap(AS_PROGRAM, &apollo_dn300_state::physical_map);
+	m_mmu->set_space(m_mmu, AS_PROGRAM);
 
 	// DMA controller
 	HD63450(config, m_dmac, 16_MHz_XTAL / 2, m_maincpu);

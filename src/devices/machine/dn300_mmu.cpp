@@ -1,9 +1,80 @@
+/***********************************************************
+ * Apollo DN300 MMU
+ * 
+ * Physical Memory Layout
+ * 1K PPN
+ * 0000-000F	PROM		000000
+ * 0010-001F	PFT			004000
+ * 0020			MMU			008000
+ * 0021			SIO			008400
+ * 0022			TIMERS		008800
+ * 0023			---
+ * 0024			DMA			009000
+ * 0025			DISP1		009400
+ * 0026			RING		009800
+ * 0027			DISKS,CAL	009C00
+ * 0028-002A	---
+ * 002B			DIAGS		00AC00
+ * 002C			FPU CTL		00B000
+ * 002D			FPU CMD		00B400
+ * 002E			FPU CS		00B800
+ * 002F-007F	---
+ * 0080-00FF	DISP1 MEM	020000
+ * 0100-01FF	---
+ * 0200-03FF	PHYS MEM	080000
+ * 0400			MD DATA		100000
+ * 0401			TRAP PG		100400
+ * 0402-0FFF	PHYS MEM	100800
+ * 1000-1BFF	PTT(020)	------
+ * 1C00-1FFF	PTT			700000
+ * 2000-3FFF	---
+ * 
+ * -------------------------------
+ * Virtual Memory Layout
+ * 000000-0003FF	TRAP PAGE
+ * 000400-003FFF	PROM
+ * 007000			FPU CMD
+ * 008000-1FFFFF	GLOBAL ADDRESS SPACE
+ * 200000-AFFFFF	PRIVATE ADDRESS SPACE
+ * 700000-7FFFFF	PTT
+ * BC0000-BFFFFF	PRIVATE PROTECTED ADDRESS SPACE
+ * E00000-EFFFFF	OS PROC AND DATA
+ * F00000-F68000	OS BUFFERS
+ * FC0000-FDFFFF	DISP1 MEM
+ * FF7000			FPU CTL
+ * FF7400			FPU CMD
+ * FF7800			FPU CS
+ * FF8800			CHK BUFF
+ * FF8C00			Z BUFF
+ * FF9000			PAR BUFF
+ * FF9800			DISP1
+ * FF9C00			RING
+ * FFA000			DMA
+ * FFA800			FLOP,WIN,CAL
+ * FFAC00			TIMR
+ * FFB000			SIO
+ * FFB400			MMU
+ * FFB800-FF7FFF	PFT
+ */
+
 #include "emu.h"
 #include "dn300_mmu.h"
 #include "video/dn300.h"
 
-#define VERBOSE 1
+#define LOG_GENERAL		0x01
+#define LOG_MMU_ACCESS	0x02
+#define LOG_TRANSLATION	0x04
+#define LOG_BUSERROR	0x08
+
+//#define VERBOSE (LOG_GENERAL|LOG_MMU_ACCESS|LOG_TRANSLATION)
+#define VERBOSE (LOG_GENERAL|LOG_BUSERROR)
+
 #include "logmacro.h"
+
+#define LOG(...)      		LOGMASKED(LOG_GENERAL, 		__VA_ARGS__)
+#define LOGMMUACCESS(...) 	LOGMASKED(LOG_MMU_ACCESS,	__VA_ARGS__)
+#define LOGTRANSLATION(...) LOGMASKED(LOG_TRANSLATION,	__VA_ARGS__)
+#define LOGBUSERROR(...)	LOGMASKED(LOG_BUSERROR,		__VA_ARGS__)
 
 #ifdef _MSC_VER
 #define FUNCNAME __func__
@@ -12,6 +83,7 @@
 #endif
 
 #define PAGE_SIZE 	( 1024 )
+#define PAGENUM(ADDR) ( ADDR / PAGE_SIZE )
 
 DEFINE_DEVICE_TYPE(APOLLO_DN300_MMU, apollo_dn300_mmu_device, "apollo_dn300_mmu", "Apollo DN300 MMU")
 
@@ -19,93 +91,33 @@ apollo_dn300_mmu_device::apollo_dn300_mmu_device(const machine_config &mconfig, 
 	: device_t(mconfig, APOLLO_DN300_MMU, tag, owner, clock)
 	, device_memory_interface(mconfig, *this)
 	, m_maincpu(*this, ":maincpu")
-	, m_physical_config("physical", 	ENDIANNESS_BIG, 16, 24, 0, address_map_constructor(FUNC(apollo_dn300_mmu_device::physical_map), this))
-	, m_virtual_config("virtual", 		ENDIANNESS_BIG, 16, 24, 0, address_map_constructor(FUNC(apollo_dn300_mmu_device::virtual_map), this))
+	, m_physical_config("physical", ENDIANNESS_BIG, 16, 24)
+	, m_space(*this, finder_base::DUMMY_TAG, -1)
 {
 }
 
 device_memory_interface::space_config_vector apollo_dn300_mmu_device::memory_space_config() const
 {
 	return space_config_vector {
-		std::make_pair(0, &m_physical_config),
-		std::make_pair(1, &m_virtual_config)
+		std::make_pair(0, &m_physical_config)
 	};
+}
+
+void apollo_dn300_mmu_device::device_add_mconfig(machine_config &config)
+{
+
 }
 
 void apollo_dn300_mmu_device::device_start()
 {
-	// address_space &space = m_maincpu->space(AS_PROGRAM);
-	// space.unmap_readwrite(0x000000, 0xffffff);
-	// space.install_readwrite_handler(0x000000, 0xffffff, 
-	// 	read16sm_delegate(*this, FUNC(apollo_dn300_mmu_device::mmu_r)), write16sm_delegate(*this, FUNC(apollo_dn300_mmu_device::mmu_w)));
-
-	space(0).specific(m_physical_space);
-	space(1).specific(m_virtual_space);
+	m_bus_error_timer = timer_alloc(FUNC(apollo_dn300_mmu_device::bus_error), this);
 }
 
 void apollo_dn300_mmu_device::device_reset()
 {
-	update_mmu_enabled(false);
+	m_pid_priv_register = 0;
+	m_status_register = 0;
 }
-
-void apollo_dn300_mmu_device::virtual_map(address_map &map)
-{
-	// Set up a virtual address map based on the contents of the page tables.
-	map.unmap_value_high();
-	LOG("%s: Switching to virtual address map...\n", FUNCNAME);
-	map(0x000000, 0xFFFFFF).rw(FUNC(apollo_dn300_mmu_device::mmu_r), FUNC(apollo_dn300_mmu_device::mmu_w));
-}
-
-void apollo_dn300_mmu_device::physical_map(address_map &map)
-{
-	LOG("%s: Switching to physical address map...\n", FUNCNAME);
-
-	// Physical addresses.
-	map.unmap_value_high();
-	map(0x000000, 0x003FFF).rom().region(":prom", 0);
-	map(0x004000, 0x004FFF).rw(FUNC(apollo_dn300_mmu_device::pft_r), FUNC(apollo_dn300_mmu_device::pft_w));
-	map(0x005000, 0x007FFF).rw(FUNC(apollo_dn300_mmu_device::big_pft_r), FUNC(apollo_dn300_mmu_device::big_pft_w));
-	map(0x008000, 0x008001).rw(FUNC(apollo_dn300_mmu_device::pid_priv_r), FUNC(apollo_dn300_mmu_device::pid_priv_w));
-	map(0x008002, 0x008003).rw(FUNC(apollo_dn300_mmu_device::status_r), FUNC(apollo_dn300_mmu_device::status_w));
-	map(0x008004, 0x008005).rw(FUNC(apollo_dn300_mmu_device::mem_ctrl_r), FUNC(apollo_dn300_mmu_device::mem_ctrl_w)).umask16(0x00FF);
-	map(0x008006, 0x008007).rw(FUNC(apollo_dn300_mmu_device::mem_status_r), FUNC(apollo_dn300_mmu_device::mem_status_w));
-	map(0x008400, 0x00841F).rw(":duart", FUNC(scn2681_device::read), FUNC(scn2681_device::write)).umask16(0x00FF);	// Serial I/O Interface
-	map(0x008420, 0x008423).rw(":acia", FUNC(acia6850_device::read), FUNC(acia6850_device::write)).umask16(0x00FF);	// Display Keyboard Interface
-	map(0x008800, 0x008803).rw(":ptm", FUNC(ptm6840_device::read), FUNC(ptm6840_device::write)); 					// TIMERS
-	map(0x009000, 0x0090FF).rw(":dmac", FUNC(hd63450_device::read), FUNC(hd63450_device::write));					// DMA CTL
-	map(0x009400, 0x00941F).rw(":display", FUNC(dn300_display_device::regs_r), FUNC(dn300_display_device::regs_w)); // DISP 1
-	map(0x009800, 0x009803).rw(FUNC(apollo_dn300_mmu_device::ring_2_r), FUNC(apollo_dn300_mmu_device::ring_2_w)); 	// RING 2
-	// Winchester controller at 0x9C00-0x9C0F
-	map(0x009C00, 0x009C0F).rw(FUNC(apollo_dn300_mmu_device::dsk_r), FUNC(apollo_dn300_mmu_device::dsk_w));
-	map(0x009C10, 0x009C15).m(":fdc", FUNC(upd765a_device::map)).umask16(0x00FF);									// FLP
-	map(0x009C20, 0x009C25).rw(":rtc", FUNC(mc146818_device::read), FUNC(mc146818_device::write)).umask16(0x00FF);	// CAL
-	map(0x020000, 0x03FFFF).rw(":display", FUNC(dn300_display_device::vram_r), FUNC(dn300_display_device::vram_w));
-	map(0x100000, 0x4FFFFF).ram().share(":phys_mem");
-	map(0x700000, 0x7FFFFF).rw(FUNC(apollo_dn300_mmu_device::ptt_r), FUNC(apollo_dn300_mmu_device::ptt_w)); 		// PTT
-}
-
-//
-
-void apollo_dn300_mmu_device::update_mmu_enabled(bool state)
-{
-	LOG("%s MMU enabled bit now %d\n", FUNCNAME, state);
-
-	if(m_mmu_enabled && !state)
-	{
-		// 1 to 0 transition
-		m_maincpu->set_addrmap(AS_PROGRAM, &apollo_dn300_mmu_device::physical_map);
-	}
-	else if(!m_mmu_enabled && state)
-	{
-		// 0 to 1 transition
-		address_space &space = m_maincpu->space(AS_PROGRAM);
-		space.unmap_readwrite(0x000000, 0xffffff);
-		space.install_readwrite_handler(0x000000, 0xffffff, 
-			read16sm_delegate(*this, FUNC(apollo_dn300_mmu_device::mmu_r)), write16sm_delegate(*this, FUNC(apollo_dn300_mmu_device::mmu_w)));
-	}
-}
-
-//
 
 uint16_t apollo_dn300_mmu_device::ring_2_r(offs_t offset)
 {
@@ -168,10 +180,7 @@ void apollo_dn300_mmu_device::pid_priv_w(uint16_t data)
 	 */
 
 	LOG("%s: D:%X\n", FUNCNAME, data);
-
-	update_mmu_enabled(BIT(data, 0));
-
-    m_pid_priv_register = data;
+	m_pid_priv_register = data;
 
     // When the MMU is enabled, all reads/writes from the CPU go through the page tables.
     // Otherwise, they are physical accesses.
@@ -187,11 +196,44 @@ void apollo_dn300_mmu_device::status_w(uint8_t data)
 	 * b3: interrupt pending
 	 * b2: 4K PFT
 	 * b1: PTT access enabled
-	 * b0: MMU enabled
+	 * b0: tied to 0 if 68020, tied to 1 if 68010
 	 */
 
 	LOG("%s: D:%X\n", FUNCNAME, data);
-	m_status_register = data;
+	m_status_register = (data & 0x1F);
+}
+
+uint16_t apollo_dn300_mmu_device::pft_r(offs_t offset)
+{
+	// Offset is in words, convert it to bytes.
+	offset = offset * 2;
+
+	// One entry every 4 bytes.
+	uint16_t index = offset / 4;
+	uint16_t result;
+
+	if(BIT(offset, 1))
+	{
+		// odd = low word
+		result = (m_pft[index].value & 0x0000FFFF);
+	}
+	else
+	{
+		// even = high word
+		result = (m_pft[index].value & 0xFFFF0000) >> 16;
+	}
+
+	if(!machine().side_effects_disabled()) LOGTRANSLATION("%s: O:%06X D:%04X\n", FUNCNAME, offset, result);
+
+	return result;
+}
+
+uint16_t apollo_dn300_mmu_device::ptt_r(offs_t offset)
+{
+	offset = offset*2;
+	uint16_t page = offset >> 10;
+	
+    return m_ptt[page];
 }
 
 void apollo_dn300_mmu_device::pft_w(offs_t offset, uint16_t data)
@@ -200,34 +242,54 @@ void apollo_dn300_mmu_device::pft_w(offs_t offset, uint16_t data)
 	 *	
 	 * entry format:
 	 * b31-b25: address space ID
+	 * 	The MMU compares its ASID (the current context) to the PFT entry's ASID.
+	 * 	If the global flag is set, this field is ignored.
 	 * b24: supervisor domain
-	 * b23: domain
+	 * 	Page is locked to SUPERVISOR. Privilege violation if accessed when CPU is in USER.
+	 * b23: domain (unused)
 	 * b22: write access
 	 * b21: read access
 	 * b20: execute access
 	 * b19-b16: excess virtual page number
+	 * 	Excess bits from the virtual page number. The XSVPN in the address must match this for a page hit.
 	 * b15: end of chain
+	 * 	End of a linked list in the PFT. If a match has not been found after two searches, a bus error occurs.
 	 * b14: page is modified
+	 * 	Set on page write.
 	 * b13: page is referenced
+	 * 	Set on page read.
 	 * b12: page is global
+	 * 	Disables the ASID check.
 	 * b11-b0: PFT hash thread
+	 * 	Contains the physical page number of the next entry whose hashed virtual page number is the same as its own.
 	 * 
 	 * One entry per physical page of memory.
+	 * 
+	 * 
 	 */
 
-    //LOG("%s: O:%06X D:%04X\n", FUNCNAME, offset, data);
-	if(offset % 2)
+	// Offset is in words, convert it to bytes.
+	offset = offset * 2;
+
+	// One entry every 4 bytes.
+	uint16_t index = offset / 4;
+
+	uint32_t old = m_pft[index].value;
+	//uint16_t endian_swapped_data = ((data & 0xff00) >> 8) | ((data & 0x00ff) << 8);
+
+	// Low word or high word of an entry?
+	if(BIT(offset, 1))
 	{
 		// odd = low word
-		m_pft[offset / 2] = (m_pft[offset / 2] & 0xFFFF0000) | data;
+		m_pft[index].value = (m_pft[index].value & 0xFFFF0000) | data;
 	}
 	else
 	{
 		// even = high word
-		m_pft[offset / 2] = (m_pft[offset / 2] & 0x0000FFFF) | (((uint32_t)data) << 16);
+		m_pft[index].value = (m_pft[index].value & 0x0000FFFF) | (((uint32_t)data) << 16);
 	}
 
-	uint32_t pfte = m_pft[offset/2];
+	uint32_t pfte = m_pft[index].value;
 
 	char s = BIT(pfte, 23) ? 'S' : '-';
 
@@ -242,101 +304,451 @@ void apollo_dn300_mmu_device::pft_w(offs_t offset, uint16_t data)
 	emug[2] = BIT(pfte, 13) ? 'U' : '-';
 	emug[3] = BIT(pfte, 12) ? 'G' : '-';
 
-	//LOG("%s: writing PFT entry for page %06X. now %08X\n", FUNCNAME, offset, m_pft[offset/2]);
-	LOG("%s: entry %04X A:%02X|%c|D:%d|%s|P:%01X|%s|L:%03X\n", FUNCNAME, offset/2,
-		pfte >> 25, s, BIT(pfte, 23), wrx, (pfte >> 16) & 15, emug, pfte & 0x7F);
-}
-
-void apollo_dn300_mmu_device::big_pft_w(offs_t offset, uint16_t data)
-{
-    /* page frame table
-	 *	
-	 * entry format:
-	 * b31-b25: address space ID
-	 * b24: supervisor domain
-	 * b23: domain
-	 * b22: write access
-	 * b21: read access
-	 * b20: execute access
-	 * b19-b16: excess virtual page number
-	 * b15: end of chain
-	 * b14: page is modified
-	 * b13: page is referenced
-	 * b12: page is global
-	 * b11-b0: PFT hash thread
-	 * 
-	 * One entry per physical page of memory.
-	 */
-
-    //LOG("%s: O:%06X D:%04X\n", FUNCNAME, offset, data);
-	if(offset % 2)
-	{
-		// odd = low word
-		m_big_pft[offset / 2] = (m_pft[offset / 2] & 0xFFFF0000) | data;
-	}
-	else
-	{
-		// even = high word
-		m_big_pft[offset / 2] = (m_pft[offset / 2] & 0x0000FFFF) | (((uint32_t)data) << 16);
-	}
-
-	uint32_t pfte = m_pft[offset/2];
-
-	char s = BIT(pfte, 23) ? 'S' : '-';
-
-	char wrx[4] = { 0,0,0,0 };
-	wrx[0] = BIT(pfte, 22) ? 'W' : '-';
-	wrx[1] = BIT(pfte, 21) ? 'R' : '-';
-	wrx[2] = BIT(pfte, 20) ? 'X' : '-';
-
-	char emug[5] = { 0,0,0,0,0 };
-	emug[0] = BIT(pfte, 15) ? 'E' : '-';
-	emug[1] = BIT(pfte, 14) ? 'M' : '-';
-	emug[2] = BIT(pfte, 13) ? 'U' : '-';
-	emug[3] = BIT(pfte, 12) ? 'G' : '-';
-
-	//LOG("%s: writing PFT entry for page %06X. now %08X\n", FUNCNAME, offset, m_pft[offset/2]);
-	LOG("%s: entry %04X A:%02X|%c|D:%d|%s|P:%01X|%s|L:%03X\n", FUNCNAME, offset/2,
-		pfte >> 25, s, BIT(pfte, 23), wrx, (pfte >> 16) & 15, emug, pfte & 0x7F);
+	LOG("%s: PC=%06X O:%04X D:%04X | PFT entry %04X %08X->%08X A:%02X|%c|D:%d|%s|P:%01X|%s|L:%03X\n", FUNCNAME, m_maincpu->pc(), offset, data, index, old, pfte,
+		pfte >> 25, s, BIT(pfte, 23), wrx, (pfte >> 16) & 15, emug, pfte & 0xFFF);
 }
 
 void apollo_dn300_mmu_device::ptt_w(offs_t offset, uint16_t data)
 {
 	/* Page Translation Table
 	 *
+	 * Effectively, a cache for the PFT.
+	 * Each entry points to one entry in a list of PFT entries.
+	 * All linked PFT entries point to a common PTT entry. 
+	 * 
+	 * Bits 10-21 are an index to the PTT, which points to the PFT, which produces a physical address.
+	 * The PTT is assigned to the fixed virtual range $400000-$800000.
+	 * Writes are disabled when the PTT update bit is cleared.
+	 *
 	 * entry format:
 	 * b11-b0: physical page number
 	 * 
 	 * One PPTE every 1024 bytes in table.
-	 * 
-	 * I think pages are 1024 bytes. Confirm?
 	 */
 
-	LOG("%s: setting entry at offset %06X to page %04X (%06X-%06X)\n",
-		FUNCNAME, offset*2, data, data*PAGE_SIZE, (data*PAGE_SIZE)+PAGE_SIZE-1);
+	// Offset is in words, convert it to bytes.
+	offset = offset*2;
+	uint16_t page = offset >> 10;
 
-    m_ptt[offset/512] = data;
+	LOG("%s: O:%06X D:%04X | setting PTT entry %03X (offset %06X) to page %04X (%06X-%06X)\n",
+		FUNCNAME, offset, data, page, offset, data, data*PAGE_SIZE, (data*PAGE_SIZE)+PAGE_SIZE-1);
+
+    m_ptt[page] = data & 0xFFF;
 }
 
 /*****************************************************************************
  * The fun part, if your idea of fun is smashing your balls with a hammer.
  * 
+ * AEGIS manual section 10 page 13
+ * 
+ * When the hardware gets a virtual address to translate, it:
+ * 
+ * 1. Takes the virtual page number in the virtual address and uses it as an index into the PTT.
+ * 
+ * 2. Uses the information in the PTTE to locate the first PFTE in the chain.
+ * 		If there is no hint in the PTT, the hardware hashes the virtual address to obtain an
+ * 		index into the PFT.
+ * 
+ * 3. Examines the PFTE, searching for a virtual-to-physical address correspondence by checking
+ * 		the ASID and XSVPN in the virtual address against the ASID and XSVPN in the PFTE. (On a
+ * 		global reference, only the XSVPN must match.) If the two values do not match, the hardware
+ * 		searches all PFTEs in the linked list for a match. If the virtual address is not in the list,
+ * 		and it has encountered the end-of-chain field twice, the hardware recognizes that no
+ * 		virtual-physical page mapping exists for the address and signals a page fault to install
+ * 		the correct mapping.
+ * 
+ * 4. If a match exists, copies the index of the matching PFTE to the PTTE and calculates the
+ * 		physical address by combining the offset given in the virtual address with the PPN in the
+ * 		PTTE; this operation will optimize performance on the next search.	
+ * 
+ * Page 1-13 describes the MMU further.
+ * For a 26-bit virtual address,
+ * 	b00-b09: 10-bit offset
+ * 	b10-b21: hashed virtual page number
+ *  b25-b22: XSVPN
+ * 
+ * Theory: for a 24-bit virtual address, we drop it to a 10-bit virtual page. The MMU still has a 4-bit XSVPN field.
+ * So for a 24-bit virtual address,
+ * 	b00-b09: 10-bit offset
+ * 	b10-b19: hashed virtual page number
+ *  b20-b23: XSVPN
+ * 
  *****************************************************************************/
-#define PAGENUM(ADDR) ( ADDR / 1024 )
 
-uint16_t apollo_dn300_mmu_device::mmu_r(offs_t offset)
+#define PFTE_IS_END(PFTE) ( BIT(PFTE, 15) )
+#define SEARCH_RESULT_PAGE_FAULT		( 0xFFFFFFFF )
+#define SEARCH_RESULT_ACCESS_VIOLATION	( 0xFFFFFFFE )
+
+bool apollo_dn300_mmu_device::operation_is_permitted(PFT_ENTRY pfte, uint16_t fc, bool write)
 {
-	// The MMU is enabled and the CPU is reading something somewhere.
-	uint16_t page = PAGENUM(offset);
-	uint16_t ptt_entry = m_ptt[page];
-	uint32_t base = (ptt_entry * 1024) + (offset % 1024);
+	// Short-circuit: if pfte.R is 0, fail.
+	if(!pfte.field.read_access) return false;
 
-	LOG("%s: ptt entry %04X, virtual offset %06X -> physical offset %06X\n", FUNCNAME, ptt_entry, offset, base);
+	// Now check FC bits.
+	// At this point R is always 1.
+	switch(fc)
+	{
+		case 1:
+		{
+			if(pfte.field.supervisor) return false;
 
-	return m_physical_space.read_word(base);
+			// At this point S is always 0.
+			if(!write)
+			{
+				// User Data Read
+				return true;
+			}
+			else
+			{
+				// User Data Write
+				return pfte.field.write_access;
+			}
+			break;
+		}
+		case 2:
+		{
+			if(pfte.field.supervisor) return false;
+
+			// At this point S is always 0.
+			if(!write)
+			{
+				// User Program Read
+				return pfte.field.execute_access;
+			}
+			else
+			{
+				// User Program Write
+				return false; // Never allowed.
+			}
+		}
+		case 5:
+		{
+			if(!write)
+			{
+				// Supervisor Data Read
+				return true;
+			}
+			else
+			{
+				// Supervisor Data Write
+				return pfte.field.write_access;
+				
+			}
+		}
+		case 6:	
+		{
+			if(!write)
+			{
+				// Supervisor Program Read
+				return pfte.field.execute_access;
+			}
+			else
+			{
+				// Supervisor Program Write
+				return false; // Never allowed.
+			}
+		}
+		default: return false;
+	}
 }
 
-void apollo_dn300_mmu_device::mmu_w(offs_t offset, uint16_t data)
+void apollo_dn300_mmu_device::debug_dump_pfte(PFT_ENTRY pfte, uint16_t current_ppn)
 {
-	// The MMU is enabled and the CPU is writing something somewhere.
+	bool end 	= pfte.field.end_of_chain;
+	bool global = pfte.field.global;
+	auto asid 	= pfte.field.address_space_id;
+	auto xsvpn 	= pfte.field.xsvpn;
+	auto link 	= pfte.field.link;
+
+	LOGTRANSLATION("%s: PFTE for page %03X: %08X (MMU ASID %02X) (%c END %d ASID %02X XSVPN %01X LINK %03X)\n", FUNCNAME,
+		current_ppn, pfte.value, mmu_current_asid(), global ? 'G' : '-', end, asid, xsvpn, link);
+}
+
+uint32_t apollo_dn300_mmu_device::pft_search(PFT_ENTRY chain_start, V_ADDR vaddr, bool write)
+{
+	uint16_t head_ppn = chain_start.field.link;
+
+	if(!machine().side_effects_disabled()) LOGTRANSLATION("%s: searching chain %03X for vaddr %06X\n", FUNCNAME, head_ppn, vaddr.address);
+
+	int end_count = 0;	// Times END bit has been encountered.
+
+	uint16_t current_link = chain_start.field.link;
+	do
+	{
+		// Latch link register with next PPN.
+		uint16_t current_ppn = m_ptt[current_link];
+		if(!machine().side_effects_disabled()) LOGTRANSLATION("%s: PTT %03X: PPN %03X\n", FUNCNAME, current_link, current_ppn);
+
+		// Use new PPN to re-index PFT.
+		PFT_ENTRY pfte = m_pft[current_ppn];
+
+		if(!machine().side_effects_disabled()) debug_dump_pfte(pfte, current_ppn);
+
+		// Parity check.
+
+		// EOL bit set?
+		if(pfte.field.end_of_chain) 
+		{ 
+			end_count++;
+			if(!machine().side_effects_disabled()) LOGTRANSLATION("%s: end of chain\n", FUNCNAME);
+		}
+		
+		// Two EOLs?
+		if(end_count == 2)
+		{
+			if(!machine().side_effects_disabled()) LOGTRANSLATION("%s: hit end of chain twice, page faulting\n", FUNCNAME);
+			return SEARCH_RESULT_PAGE_FAULT;
+		}
+
+		{
+			bool end 	= m_pft[current_ppn].field.end_of_chain;
+			bool global = m_pft[current_ppn].field.global;
+			auto asid 	= m_pft[current_ppn].field.address_space_id;
+			auto xsvpn 	= m_pft[current_ppn].field.xsvpn;
+			auto link 	= m_pft[current_ppn].field.link;
+			if(!machine().side_effects_disabled())
+				LOGTRANSLATION("%s: PFTE for page %03X: %08X (%c END %d ASID %02X XSVPN %01X LINK %03X)\n", FUNCNAME,
+					current_ppn, m_pft[current_ppn].value, global ? 'G' : '-', end, asid, xsvpn, link);
+
+			bool xsvpns_match = (vaddr.fields.xsvpn == xsvpn);
+			bool asids_match = (mmu_current_asid() == asid) || global;
+			bool permissions_ok = operation_is_permitted(m_pft[current_ppn], m_maincpu->get_fc(), write);
+
+			if(xsvpns_match && asids_match)
+			{
+				if(!permissions_ok) return SEARCH_RESULT_ACCESS_VIOLATION;
+
+				if(write == 0) 
+					m_pft[current_ppn].field.used = true;
+				else if(write == 1)
+					m_pft[current_ppn].field.modified = true;
+
+				return (current_ppn << 10) | vaddr.fields.offset;
+			}
+			else
+			{
+				// Miss. Next.
+				current_link = pfte.field.link;
+				continue;
+			}
+		}
+
+		// // Flowchart: Does VA XSVPN match PFTE XSVPN?
+		// if(vaddr.fields.xsvpn == pfte.field.xsvpn)
+		// {
+		// 	if(!machine().side_effects_disabled()) LOGTRANSLATION("%s: XSVPNs match...\n", FUNCNAME);
+
+		// 	// Flowchart: Does PFTE ASID match MMU ASID or is PFTE global bit set?
+		// 	if((mmu_current_asid() == pfte.field.address_space_id) || pfte.field.global)
+		// 	{
+		// 		if(!machine().side_effects_disabled()) LOGTRANSLATION("%s: Address space OK...\n", FUNCNAME);
+
+		// 		// Flowchart: Are access bits OK?
+		// 		if(true)
+		// 		{
+		// 			// TODO: Check read/write/execute permissions.
+
+		// 			// LOGTRANSLATION("%s: Permissions OK...\n");
+
+		// 			// if(intention == TRANSLATE_READ) 
+		// 			// 	m_pft[current_page].field.used = true;
+		// 			// else if(intention == TRANSLATE_WRITE)
+		// 			// 	m_pft[current_page].field.modified = true;
+
+		// 			return (current_ppn << 10) | vaddr.fields.offset;
+		// 		}
+		// 	}
+		// 	else
+		// 	{
+		// 		// Miss. Next.
+		// 		current_link = pfte.field.link;
+		// 		continue;
+		// 	}
+		// }
+		// else
+		// {
+		// 	// Miss. Next.
+		// 	current_link = pfte.field.link;
+		// 	continue;
+		// }
+	} while(true);
+}
+
+bool apollo_dn300_mmu_device::memory_translate(int spacenum, int intention, offs_t &address)
+{
+	// We have a virtual address. We need to produce a physical address.
+
+	// Flowchart: "Use HVPN to index PTT, which contains a PPN."
+
+	bool write = intention == TRANSLATE_WRITE;
+
+	if(!machine().side_effects_disabled()) LOGTRANSLATION("%s: -- begin\n", FUNCNAME);
+	// P_ADDR paddr;
+	V_ADDR vaddr;
+	
+	vaddr.address = address;
+	
+	uint16_t vxsvpn = vaddr.fields.xsvpn;
+	uint16_t vpage = vaddr.fields.page;
+	uint16_t voffset = vaddr.fields.offset;
+
+	uint16_t ptt_entry = m_ptt[vpage];
+	uint16_t current_page = ptt_entry;
+
+	if(!machine().side_effects_disabled())
+		LOGTRANSLATION("%s: translating vaddr %06X (%02X:%01X:%03X) -> page %03X -> PTT %03X\n", FUNCNAME,
+			vaddr.address, vxsvpn, vpage, voffset, vpage, current_page);
+
+	// Flowchart: Use PPN from PTT to index PFT.
+	{
+		bool end 	= m_pft[current_page].field.end_of_chain;
+		bool global = m_pft[current_page].field.global;
+		auto asid 	= m_pft[current_page].field.address_space_id;
+		auto xsvpn 	= m_pft[current_page].field.xsvpn;
+		auto link 	= m_pft[current_page].field.link;
+		if(!machine().side_effects_disabled())
+			LOGTRANSLATION("%s: PFTE for page %03X: %08X (%c END %d ASID %02X XSVPN %01X LINK %03X)\n", FUNCNAME,
+				current_page, m_pft[current_page].value, global ? 'G' : '-', end, asid, xsvpn, link);
+
+		bool xsvpns_match = (vaddr.fields.xsvpn == xsvpn);
+		bool asids_match = (mmu_current_asid() == asid) || global;
+		bool permissions_ok = operation_is_permitted(m_pft[current_page], m_maincpu->get_fc(), write);
+
+		if(xsvpns_match && asids_match)
+		{
+			if(!permissions_ok)
+			{
+				access_violation(vaddr.address, write, m_current_mask);
+				return false;
+			}
+
+			if(intention == TRANSLATE_READ) 
+				m_pft[current_page].field.used = true;
+			else if(intention == TRANSLATE_WRITE)
+				m_pft[current_page].field.modified = true;
+
+			address = (current_page << 10) | vaddr.fields.offset;
+		}
+		else
+		{
+			char r = m_pft[current_page].field.read_access ? 'R' : '-';
+			char w = m_pft[current_page].field.write_access ? 'W' : '-';
+			char x = m_pft[current_page].field.execute_access ? 'X' : '-';
+
+			if(!machine().side_effects_disabled()) LOGTRANSLATION("%s: PFT miss (XSVPN %01X|%01X, ASID %02X|%02X, %c%c%c), initiate PFT search.\n", FUNCNAME, vxsvpn, xsvpn, mmu_current_asid(), asid, r, w, x);
+			uint32_t result = pft_search(m_pft[current_page], vaddr, write);
+
+			if(result == SEARCH_RESULT_PAGE_FAULT)
+			{
+				// Search failed.
+				page_fault(vaddr.address, write, m_current_mask);
+				return false;
+
+			}
+			else if(result == SEARCH_RESULT_ACCESS_VIOLATION)
+			{
+				access_violation(vaddr.address, write, m_current_mask);
+				return false;
+			}
+			else
+			{
+				// Search successful.
+				if(!machine().side_effects_disabled()) LOGTRANSLATION("%s: %06X -> %06X\n", FUNCNAME, vaddr.address, result);
+				address = result;
+			}
+		}
+	}
+
+	return true;
+}
+
+void apollo_dn300_mmu_device::page_fault(offs_t address, bool write, uint16_t mask)
+{
+	if(!machine().side_effects_disabled()) LOGBUSERROR("%s: pc=%06X page fault at %06X, write %d\n", FUNCNAME, m_maincpu->pc(), address, write);
+
+	// Set the access violation bit.
+	m_status_register |= 0x40;
+	// Trigger bus error.
+	set_bus_error(address, write, m_current_mask);
+}
+
+void apollo_dn300_mmu_device::access_violation(offs_t address, bool write, uint16_t mask)
+{
+	if(!machine().side_effects_disabled()) LOGBUSERROR("%s: pc=%06X access violation at %06X, write %d\n", FUNCNAME, m_maincpu->pc(), address, write);
+
+	// Set the access violation bit.
+	m_status_register |= 0x80;
+	// Trigger bus error.
+	set_bus_error(address, write, m_current_mask);
+}
+
+uint16_t apollo_dn300_mmu_device::translated_read(offs_t offset, uint16_t mem_mask)
+{
+	offs_t vaddr = offset*2;
+	offs_t paddr = offset*2;
+	m_current_mask = mem_mask;
+	memory_translate(AS_PROGRAM, TRANSLATE_READ, paddr);
+
+	if(!machine().side_effects_disabled())
+		LOGMMUACCESS("%s: MMU READ,  translating vaddr %06X to paddr %06X, mask %04X\n", FUNCNAME, vaddr, paddr, mem_mask);
+
+	uint16_t result;
+
+	switch(mem_mask)
+	{
+		case 0x00FF: result = m_space->read_byte(paddr+1); break;
+		case 0xFF00: result = m_space->read_byte(paddr) << 8; break;
+		case 0xFFFF: result = m_space->read_word(paddr, mem_mask); break;
+		default: fatalerror("%s: unhandled mask %02X", FUNCNAME, mem_mask);
+	}
+
+	return result;
+}
+
+void apollo_dn300_mmu_device::translated_write(offs_t offset, uint16_t data, uint16_t mem_mask)
+{
+	offs_t vaddr = offset*2;
+	offs_t paddr = offset*2;
+	m_current_mask = mem_mask;
+	memory_translate(AS_PROGRAM, TRANSLATE_WRITE, paddr);
+
+	if(!machine().side_effects_disabled())
+		LOGMMUACCESS("%s: MMU WRITE, translating vaddr %06X to paddr %06X, data %04X, mask %04X\n", FUNCNAME, vaddr, paddr, data, mem_mask);
+
+	switch(mem_mask)
+	{
+		case 0x00FF: m_space->write_byte(paddr+1, data>>8); break;
+		case 0xFF00: m_space->write_byte(paddr, data); break;
+		case 0xFFFF: m_space->write_word(paddr, data, mem_mask); break;
+		default: break;
+	}
+}
+
+void apollo_dn300_mmu_device::set_bus_error(uint32_t address, bool write, uint16_t mem_mask)
+{
+	// 1 for read, 0 for write. Thanks, Motorola.
+	bool rw = !write;
+
+	if(machine().side_effects_disabled())
+	{
+		return;
+	}
+	if(m_bus_error)
+		return;
+
+	LOGBUSERROR("%s: addr %06X, write? %d, mem_mask %04X\n", FUNCNAME, address, write, mem_mask);
+
+	if(!ACCESSING_BITS_8_15)
+		address++;
+
+	m_bus_error = true;
+	m_maincpu->set_buserror_details(address, rw, m_maincpu->get_fc());
+	m_maincpu->set_input_line(M68K_LINE_BUSERROR, ASSERT_LINE);
+	m_maincpu->set_input_line(M68K_LINE_BUSERROR, CLEAR_LINE);
+	m_bus_error_timer->adjust(m_maincpu->cycles_to_attotime(16)); // let rmw cycles complete
+}
+
+TIMER_CALLBACK_MEMBER(apollo_dn300_mmu_device::bus_error)
+{
+	m_bus_error = false;
 }
