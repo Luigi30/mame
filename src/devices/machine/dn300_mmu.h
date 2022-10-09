@@ -157,7 +157,7 @@ protected:
 
     uint32_t pft_search(PFT_ENTRY chain_start, V_ADDR vaddr, bool rw);
 
-    void debug_dump_pfte(PFT_ENTRY pfte, uint16_t current_ppn);
+    void debug_dump_pfte(PFT_ENTRY pfte, uint16_t current_ppn, V_ADDR vaddr, bool always);
 
     void page_fault(offs_t address, bool write, uint16_t mask);
     void access_violation(offs_t address, bool write, uint16_t mask);

@@ -21,6 +21,7 @@
 #include "machine/ram.h"
 #include "video/dn300.h"
 #include "apollo_kbd_new.h"
+#include "formats/apollo_dsk.h"
 #include "apollo.h"
 
 #define LOG_GENERAL 0x01
@@ -41,8 +42,7 @@
 
 static void floppies(device_slot_interface &device)
 {
-	device.option_add("525sd", FLOPPY_525_SD);
-	device.option_add("525dd", FLOPPY_525_DD);
+	device.option_add("8dsdd", FLOPPY_8_DSDD);
 }
 
 void apollo_keyboard_devices(device_slot_interface &device)
@@ -91,10 +91,24 @@ protected:
 	void virtual_map(address_map &map);
 
     void pid_priv_w(uint16_t data);
+	DECLARE_WRITE_LINE_MEMBER(floppy_irq_w);
+
+	uint16_t floppy_r(offs_t offset);
+	void floppy_w(offs_t offset, uint16_t data);
+	void floppy_ctrl_w(uint8_t data);
 
 private:
+	static void floppy_formats(format_registration &fr);
+
 	memory_view m_view;
+
+	uint8_t m_floppy_ctrl;
 };
+
+void apollo_dn300_state::floppy_formats(format_registration &fr)
+{
+	fr.add_mfm_containers();
+}
 
 void apollo_dn300_state::pid_priv_w(uint16_t data)
 {
@@ -110,40 +124,20 @@ void apollo_dn300_state::machine_reset()
 void apollo_dn300_state::machine_start()
 {
 	m_view.select(0);
-	// address_space &pgmspace = m_maincpu->space(AS_PROGRAM);
-
-	// pgmspace.install_read_tap(0x000000, 0xffffff, "mmu_tap_r",[this](offs_t offset, u16 &data, u16 mem_mask)
-	// {
-	// 	if(m_mmu->mmu_is_enabled())
-	// 	{
-	// 		m_mmu->translated_read(offset, mem_mask);
-	// 		// Don't call the parent read handler, we already took care of it.
-	// 	}
-	// 	else
-	// 	{
-	// 		// pass through
-	// 	}
-	// 	return data;
-	// });
-
-	// pgmspace.install_write_tap(0x000000, 0xffffff, "mmu_tap_w",[this](offs_t offset, u16 &data, u16 mem_mask)
-	// {
-	// 	if(m_mmu->mmu_is_enabled())
-	// 	{
-	// 		m_mmu->translated_write(offset, data, mem_mask);
-	// 		// Don't call the parent write handler, we already took care of it.
-	// 	}
-	// 	else
-	// 	{
-	// 		// pass through
-	// 	}
-	// 	return data;
-	// });
 }
 
 void apollo_dn300_state::init_dn300()
 {
 
+}
+
+WRITE_LINE_MEMBER(apollo_dn300_state::floppy_irq_w)
+{
+	// Gated by floppy control register.
+	if(BIT(m_floppy_ctrl, 1))
+	{
+		m_maincpu->set_input_line(M68K_IRQ_5, state);
+	}
 }
 
 void apollo_dn300_state::virtual_map(address_map &map)
@@ -166,7 +160,8 @@ void apollo_dn300_state::virtual_map(address_map &map)
 	m_view[0](0x009800, 0x009803).rw(":mmu", FUNC(apollo_dn300_mmu_device::ring_2_r), FUNC(apollo_dn300_mmu_device::ring_2_w)); 	// RING 2
 	// Winchester controller at 0x9C00-0x9C0F
 	m_view[0](0x009C00, 0x009C0F).rw(":mmu", FUNC(apollo_dn300_mmu_device::dsk_r), FUNC(apollo_dn300_mmu_device::dsk_w));
-	m_view[0](0x009C10, 0x009C15).m(":fdc", FUNC(upd765a_device::map)).umask16(0x00FF);									// FLP
+	m_view[0](0x009C10, 0x009C13).m(":fdc", FUNC(upd765a_device::map)).umask16(0x00FF);										// FLP
+	m_view[0](0x009C10, 0x009C15).rw(FUNC(apollo_dn300_state::floppy_r), FUNC(apollo_dn300_state::floppy_w));
 	m_view[0](0x009C20, 0x009C25).rw(":rtc", FUNC(mc146818_device::read), FUNC(mc146818_device::write)).umask16(0x00FF);	// CAL
 	m_view[0](0x020000, 0x03FFFF).rw(":display", FUNC(dn300_display_device::vram_r), FUNC(dn300_display_device::vram_w));
 	m_view[0](0x100000, 0x3FFFFF).ram().share(":phys_mem");
@@ -193,7 +188,8 @@ void apollo_dn300_state::physical_map(address_map &map)
 	map(0x009800, 0x009803).rw(":mmu", FUNC(apollo_dn300_mmu_device::ring_2_r), FUNC(apollo_dn300_mmu_device::ring_2_w)); 	// RING 2
 	// Winchester controller at 0x9C00-0x9C0F
 	map(0x009C00, 0x009C0F).rw(":mmu", FUNC(apollo_dn300_mmu_device::dsk_r), FUNC(apollo_dn300_mmu_device::dsk_w));
-	map(0x009C10, 0x009C15).m(":fdc", FUNC(upd765a_device::map)).umask16(0x00FF);									// FLP
+	map(0x009C10, 0x009C15).rw(FUNC(apollo_dn300_state::floppy_r), FUNC(apollo_dn300_state::floppy_w));				// FLP
+
 	map(0x009C20, 0x009C25).rw(":rtc", FUNC(mc146818_device::read), FUNC(mc146818_device::write)).umask16(0x00FF);	// CAL
 	map(0x020000, 0x03FFFF).rw(":display", FUNC(dn300_display_device::vram_r), FUNC(dn300_display_device::vram_w));
 	map(0x100000, 0x3FFFFF).ram().share(":phys_mem");
@@ -206,6 +202,43 @@ static DEVICE_INPUT_DEFAULTS_START(keyboard)
 	DEVICE_INPUT_DEFAULTS( "RS232_PARITY", 0xff, RS232_PARITY_NONE )
 	DEVICE_INPUT_DEFAULTS( "RS232_STOPBITS", 0xff, RS232_STOPBITS_1 )
 DEVICE_INPUT_DEFAULTS_END
+
+uint16_t apollo_dn300_state::floppy_r(offs_t offset)
+{
+	LOG("%s: O:%02X\n", FUNCNAME, offset);
+	uint16_t result = 0;
+
+	switch(offset)
+	{
+		case 0: result = m_fdc->msr_r(); 	break;
+		case 1: result = m_fdc->fifo_r();	break;
+		default: return 0;
+	}
+
+	// Place in high bits.
+	return result << 8;
+}
+
+void apollo_dn300_state::floppy_w(offs_t offset, uint16_t data)
+{
+	LOG("%s: O:%02X D:%04X\n", FUNCNAME, offset, data);
+
+	switch(offset)
+	{
+		case 0:		break;
+		case 1:		m_fdc->fifo_w(data >> 8); break;
+		case 2:		floppy_ctrl_w(data >> 8); break;
+		default: 	break;
+	}
+}
+
+void apollo_dn300_state::floppy_ctrl_w(uint8_t data)
+{
+	LOG("%s: D:%02X\n", FUNCNAME, data);
+	m_floppy_ctrl = data;
+
+	//if(!BIT(m_floppy_ctrl, 1)) m_maincpu->set_input_line(M68K_IRQ_5, false);
+}
 
 void apollo_dn300_state::dn300(machine_config &config)
 {
@@ -234,11 +267,11 @@ void apollo_dn300_state::dn300(machine_config &config)
 
 	// Serial I/O controller
 	SCN2681(config, m_duart, 3.6864_MHz_XTAL);		// TODO: confirm speed
-	m_duart->irq_cb().set_inputline(m_maincpu, M68K_IRQ_1);
+	// m_duart->irq_cb().set_inputline(m_maincpu, M68K_IRQ_1);
 
 	// "Display Keyboard Interface"
 	ACIA6850(config, m_acia, 0);
-	m_acia->irq_handler().set_inputline(m_maincpu, M68K_IRQ_2);
+	// m_acia->irq_handler().set_inputline(m_maincpu, M68K_IRQ_2);
 
 	clock_device &acia_clock(CLOCK(config, "acia_clock", 1200*16));
 	acia_clock.signal_handler().set(m_acia, FUNC(acia6850_device::write_txc));
@@ -246,16 +279,16 @@ void apollo_dn300_state::dn300(machine_config &config)
 
 	// Timers
 	PTM6840(config, m_ptm, 3.6864_MHz_XTAL / 2);	// TODO: confirm speed
-	m_ptm->irq_callback().set_inputline(m_maincpu, M68K_IRQ_6);
+	// m_ptm->irq_callback().set_inputline(m_maincpu, M68K_IRQ_6);
 
 	// FDC
-	UPD765A(config, m_fdc, 16_MHz_XTAL / 2);
-	m_fdc->intrq_wr_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ5);
-	m_fdc->drq_wr_callback().set(m_dmac, FUNC(hd63450_device::drq3_w));
+	UPD765A(config, m_fdc, 16_MHz_XTAL / 2, true, true);
+	//m_fdc->intrq_wr_callback().set_inputline(m_maincpu, INPUT_LINE_IRQ5);
+	// m_fdc->intrq_wr_callback().set(FUNC(apollo_dn300_state::floppy_irq_w));
+	//m_fdc->drq_wr_callback().set(m_dmac, FUNC(hd63450_device::drq3_w));
 
 	// floppy drives
-	FLOPPY_CONNECTOR(config, "fdc:0", floppies, "525dd", floppy_image_device::default_fm_floppy_formats);
-	FLOPPY_CONNECTOR(config, "fdc:1", floppies, "525dd", floppy_image_device::default_fm_floppy_formats);
+	FLOPPY_CONNECTOR(config, "fdc:0", floppies, "8dsdd", apollo_dn300_state::floppy_formats);
 
 	// RTC
 	MC146818(config, m_rtc, 32.768_kHz_XTAL);
