@@ -486,6 +486,7 @@ misc/3do.cpp
 misc/eva.cpp
 misc/monon_color.cpp
 misc/mtu130.cpp
+misc/nabu_pc.cpp
 misc/z80ne.cpp
 mit/tx0.cpp
 mits/altair.cpp
