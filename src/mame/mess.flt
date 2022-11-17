@@ -486,7 +486,6 @@ misc/3do.cpp
 misc/eva.cpp
 misc/monon_color.cpp
 misc/mtu130.cpp
-misc/nabu_pc.cpp
 misc/z80ne.cpp
 mit/tx0.cpp
 mits/altair.cpp
@@ -518,6 +517,7 @@ multitech/mkit09.cpp
 multitech/mpf1.cpp
 mupid/mdisk.cpp
 mupid/mupid2.cpp
+nabu/nabupc.cpp
 nakajima/nakajies.cpp
 nascom/nascom1.cpp
 natsemi/ns32kdb.cpp
