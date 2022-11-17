@@ -125,7 +125,7 @@ void ntnew_device::enable_ram(offs_t offset, u8 data)
 	}
 
 	// TODO: how many bits are checked?
-	bool const enable = 0x0a == (data & 0x0f);
+	bool const enable(0x0a == (data & 0x0f));
 	LOG(
 			"%s: Cartridge RAM %s\n",
 			machine().describe_context(),
@@ -176,4 +176,4 @@ void ntnew_device::bank_switch_ram(u8 data)
 } // namespace bus::gameboy
 
 
-DEFINE_DEVICE_TYPE_PRIVATE(GB_ROM_NTNEW, device_gb_cart_interface, bus::gameboy::ntnew_device, "gb_rom_ntnew", "Game Boy newer NT/Makon Cartridge")
+DEFINE_DEVICE_TYPE_PRIVATE(GB_ROM_NTNEW, device_gb_cart_interface, bus::gameboy::ntnew_device, "gb_rom_ntnew", "Game Boy newer Kasheng/Makon Cartridge")

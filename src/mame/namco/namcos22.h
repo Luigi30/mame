@@ -47,8 +47,8 @@ enum
 struct namcos22_polyvertex
 {
 	float x, y, z;
-	int u, v; /* 0..0xfff */
-	int bri;  /* 0..0xff */
+	int u, v; // 0..0xfff
+	int bri;  // 0..0xff
 };
 
 enum namcos22_scenenode_type
@@ -82,6 +82,7 @@ struct namcos22_scenenode
 			int cmode;
 			int flags;
 			int cz_adjust;
+			int bri_adjust;
 			int direct;
 			namcos22_polyvertex v[4];
 		} quad;
@@ -98,7 +99,7 @@ struct namcos22_scenenode
 			int cx_min, cx_max;
 			int cy_min, cy_max;
 			int sizex, sizey;
-			int translucency;
+			int alpha;
 			int cz;
 		} sprite;
 	} data;
@@ -107,7 +108,7 @@ struct namcos22_scenenode
 
 struct namcos22_object_data
 {
-	/* poly / sprites */
+	// poly / sprites
 	rgbaint_t fogcolor;
 	rgbaint_t fadecolor;
 	rgbaint_t polycolor;
@@ -120,15 +121,17 @@ struct namcos22_object_data
 	int cmode;
 	int fadefactor;
 	int pfade_enabled;
+	int brifactor;
 	int fogfactor;
 	int zfog_enabled;
 	int cz_adjust;
 	int cz_sdelta;
 	const u8 *czram;
-
-	/* sprites */
-	const u8 *source;
 	int alpha;
+	bool alpha_enabled;
+
+	// sprites
+	const u8 *source;
 	int line_modulo;
 	int flipx;
 	int flipy;
@@ -158,8 +161,8 @@ private:
 	float m_clipy = 0.0;
 	rectangle m_cliprect;
 
-	inline u8 nthbyte(const u32 *src, int n) { return (src[n / 4] << ((n & 3) * 8)) >> 24; }
-	inline u16 nthword(const u32 *src, int n) { return (src[n / 2] << ((n & 1) * 16)) >> 16; }
+	static u8 nthbyte(const u32 *src, int n) { return util::big_endian_cast<u8>(src)[n]; }
+	static u16 nthword(const u32 *src, int n) { return util::big_endian_cast<u16>(src)[n]; }
 
 	void render_scene_nodes(screen_device &screen, bitmap_rgb32 &bitmap, struct namcos22_scenenode *node);
 	void render_sprite(screen_device &screen, bitmap_rgb32 &bitmap, struct namcos22_scenenode *node);
@@ -224,15 +227,14 @@ public:
 	void cybrcomm(machine_config &config);
 	void namcos22(machine_config &config);
 
-	void init_acedrvr();
-	void init_raveracw();
-	void init_ridger2j();
+	void init_acedrive();
+	void init_raverace();
+	void init_ridgera2();
 	void init_victlap();
 	void init_cybrcomm();
-	void init_ridgeraj();
+	void init_ridgerac();
 
 	// renderer
-	int m_poly_translucency;
 	u16 *m_texture_tilemap;
 	std::unique_ptr<u8[]> m_texture_tileattr;
 	u8 *m_texture_tiledata;
@@ -247,6 +249,9 @@ public:
 	int m_poly_fade_r;
 	int m_poly_fade_g;
 	int m_poly_fade_b;
+	int m_poly_alpha_color;
+	int m_poly_alpha_pen;
+	int m_poly_alpha_factor;
 	u32 m_fog_colormask;
 	int m_fog_r;
 	int m_fog_g;
@@ -323,14 +328,15 @@ protected:
 	u16 mcuc74_speedup_r();
 	void mcu_speedup_w(offs_t offset, u16 data, u16 mem_mask = ~0);
 
-	inline u8 nthbyte(const u32 *src, int n) { return (src[n / 4] << ((n & 3) * 8)) >> 24; }
-	inline u16 nthword(const u32 *src, int n) { return (src[n / 2] << ((n & 1) * 16)) >> 16; }
+	static u8 nthbyte(const u32 *src, int n) { return util::big_endian_cast<u8>(src)[n]; }
+	static u16 nthword(const u32 *src, int n) { return util::big_endian_cast<u16>(src)[n]; }
 
-	inline s32 signed18(s32 val) { return (val & 0x00020000) ? (s32)(val | 0xfffc0000) : val & 0x0001ffff; }
-	inline s32 signed24(s32 val) { return (val & 0x00800000) ? (s32)(val | 0xff000000) : val & 0x007fffff; }
+	static constexpr s32 signed12(s32 val) { return util::sext(val, 12); }
+	static constexpr s32 signed18(s32 val) { return util::sext(val, 18); }
+	static constexpr s32 signed24(s32 val) { return util::sext(val, 24); }
 
-	inline float dspfixed_to_nativefloat(s16 val) { return val / (float)0x7fff; }
-	float dspfloat_to_nativefloat(u32 val);
+	static constexpr float dspfixed_to_nativefloat(s16 val) { return val / (float)0x7fff; }
+	static float dspfloat_to_nativefloat(u32 val);
 
 	void handle_driving_io();
 	void handle_coinage(u16 flags);
@@ -386,6 +392,8 @@ protected:
 
 	TILE_GET_INFO_MEMBER(get_text_tile_info);
 	virtual void draw_text_layer(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
+	void update_text_rowscroll();
+	void apply_text_scroll();
 	u32 screen_update_namcos22(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
 	INTERRUPT_GEN_MEMBER(namcos22_interrupt);
 	INTERRUPT_GEN_MEMBER(dsp_vblank_irq);
@@ -452,6 +460,7 @@ protected:
 	u16 m_keycus_rng = 0;
 	int m_gametype = 0;
 	int m_cz_adjust = 0;
+	int m_bri_adjust = 0;
 	std::unique_ptr<namcos22_renderer> m_poly;
 	u16 m_dspram_bank = 0;
 	u16 m_dspram16_latch = 0;
@@ -469,9 +478,12 @@ protected:
 	std::unique_ptr<s32[]> m_pointrom;
 	std::unique_ptr<u8[]> m_dirtypal;
 	std::unique_ptr<bitmap_ind16> m_mix_bitmap;
+
 	tilemap_t *m_bgtilemap;
 	u16 m_tilemapattr[8] = { };
-
+	u16 m_rowscroll[480] = { };
+	u16 m_lastrow = 0;
+	u64 m_rs_frame = 0;
 	int m_spot_factor = 0;
 	int m_text_palbase = 0;
 	int m_bg_palbase = 0;
@@ -494,7 +506,7 @@ protected:
 	DECLARE_WRITE_LINE_MEMBER(screen_vblank);
 	bool m_pdp_render_done = false;
 	bool m_render_refresh = false;
-	uint64_t m_pdp_frame = 0;
+	u64 m_pdp_frame = 0;
 	u16 m_pdp_base = 0;
 };
 
@@ -512,7 +524,7 @@ public:
 	void tokyowar(machine_config &config);
 
 	void init_aquajet();
-	void init_cybrcyc();
+	void init_cybrcycc();
 	void init_tokyowar();
 	void init_dirtdash();
 	void init_airco22();
@@ -578,8 +590,8 @@ public:
 	{ }
 
 	void alpine(machine_config &config);
-	void init_alpiner2();
 	void init_alpiner();
+	void init_alpiner2();
 
 	template <int N> DECLARE_READ_LINE_MEMBER(alpine_motor_r);
 
@@ -591,26 +603,25 @@ protected:
 	void alpine_mcu_port4_w(u8 data);
 	TIMER_DEVICE_CALLBACK_MEMBER(alpine_steplock_callback);
 
-	int m_motor_status = 0;
+	int m_motor_status = 2;
 };
 
-class alpinesa_state : public alpine_state
+class alpines_state : public alpine_state
 {
 public:
-	alpinesa_state(const machine_config &mconfig, device_type type, const char *tag) :
+	alpines_state(const machine_config &mconfig, device_type type, const char *tag) :
 		alpine_state(mconfig, type, tag),
 		m_rombank(*this, "rombank")
 	{ }
 
-	void alpinesa(machine_config &config);
-	void init_alpinesa();
+	void alpines(machine_config &config);
+	void init_alpines();
 
 private:
 	required_memory_bank m_rombank;
 
 	void rombank_w(u32 data);
-	u32 rombank_r();
-	void alpinesa_am(address_map &map);
+	void alpines_am(address_map &map);
 };
 
 class timecris_state : public namcos22s_state
