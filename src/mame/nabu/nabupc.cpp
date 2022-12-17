@@ -333,12 +333,12 @@ void nabu_pc_state::nabu_pc(machine_config &config)
 *              ROM Load               *
 **************************************/
 ROM_START( nabu_pc )
-	ROM_REGION( 0x1000, "maincpu", 0 )  // main BIOS
-	ROM_DEFAULT_BIOS("rev_a")
-	ROM_SYSTEM_BIOS(0, "rev_a", "BIOS Rev.A")
-	ROMX_LOAD("pc_rev_a.bin", 0x0000, 0x1000, CRC(8110bde0) SHA1(57e5f34645df06d7cb6c202a6d35a442776af2cb), ROM_BIOS(0))
-	// ROM_SYSTEM_BIOS(1, "rev_b", "BIOS Rev.B")
-	// ROMX_LOAD("pc_rev_b.bin", 0x0000, 0x2000, CRC(5a5db110) SHA1(14f3e14ed809f9ec30b8189e5506ed911127de34), ROM_BIOS(1))
+	ROM_REGION( 0x2000, "maincpu", 0 )  // main BIOS
+	ROM_DEFAULT_BIOS("rev_b")
+	//ROM_SYSTEM_BIOS(0, "rev_a", "BIOS Rev.A")
+	//ROMX_LOAD("pc_rev_a.bin", 0x0000, 0x1000, CRC(8110bde0) SHA1(57e5f34645df06d7cb6c202a6d35a442776af2cb), ROM_BIOS(0))
+	ROM_SYSTEM_BIOS(0, "rev_b", "BIOS Rev.B")
+	ROMX_LOAD("pc_rev_b.bin", 0x0000, 0x2000, CRC(5a5db110) SHA1(14f3e14ed809f9ec30b8189e5506ed911127de34), ROM_BIOS(0))
 ROM_END
 
 /**************************************
