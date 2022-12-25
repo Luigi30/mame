@@ -50,7 +50,7 @@
 
 #include <algorithm>
 
-//#define VERBOSE 1
+#define VERBOSE 1
 //#define LOG_OUTPUT_FUNC printf
 #include "logmacro.h"
 
@@ -581,7 +581,8 @@ uint8_t duart_base_device::read(offs_t offset)
 
 	offset &= 0xf;
 
-	LOG("Reading 68681 (%s) reg %x (%s)\n", tag(), offset, duart68681_reg_read_names[offset]);
+	if (!machine().side_effects_disabled())
+		LOG("Reading 68681 (%s) reg %x (%s)\n", tag(), offset, duart68681_reg_read_names[offset]);
 
 	switch (offset)
 	{
@@ -663,10 +664,12 @@ uint8_t duart_base_device::read(offs_t offset)
 		break;
 
 	default:
-		LOG("Reading unhandled 68681 reg %x\n", offset);
+		if(!machine().side_effects_disabled())
+			LOG("Reading unhandled 68681 reg %x\n", offset);
 		break;
 	}
-	LOG("returned %02x\n", r);
+	if (!machine().side_effects_disabled())
+		LOG("returned %02x\n", r);
 
 	return r;
 }
@@ -1380,8 +1383,11 @@ uint8_t duart_channel::read_rx_fifo()
 
 	if (rx_fifo_num == 0)
 	{
-		LOG("68681 channel: rx fifo underflow\n");
-		update_interrupts();
+		if(!machine().side_effects_disabled())
+		{
+			LOG("68681 channel: rx fifo underflow\n");
+			update_interrupts();
+		}
 		return 0;
 	}
 

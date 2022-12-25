@@ -166,6 +166,8 @@ if (BUSES["ADAM"]~=null) then
 		MAME_DIR .. "src/devices/bus/adam/ide.h",
 		MAME_DIR .. "src/devices/bus/adam/ram.cpp",
 		MAME_DIR .. "src/devices/bus/adam/ram.h",
+		MAME_DIR .. "src/devices/bus/adam/mib238.cpp",
+		MAME_DIR .. "src/devices/bus/adam/mib238.h",
 	}
 end
 

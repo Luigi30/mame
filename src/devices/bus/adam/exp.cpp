@@ -141,6 +141,7 @@ void adam_expansion_slot_device::bd_w(offs_t offset, uint8_t data, int bmreq, in
 #include "adamlink.h"
 #include "ide.h"
 #include "ram.h"
+#include "mib238.h"
 
 //-------------------------------------------------
 //  SLOT_INTERFACE( adam_slot1_devices )
@@ -159,6 +160,7 @@ void adam_slot1_devices(device_slot_interface &device)
 void adam_slot2_devices(device_slot_interface &device)
 {
 	device.option_add("ide", ADAM_IDE);
+	device.option_add("mib238", MIB238);
 }
 
 
