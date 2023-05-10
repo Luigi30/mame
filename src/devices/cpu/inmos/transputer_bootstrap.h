@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "transputer_defs.h"
+#include "transputer_private.h"
 
 /********************************************
  *** Bootstrapping

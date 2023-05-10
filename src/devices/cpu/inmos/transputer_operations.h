@@ -1,10 +1,8 @@
 #ifndef MAME_CPU_INMOS_TRANSPUTER_OPERATIONS
 #define MAME_CPU_INMOS_TRANSPUTER_OPERATIONS
 
-void transputer_cpu_device::execute_one(int opcode)
+int transputer_cpu_device::execute_one(int opcode)
 {
-	m_icount--;
-
 	/*
 	 *  F.3.1 - Decoding an Instruction
 	 *  Instruction set definitions:
@@ -16,13 +14,17 @@ void transputer_cpu_device::execute_one(int opcode)
 	 *      - Workspace addresses are word-aligned.
 	 */
 
+	// The return value is the number of cycles the instruction took.
+	u8 direct_function = transputer_ops::get_direct_function(opcode);
+	int cycles_elapsed = transputer_ops::direct_function_cycle_table[direct_function];
+
 	// The high 4 bits of the opcode are a function code.
 	// The low 4 bits are ORed with Oreg.
 	m_OReg0 = m_OREG | (opcode & 0x0F);
 
 	// Now we're at the state where we can execute the instruction.
 
-	switch(transputer_ops::get_direct_function(opcode))
+	switch(direct_function)
 	{
 		// F.3.3 - Direct Functions
 		case transputer_ops::DIRECT_J:   
@@ -130,14 +132,18 @@ void transputer_cpu_device::execute_one(int opcode)
 		case transputer_ops::DIRECT_CJ:
 		{
 			// A
+
+			// Jump taken, 4 cycles. Not taken, 2 cycles.
 			if(m_AREG == 0)
 			{
 				m_IPTR = OP_ByteIndex(OP_NextInst(), Oreg0);
+				cycles_elapsed = 4;
 			}
 			else
 			{
 				OP_StackPop();
 				OP_IptrAdvance();
+				cycles_elapsed = 2;
 			}
 			OP_ClearOreg();
 			break;
@@ -181,17 +187,24 @@ void transputer_cpu_device::execute_one(int opcode)
 		case transputer_ops::DIRECT_OPR:
 		{
 			// F
-			DoOperation();
+			cycles_elapsed = DoOperation();
 			OP_ClearOreg(); // Always executed after an OPR.
 		}
 
 		default:
 		break;
 	}
+
+	return cycles_elapsed;
 }
 
-void transputer_cpu_device::DoOperation()
+int transputer_cpu_device::DoOperation()
 {
+	// OPR instruction dispatcher.
+	// Perform the operation specified in Oreg0.
+	
+	int cycles = transputer_ops::ops_lookup[Oreg0].cycles;
+
 	switch(Oreg0)
 	{
 		case 0x00:  // rev
@@ -240,8 +253,7 @@ void transputer_cpu_device::DoOperation()
 		break;
 	}
 
-	// OPR instruction dispatcher.
-	// Perform the operation specified in Oreg0.
+	return cycles;
 }
 
 #endif

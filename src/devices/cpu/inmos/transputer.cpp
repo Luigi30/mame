@@ -71,13 +71,30 @@ void transputer_cpu_device::execute_run()
 	while(m_bcount && m_icount <= m_bcount)
 		internal_update(total_cycles() + m_icount - m_bcount);
 
-	// TODO: Make this actually cycle-accurate and not just skipping to icount=0.
+	// TODO: Operations are not cycle-accurate.
 	do
 	{
 		// Update the debugger state.
 		debugger_instruction_hook(m_IPTR);
 
 		// Update high and low priority clock registers.
+		if(total_cycles() >= (m_last_timer_tick + cycles_per_microsecond()))
+		{
+			// 1uS per tick.
+			m_ClockReg0++;
+			if(m_ClockReg0 == transputer_ops::MostPos) m_ClockReg0 = transputer_ops::MostNeg;
+			
+			// 64 uSec per tick.
+			m_low_priority_usec_to_go--;
+			if(m_low_priority_usec_to_go == 0)
+			{
+				m_ClockReg1++;
+				if(m_ClockReg1 == transputer_ops::MostPos) m_ClockReg1 = transputer_ops::MostNeg;
+				m_low_priority_usec_to_go = 64;
+			}
+
+			m_last_timer_tick = total_cycles();
+		}
 
 		// Check the process scheduler.
 
@@ -85,23 +102,20 @@ void transputer_cpu_device::execute_run()
 		if(m_cpu_state == CPU_RUNNING)
 		{
 			uint8_t opcode = fetch();
-			execute_one(opcode);
-		}
-		else if(m_cpu_state == CPU_WAITING_FOR_BOOTSTRAP)
-		{
-			bootstrap_step();
-			m_links[0].rx_byte_present = false;
+			m_icount -= execute_one(opcode);
 		}
 		else
 		{
-			m_icount = 0;
+			bootstrap_step();
+			m_links[0].rx_byte_present = false;
+			m_icount--;
 		}
 
 		if(m_icount > 0)
 			while(m_bcount && m_icount <= m_bcount)
 				internal_update(total_cycles() + m_icount - m_bcount);
 
-		m_icount--;
+		
 	} while (m_icount > 0);
 }
 
@@ -115,10 +129,9 @@ std::unique_ptr<util::disasm_interface> transputer_cpu_device::create_disassembl
 ***************************************************************************/
 void transputer_cpu_device::device_start()
 {
+	m_last_timer_tick = 0;
+	m_low_priority_usec_to_go = 64;
 	m_event_step = 100;
-
-    m_link_out_cb.resolve_all_safe();
-	m_error_cb.resolve_safe();
 
 	space(AS_PROGRAM).specific(memory);
 
@@ -135,8 +148,8 @@ void transputer_cpu_device::device_start()
 	state_add(TRANSPUTER_BREG, "Breg", m_BREG).formatstr("%08X");
 	state_add(TRANSPUTER_CREG, "Creg", m_CREG).formatstr("%08X");
 	state_add(TRANSPUTER_OREG, "Oreg", m_OREG).formatstr("%08X");
-	state_add(TRANSPUTER_TIME0, "Time0", m_TIME0).formatstr("%08X");
-	state_add(TRANSPUTER_TIME1, "Time1", m_TIME1).formatstr("%08X");
+	state_add(TRANSPUTER_TIME0, "ClockReg0", m_ClockReg0).formatstr("%08X");
+	state_add(TRANSPUTER_TIME1, "ClockReg1", m_ClockReg1).formatstr("%08X");
 	state_add(RUN_STATE, "RUN", m_cpu_state).formatstr("%1u");
 	//state_add(BOOTSTRAP_STATE, "BOOTSTRAP_STATE", m_bootstrap_status.state).formatstr("%d");
 
@@ -175,6 +188,12 @@ void transputer_cpu_device::device_add_mconfig(machine_config &config)
 	m_internal_sram->set_default_value(0);
 }
 
+void transputer_cpu_device::device_resolve_objects()
+{
+	m_link_out_cb.resolve_all_safe();
+	m_error_cb.resolve_safe();
+}
+
 void transputer_cpu_device::internal_map(address_map &map)
 {
 	// Transputers have 1KB of internal SRAM.
@@ -211,6 +230,7 @@ void transputer_cpu_device::internal_map(address_map &map)
 WRITE_LINE_MEMBER(transputer_cpu_device::analyse_w)
 {
 	m_analyse_in = state;
+	LOGMASKED(LOG_GENERAL, "analyse bit now %d\n", m_analyse_in);
 }
 
 WRITE_LINE_MEMBER(transputer_cpu_device::reset_w)
@@ -223,6 +243,9 @@ WRITE_LINE_MEMBER(transputer_cpu_device::reset_w)
 		m_is_analysed = m_analyse_in; // ANALYSE & RESET == put CPU in analyse mode.
 		device_reset();
 	}
+
+	m_reset_in = state;
+	LOGMASKED(LOG_GENERAL, "reset bit now %d\n", m_reset_in);
 }
 
 WRITE_LINE_MEMBER(transputer_cpu_device::boot_from_rom_w)
@@ -314,4 +337,3 @@ void transputer_cpu_device::EregIntSaveLoc_w(uint32_t value)
 {
 	m_EregIntSaveLoc = value;
 }
-
