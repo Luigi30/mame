@@ -55,25 +55,15 @@ void isa16_imsb008_device::device_add_mconfig(machine_config &config)
 	IMS_C012(config, m_link_adapter, master_clock);
 }
 
-void isa16_imsb008_device::device_config_complete()
-{
-
-}
-
 void isa16_imsb008_device::device_resolve_objects()
 {
-	
-}
-
-void isa16_imsb008_device::cfg_links_ims_b411(device_t *device)
-{
-
+	m_trams[0] = m_slot0->get_card_device();
 }
 
 void isa16_imsb008_device::device_start()
 {
 	set_isa_device();
-
+	
 	m_trams[0] = dynamic_cast<device_inmos_tram_interface *>(m_slot0->get_card_device());
 	printf("m_trams[0] = %p\n", m_trams[0]);
 	
@@ -82,7 +72,7 @@ void isa16_imsb008_device::device_start()
 
 	m_link_adapter->link_out_cb<0>().set(*m_trams[0], FUNC(device_inmos_tram_interface::inmos0_in_w));
 	m_trams[0]->link_out_cb<0>().set(m_link_adapter, FUNC(device_inmos_serial_link_interface::link_in0_w));
-	m_trams[0]->error_cb().set(*this, FUNC(isa16_imsb008_device::error_w));	
+	m_trams[0]->error_cb().set(*this, FUNC(isa16_imsb008_device::error_in_w));	
 }
 
 void isa16_imsb008_device::map(address_map &map)
@@ -92,7 +82,7 @@ void isa16_imsb008_device::map(address_map &map)
 	map(0x02, 0x02).rw(m_link_adapter, FUNC(ims_c012_device::input_status_r), FUNC(ims_c012_device::input_status_w));
 	map(0x03, 0x03).rw(m_link_adapter, FUNC(ims_c012_device::output_status_r), FUNC(ims_c012_device::output_status_w));
 	map(0x10, 0x10).rw(FUNC(isa16_imsb008_device::error_register_r), FUNC(isa16_imsb008_device::reset_register_w));
-	map(0x11, 0x11).rw(FUNC(isa16_imsb008_device::analyse_register_r), FUNC(isa16_imsb008_device::analyse_register_w));
+	map(0x11, 0x11).w(FUNC(isa16_imsb008_device::analyse_register_w));
 	map(0x12, 0x13).rw(FUNC(isa16_imsb008_device::dma_request_register_r), FUNC(isa16_imsb008_device::dma_request_register_w));
 	map(0x13, 0x13).rw(FUNC(isa16_imsb008_device::irq_control_register_r), FUNC(isa16_imsb008_device::irq_control_register_w));
 }
@@ -113,38 +103,17 @@ void isa16_imsb008_device::device_reset()
 uint8_t isa16_imsb008_device::error_register_r()
 {
 	// returns NotError
-	return (m_error > 0) ? 0 : 1;
-}
-void isa16_imsb008_device::error_register_w(uint8_t value)
-{
-
-	LOGMASKED(LOG_ISA, "*** TODO *** %s %d\n", FUNCNAME, value);
+	return !BIT(m_error, 0);
 }
 
-uint8_t isa16_imsb008_device::reset_register_r()
-{
-	if(!machine().side_effects_disabled())
-	{
-		LOGMASKED(LOG_ISA, "*** TODO *** %s\n", FUNCNAME);
-	}
-	return 0x00;
-}
 void isa16_imsb008_device::reset_register_w(uint8_t value)
 {
-	LOGMASKED(LOG_ISA, "*** TODO *** %s %d\n", FUNCNAME, value);
+	m_trams[0]->reset_w(BIT(value, 0));
 }
 
-uint8_t isa16_imsb008_device::analyse_register_r()
-{
-	if(!machine().side_effects_disabled())
-	{
-		LOGMASKED(LOG_ISA, "%s\n", FUNCNAME);
-	}
-	return 0x00;
-}
 void isa16_imsb008_device::analyse_register_w(uint8_t value)
 {
-	LOGMASKED(LOG_ISA, "*** TODO *** %s %d\n", FUNCNAME, value);
+	m_trams[0]->analyse_w(BIT(value, 0));
 }
 
 uint8_t isa16_imsb008_device::dma_request_register_r()
