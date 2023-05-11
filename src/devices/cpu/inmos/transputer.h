@@ -115,6 +115,7 @@ class transputer_cpu_device : public cpu_device, public device_inmos_serial_link
 	virtual void perform_read_cb(s32 param) override;
 	virtual void internal_update(uint64_t current_time = 0) override;
 	virtual void got_ack_packet_cb() override;
+	virtual void link_tx_is_ready(InmosLink::LinkId link) override;
 	void recompute_bcount(uint64_t event_time);
 	u64 serial_get_next_edge();
 

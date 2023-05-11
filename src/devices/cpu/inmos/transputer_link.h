@@ -116,6 +116,11 @@ void transputer_cpu_device::got_ack_packet_cb()
     //
 }
 
+void transputer_cpu_device::link_tx_is_ready(InmosLink::LinkId link)
+{
+	//
+}
+
 void transputer_cpu_device::recompute_bcount(uint64_t event_time)
 {
 	if(!event_time || event_time >= total_cycles() + m_icount) {

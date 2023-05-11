@@ -62,7 +62,6 @@ void device_inmos_serial_link_interface::serial_rx_update(u8 link_num, u64 curre
 		case InmosLink::RxState::RX_IDLE:
 		{
 			// The receiver is idle.
-
 			next = 0; // idle
 			nstate = InmosLink::RxState::RX_IDLE;
 			break;
@@ -246,7 +245,8 @@ void device_inmos_serial_link_interface::perform_write_cb(s32 link_num)
 {
 	switch(link_num)
 	{
-		case 0: if(m_links[0].tx_write_at_sync) { link_out_w<0>(m_links[0].tx_value); m_links[0].tx_write_at_sync = false; } break;
+		case 0: if(m_links[0].tx_write_at_sync) 
+			{ link_out_w<0>(m_links[0].tx_value); m_links[0].tx_write_at_sync = false; if(m_links[link_num].tx_state == InmosLink::TxState::TX_IDLE) link_tx_is_ready(InmosLink::Link0); } break;
 		case 1: if(m_links[1].tx_write_at_sync) { link_out_w<1>(m_links[1].tx_value); m_links[1].tx_write_at_sync = false; } break;
 		case 2: if(m_links[2].tx_write_at_sync) { link_out_w<2>(m_links[2].tx_value); m_links[2].tx_write_at_sync = false; } break;
 		case 3: if(m_links[3].tx_write_at_sync) { link_out_w<3>(m_links[3].tx_value); m_links[3].tx_write_at_sync = false; } break;

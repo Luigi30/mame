@@ -148,6 +148,8 @@ class device_inmos_serial_link_interface : public device_interface
 	virtual void perform_read_cb(s32 param) = 0;
 	// Callback: The device got an ACK packet on a link.
 	virtual void got_ack_packet_cb() = 0;
+	// Callback: The link is now idle after sending an ACK packet.
+	virtual void link_tx_is_ready(InmosLink::LinkId link) = 0;
 
 	// Called by the scheduler().synchronize() function.
 	void perform_write_cb(s32 param);

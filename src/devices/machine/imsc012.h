@@ -48,7 +48,6 @@ class ims_c012_device :
 
 	// Register accessors
 	uint8_t input_r();
-	void input_w(uint8_t data);
 	uint8_t output_r();
 	void output_w(uint8_t data);
 
@@ -83,6 +82,7 @@ class ims_c012_device :
 	virtual void perform_read_cb(s32 param) override;
 	virtual void got_ack_packet_cb() override;
 	virtual void received_full_byte_cb(InmosLink::LinkId link) override;
+	virtual void link_tx_is_ready(InmosLink::LinkId link) override;
 	virtual void internal_update(uint64_t current_time = 0) override;
 	void recompute_bcount(uint64_t event_time);		
 	void serial_rx_w(int ch, int state);

@@ -16,8 +16,8 @@
 #endif
 
 #define LOG_LINK    (1U << 1)
-#define LOG_SERIAL  (1U < 2)
-#define VERBOSE     (LOG_LINK|LOG_SERIAL)
+#define LOG_SERIAL  (1U << 2)
+#define VERBOSE     (LOG_GENERAL|LOG_LINK|LOG_SERIAL)
 
 #include "logmacro.h"
 
@@ -76,6 +76,27 @@ void ims_c012_device::device_resolve_objects()
 }
 
 //-------------------------------------------------
+//  Execute loop for serial transfer.
+//-------------------------------------------------
+void ims_c012_device::execute_run()
+{
+    do
+    {
+        internal_update(total_cycles());
+        m_icount--;
+    } while (m_icount > 0);
+};
+
+void ims_c012_device::recompute_bcount(uint64_t event_time)
+{
+	if(!event_time || event_time >= total_cycles() + m_icount) {
+		m_bcount = 0;
+		return;
+	}
+	m_bcount = total_cycles() + m_icount - event_time;
+}
+
+//-------------------------------------------------
 //  imsc012_device - I/O handlers
 //-------------------------------------------------
 
@@ -87,15 +108,10 @@ uint8_t ims_c012_device::input_r()
     // Clears the input data present bit on read.
     // If input data present, sends an ACK packet to link.
 
-    if(m_input_data_present) { m_links[0].send_ack_packet(total_cycles()); }
+    if(m_input_data_present) { m_output_ready = false; m_links[0].send_ack_packet(total_cycles()); }
 
     m_input_data_present = false;
     return m_input_data;
-}
-
-void ims_c012_device::input_w(uint8_t value)
-{
-    // No effect on writes.
 }
 
 //-------------------------------------------------
@@ -120,15 +136,9 @@ void ims_c012_device::input_status_w(uint8_t state)
     m_input_interrupt_enable = BIT(state, 1);
 }
 
-
 //-------------------------------------------------
 //  Output: ISA -> C012Link
 //-------------------------------------------------
-uint8_t ims_c012_device::output_r()
-{
-    // Read value is undefined.
-    return 0xff;
-}
 
 void ims_c012_device::output_w(uint8_t value)
 {
@@ -152,33 +162,13 @@ uint8_t ims_c012_device::output_status_r()
     uint8_t data = 0;
     data |= m_output_ready;
     data |= (m_output_interrupt_enable << 1);
+
     return data;
 }
 
 void ims_c012_device::output_status_w(uint8_t state)
 {
     m_output_interrupt_enable = BIT(state, 1);
-}
-
-//-------------------------------------------------
-//  Execute loop for serial transfer.
-//-------------------------------------------------
-void ims_c012_device::execute_run()
-{
-    do
-    {
-        internal_update(total_cycles());
-        m_icount--;
-    } while (m_icount > 0);
-};
-
-void ims_c012_device::recompute_bcount(uint64_t event_time)
-{
-	if(!event_time || event_time >= total_cycles() + m_icount) {
-		m_bcount = 0;
-		return;
-	}
-	m_bcount = total_cycles() + m_icount - event_time;
 }
 
 //-------------------------------------------------
@@ -249,6 +239,11 @@ void ims_c012_device::perform_read_cb(s32 link_num)
 }
 
 void ims_c012_device::got_ack_packet_cb()
+{
+    m_output_ready = true;
+}
+
+void ims_c012_device::link_tx_is_ready(InmosLink::LinkId link)
 {
     m_output_ready = true;
 }
