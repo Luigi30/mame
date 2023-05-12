@@ -78,25 +78,26 @@ void transputer_cpu_device::execute_run()
 		debugger_instruction_hook(m_IPTR);
 
 		// Update high and low priority clock registers.
-		if(total_cycles() >= (m_last_timer_tick + cycles_per_microsecond()))
+		if(m_clocks_running)
 		{
-			// 1uS per tick.
-			m_ClockReg0++;
-			if(m_ClockReg0 == transputer_ops::MostPos) m_ClockReg0 = transputer_ops::MostNeg;
-			
-			// 64 uSec per tick.
-			m_low_priority_usec_to_go--;
-			if(m_low_priority_usec_to_go == 0)
+			if(total_cycles() >= (m_last_timer_tick + cycles_per_microsecond()))
 			{
-				m_ClockReg1++;
-				if(m_ClockReg1 == transputer_ops::MostPos) m_ClockReg1 = transputer_ops::MostNeg;
-				m_low_priority_usec_to_go = 64;
+				// 1uS per tick.
+				m_ClockReg0++;
+				if(m_ClockReg0 == transputer_ops::MostPos) m_ClockReg0 = transputer_ops::MostNeg;
+				
+				// 64 uSec per tick.
+				m_low_priority_usec_to_go--;
+				if(m_low_priority_usec_to_go == 0)
+				{
+					m_ClockReg1++;
+					if(m_ClockReg1 == transputer_ops::MostPos) m_ClockReg1 = transputer_ops::MostNeg;
+					m_low_priority_usec_to_go = 64;
+				}
+
+				m_last_timer_tick = total_cycles();
 			}
-
-			m_last_timer_tick = total_cycles();
 		}
-
-		// Check the process scheduler.
 
 		// CPU running or bootstrapping?
 		if(m_cpu_state == CPU_RUNNING)
@@ -166,6 +167,14 @@ void transputer_cpu_device::device_reset()
 	for(int i=0; i<4; i++) m_links[i].reset();
 
 	m_IPTR = 0x7FFFFFFE;
+	m_AREG = 0;
+	m_BREG = 0;
+	m_CREG = 0;
+	m_WDESC = 0;
+	m_OREG = 0;
+	m_ClockReg0 = transputer_ops::MostNeg; 
+	m_ClockReg1 = transputer_ops::MostNeg;
+	m_clocks_running = false;
 
 	if(m_boot_from_rom_in)
 	{

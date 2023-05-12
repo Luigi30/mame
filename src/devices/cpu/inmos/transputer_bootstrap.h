@@ -56,7 +56,7 @@ void transputer_cpu_device::bootstrap_step()
                 LOG("current COMMAND is LOAD. %d bytes remaining\n", m_bootstrap_status.length_remaining-1);
 
                 // Store data in memory until we're out of length_remaining.
-                memory.write_byte(OFFSET_MEMSTART + (m_bootstrap_status.current_buffer_offset++), data);
+                memory.write_byte(get_memstart() + (m_bootstrap_status.current_buffer_offset++), data);
 
                 if(--m_bootstrap_status.length_remaining == 0)
                 {
@@ -250,11 +250,11 @@ void transputer_cpu_device::bootstrap_begin_execution()
     m_AREG = m_IPTR;            // Areg = old IPTR
     m_BREG = m_WDESC;           // Breg = old WDESC
     m_CREG = LINK_OUTPUT_0;     // Creg = link that sent the program
-    m_IPTR = OFFSET_MEMSTART;   // Iptr = MEMSTART
+    m_IPTR = get_memstart();    // Iptr = MEMSTART
 
     // Wdesc = ffw BITOR 1
     // where ffw is the smallest word address >= MEMSTART + CODELENGTH
-    m_WDESC = ((OFFSET_MEMSTART + m_bootstrap_status.code_length + 4) & 0xFFFFFFFC) | 1;
+    m_WDESC = ((get_memstart() + m_bootstrap_status.code_length + 4) & 0xFFFFFFFC) | 1;
 
     m_cpu_state = CPU_RUNNING;
 }

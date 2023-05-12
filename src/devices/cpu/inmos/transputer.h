@@ -89,6 +89,8 @@ class transputer_cpu_device : public cpu_device, public device_inmos_serial_link
 	void set_error_flag()   { m_errorFlag = true; m_error_cb(m_errorFlag); }
 	void clear_error_flag() { m_errorFlag = false; m_error_cb(m_errorFlag); }
 
+    virtual offs_t get_memstart() { return 0x80000048; }
+
 	///////////////////////////////////////////////////////////////////////////////////
 	protected:
 	transputer_cpu_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock, int cpu_type, u32 word_width);
@@ -140,6 +142,7 @@ class transputer_cpu_device : public cpu_device, public device_inmos_serial_link
 
 	u32 m_ClockReg0;            // High-priority timer, counts 1uS ticks.
 	u32 m_ClockReg1;            // Low-priority timer, counts 64uS ticks.
+	bool m_clocks_running;		// Are the two process clocks running?
 
 	enum
 	{

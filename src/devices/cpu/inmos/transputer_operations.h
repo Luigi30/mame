@@ -246,6 +246,12 @@ int transputer_cpu_device::DoOperation()
 			OP_IptrAdvance();
 			break;            
 		}
+		case 0x1FF: // start (undocumented)
+		{
+			// Reset the CPU back to bootstrap mode.
+			device_reset();
+			break;
+		}
 
 		default:
 		LOG("%s: OPR %08X not implemented\n", FUNCNAME, Oreg0);

@@ -28,6 +28,8 @@ class t800_cpu_device :
     public:
     t800_cpu_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 
+    virtual offs_t get_memstart() override { return 0x80000070; }
+
     protected:
     // virtual uint8_t sram_read8(offs_t addr) override;
     // virtual void sram_write8(offs_t addr, uint8_t data) override;
