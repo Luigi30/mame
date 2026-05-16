@@ -41,6 +41,39 @@ static constexpr unsigned PROM2_MO_COLOR_MASK  = 0x07;        /* negative logic 
  *
  *************************************/
 
+static const gfx_layout objlayout_1bpp =
+{
+	8,8,    /* 8*8 sprites */
+	4096,   /* 4096 of them */
+	1,      /* 4 bits per pixel */
+	{ 0*8*0x10000 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8     /* every sprite takes 8 consecutive bytes */
+};
+
+ static const gfx_layout objlayout_2bpp =
+{
+	8,8,    /* 8*8 sprites */
+	4096,   /* 4096 of them */
+	2,      /* 2 bits per pixel */
+	{ 1*8*0x10000, 0*8*0x10000 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8     /* every sprite takes 8 consecutive bytes */
+};
+
+static const gfx_layout objlayout_3bpp =
+{
+	8,8,    /* 8*8 sprites */
+	4096,   /* 4096 of them */
+	3,      /* 3 bits per pixel */
+	{ 2*8*0x10000, 1*8*0x10000, 0*8*0x10000 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8     /* every sprite takes 8 consecutive bytes */
+};
+
 static const gfx_layout objlayout_4bpp =
 {
 	8,8,    /* 8*8 sprites */
@@ -74,7 +107,27 @@ static const gfx_layout objlayout_6bpp =
 	8*8     /* every sprite takes 8 consecutive bytes */
 };
 
+static const gfx_layout objlayout_7bpp =
+{
+	8,8,    /* 8*8 sprites */
+	4096,   /* 4096 of them */
+	7,      /* 7 bits per pixel */
+	{ 6*8*0x10000, 5*8*0x10000, 4*8*0x10000, 3*8*0x10000, 2*8*0x10000, 1*8*0x10000, 0*8*0x10000 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8     /* every sprite takes 8 consecutive bytes */
+};
 
+static const gfx_layout objlayout_8bpp =
+{
+	8,8,    /* 8*8 sprites */
+	4096,   /* 4096 of them */
+	8,      /* 8 bits per pixel */
+	{ 7*8*0x10000, 6*8*0x10000, 5*8*0x10000, 4*8*0x10000, 3*8*0x10000, 2*8*0x10000, 1*8*0x10000, 0*8*0x10000 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8     /* every sprite takes 8 consecutive bytes */
+};
 
 /*************************************
  *
@@ -630,6 +683,18 @@ int atarisy1_state::get_bank(uint8_t prom1, uint8_t prom2, int bpp)
 	const uint8_t *srcdata = &tiles->as_u8(0x80000 * (bank_index - 1));
 	switch (bpp)
 	{
+	case 1:
+		m_gfxdecode->set_gfx(gfx_index,std::make_unique<gfx_element>(m_palette, objlayout_1bpp, srcdata, 0, 0x40, 256));
+		break;				
+
+	case 2:
+		m_gfxdecode->set_gfx(gfx_index,std::make_unique<gfx_element>(m_palette, objlayout_2bpp, srcdata, 0, 0x40, 256));
+		break;		
+		
+	case 3:
+		m_gfxdecode->set_gfx(gfx_index,std::make_unique<gfx_element>(m_palette, objlayout_3bpp, srcdata, 0, 0x40, 256));
+		break;		
+
 	case 4:
 		m_gfxdecode->set_gfx(gfx_index,std::make_unique<gfx_element>(m_palette, objlayout_4bpp, srcdata, 0, 0x40, 256));
 		break;
@@ -642,6 +707,14 @@ int atarisy1_state::get_bank(uint8_t prom1, uint8_t prom2, int bpp)
 		m_gfxdecode->set_gfx(gfx_index,std::make_unique<gfx_element>(m_palette, objlayout_6bpp, srcdata, 0, 0x40, 256));
 		break;
 
+	case 7:
+		m_gfxdecode->set_gfx(gfx_index,std::make_unique<gfx_element>(m_palette, objlayout_7bpp, srcdata, 0, 0x40, 256));
+		break;		
+
+	case 8:
+		m_gfxdecode->set_gfx(gfx_index,std::make_unique<gfx_element>(m_palette, objlayout_8bpp, srcdata, 0, 0x40, 256));
+		break;		
+		
 	default:
 		fatalerror("Unsupported bpp\n");
 	}

@@ -63,6 +63,7 @@ public:
 	void roadb109(machine_config &config) ATTR_COLD;
 	void marble(machine_config &config) ATTR_COLD;
 	void reliefs1(machine_config &config) ATTR_COLD;
+	void sy1demo(machine_config &config) ATTR_COLD;
 
 	void init_roadblst() ATTR_COLD;
 	void init_peterpak() ATTR_COLD;
@@ -70,6 +71,7 @@ public:
 	void init_roadrunn() ATTR_COLD;
 	void init_indytemp() ATTR_COLD;
 	void init_reliefs1() ATTR_COLD;
+	void init_sy1demo() ATTR_COLD;
 
 protected:
 	virtual void machine_start() override ATTR_COLD;

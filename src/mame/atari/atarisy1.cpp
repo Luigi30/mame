@@ -283,7 +283,7 @@ uint16_t atarisy1_state::trakball_r(offs_t offset)
 	int result = 0xff;
 
 	/* Marble Madness trackball type -- rotated 45 degrees! */
-	if (m_trackball_type == 1)
+	if (m_trackball_type == 1 || m_trackball_type == 3)
 	{
 		int player = (offset >> 1) & 1;
 		int which = offset & 1;
@@ -304,8 +304,16 @@ uint16_t atarisy1_state::trakball_r(offs_t offset)
 				posy = (int8_t)ioport("IN3")->read();
 			}
 
-			m_cur[player][0] = posx + posy;
-			m_cur[player][1] = posx - posy;
+			if(m_trackball_type == 1) /* Marble Madness, rotated 45 degrees */
+			{
+				m_cur[player][0] = posx + posy;
+				m_cur[player][1] = posx - posy;
+			}
+			else if(m_trackball_type == 3)
+			{
+				m_cur[player][0] = posx;
+				m_cur[player][1] = posy;
+			}
 		}
 
 		result = m_cur[player][which];
@@ -702,7 +710,39 @@ static INPUT_PORTS_START( roadblst )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_CUSTOM )
 INPUT_PORTS_END
 
+static INPUT_PORTS_START( sy1demo )
+	PORT_START("IN0")  // F20000
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(30) PORT_KEYDELTA(30) PORT_PLAYER(1)
 
+	PORT_START("IN1")  // F20002
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(30) PORT_KEYDELTA(30) PORT_PLAYER(1)
+
+	PORT_START("IN2")  // F20004
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(30) PORT_KEYDELTA(30) PORT_PLAYER(2)
+
+	PORT_START("IN3")  // F20006
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(30) PORT_KEYDELTA(30) PORT_PLAYER(2)
+
+	PORT_START("F60000")    // F60000
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_CUSTOM ) PORT_READ_LINE_DEVICE_MEMBER("screen", FUNC(screen_device::vblank))
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_CUSTOM ) PORT_READ_LINE_DEVICE_MEMBER("soundlatch", FUNC(generic_latch_8_device::pending_r)) // 68KBUF
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START("1820")  // 1820 (sound)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_CUSTOM ) PORT_READ_LINE_DEVICE_MEMBER("soundlatch", FUNC(generic_latch_8_device::pending_r)) // 68KBUF
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_CUSTOM ) PORT_READ_LINE_DEVICE_MEMBER("mainlatch", FUNC(generic_latch_8_device::pending_r)) // SNDBUF
+	PORT_BIT( 0x60, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_CUSTOM )
+INPUT_PORTS_END
 
 /*************************************
  *
@@ -924,6 +964,15 @@ void atarisy1_state::reliefs1(machine_config &config)
 	m_adc->in_callback<7>().set_ioport("IN3");
 }
 
+void atarisy1_state::sy1demo(machine_config &config)
+{
+	atarisy1(config);
+	add_speech(config);
+
+	SLAPSTIC(config, m_slapstic, 103);
+	m_slapstic->set_range(m_maincpu, AS_PROGRAM, 0x80000, 0x87fff, 0);
+	m_slapstic->set_bank(m_slapstic_bank);
+}
 
 /*************************************
  *
@@ -2600,7 +2649,47 @@ ROM_START( reliefs1 ) // LSI CART 2
 	MOTHERBOARD_PROMS
 ROM_END
 
+/*
+    System I Demo
 
+*/
+
+ROM_START( sy1demo )
+	ROM_REGION( 0x88000, "maincpu", 0 ) /* 8.5*64k for 68000 code & slapstic ROM */
+	MOTHERBOARD_BIOS
+	ROM_LOAD16_BYTE( "sy1demo_10000.even",	0x10000, 0x04000, CRC(284ed2e9) SHA1(a24d2fd587dffcc8536ef28fcbcf5c964a6b67a9) )
+	ROM_LOAD16_BYTE( "sy1demo_10000.odd",   0x10001, 0x04000, CRC(d541b021) SHA1(978b1565da746f7389eaf7646604990fb28d47ed) )
+
+	ROM_LOAD16_BYTE( "136033.107",   		0x80000, 0x04000, CRC(f3b8745b) SHA1(4754eac5e6d8547b3ee00f3f48eaa560eb403862) ) /* marble slapstic */
+	ROM_LOAD16_BYTE( "136033.108",   		0x80001, 0x04000, CRC(e51eecaa) SHA1(37d51a9e9cb33d1156d02a312ac8e202a18d7c20) ) /* marble slapstic */
+
+	ROM_REGION( 0x10000, "audiocpu", 0 )    /* 64k for 6502 code */
+	ROM_LOAD( "136033.421",   0x8000, 0x4000, CRC(78153dc3) SHA1(d4e68226b87df8834dc3d6daa9d683f17896c32e) )
+	ROM_LOAD( "136033.422",   0xc000, 0x4000, CRC(2e66300e) SHA1(49acb9443c5d2c1016cde7f489deab2575dd82ca) )
+
+	ROM_REGION( 0x2000, "alpha", 0 )
+	MOTHERBOARD_ALPHA
+
+	ROM_REGION( 0x100000, "tiles", ROMREGION_INVERT | ROMREGION_ERASEFF )
+	ROM_LOAD( "sy1demo_bank1.plane0",   0x00000, 0x10000, CRC(7a45f5c1) SHA1(b826a178660ff2e278558e4779586737751dca5e) )  /* bank 1, plane 0 */
+	ROM_LOAD( "sy1demo_bank1.plane1",   0x10000, 0x10000, CRC(1eb1bb5f) SHA1(987a8289fd4be06b6899bb8c620ddfa4c4b966b0) )  /* bank 1, plane 1 */
+	ROM_LOAD( "sy1demo_bank1.plane2",   0x20000, 0x10000, CRC(52448965) SHA1(e2ce22f89304b2d6858d0c61040d8ff2ee33347f) )  /* bank 1, plane 2 */
+	ROM_LOAD( "sy1demo_bank1.plane3",   0x30000, 0x10000, CRC(7156e449) SHA1(361e024e1173299d0e6b776a7c1be10767cfab0d) )  /* bank 1, plane 3 */
+	ROM_LOAD( "sy1demo_bank1.plane4",   0x40000, 0x10000, CRC(9062be7f) SHA1(ae372433da441b69345d67f5e838b8479557517b) )  /* bank 1, plane 4 */
+	
+	ROM_LOAD( "sy1demo_bank2.plane0",   0x80000, 0x10000, CRC(9062be7f) SHA1(ae372433da441b69345d67f5e838b8479557517b) )
+	ROM_LOAD( "sy1demo_bank2.plane1",   0x90000, 0x10000, CRC(9062be7f) SHA1(ae372433da441b69345d67f5e838b8479557517b) )
+	ROM_LOAD( "sy1demo_bank2.plane2",   0xa0000, 0x10000, CRC(9062be7f) SHA1(ae372433da441b69345d67f5e838b8479557517b) )
+	ROM_LOAD( "sy1demo_bank2.plane3",   0xb0000, 0x10000, CRC(9062be7f) SHA1(ae372433da441b69345d67f5e838b8479557517b) )
+	ROM_LOAD( "sy1demo_bank2.plane4",   0xc0000, 0x10000, CRC(9062be7f) SHA1(ae372433da441b69345d67f5e838b8479557517b) )
+
+	ROM_REGION( 0x400, "proms", 0 ) /* graphics mapping PROMs */
+	ROM_LOAD( "sy1demo.remap",   0x000, 0x200, CRC(2101b0ed) SHA1(e4fb8dfa80ed78847c697f9de2bd8540b0c04889) )  /* remap */
+	ROM_LOAD( "sy1demo.color",   0x200, 0x200, CRC(19f6e767) SHA1(041f24cc03c9043c31c3294c9565dfda9bdada74) )  /* color */
+
+	ROM_REGION( 0x201, "motherbrd_proms", 0) /* Motherboard PROM's (Only used by TTL version.) */
+	MOTHERBOARD_PROMS
+ROM_END
 
 
 /*************************************
@@ -2658,7 +2747,12 @@ void atarisy1_state::init_reliefs1()
 	m_trackball_type = 0;   /* none */
 }
 
+void atarisy1_state::init_sy1demo()
+{
+	init_slapstic();
 
+	m_trackball_type = 3; 	/* not rotated */
+}
 
 /*************************************
  *
@@ -2703,3 +2797,5 @@ GAME( 1987, roadblstgu, roadblst, roadb109, roadblst, atarisy1r_state, init_road
 // not a clone of relief because it needs to be a clone of atarisy1 BIOS and it's more like an unreleased prequel than a version of the released title
 // joystick inputs don't work in test mode if service mode is accessed from ingame, only if the emulation is started with the test switch on (is real hardware the same?)
 GAME( 1986, reliefs1,   atarisy1, reliefs1, reliefs1, atarisy1r_state,  init_reliefs1, ROT0, "Atari Games", "Relief Pitcher (System 1, prototype)", 0 )
+
+GAME( 2026, sy1demo,	atarisy1, sy1demo, sy1demo, atarisy1_state, init_sy1demo, ROT0, "Me", "System I Demo", 0);
